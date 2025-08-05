@@ -1,6 +1,7 @@
 // Design System Colors (Regenerative/Earth tones)
 export const Colors = {
   primary: '#2D5A27',      // Forest Green
+  primaryLight: '#E8F5E8', // Light Green Background
   secondary: '#87A96B',    // Sage Green
   accent: '#9ACD32',       // Bright Lime
   background: '#FAF9F6',   // Soft Cream
@@ -16,6 +17,7 @@ export const Colors = {
   border: '#E1E8ED',
   disabled: '#BDC3C7',
   placeholder: '#95A5A6',
+  shadow: '#000000',       // Shadow color
   
   // Gradients
   primaryGradient: ['#2D5A27', '#87A96B'],

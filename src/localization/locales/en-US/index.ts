@@ -111,6 +111,12 @@ const enUS = {
       title: 'Let\'s get started',
       subtitle: 'Create a new wallet or import an existing one',
       createNew: 'Create new wallet',
+      createNewDescription: 'Generate a new wallet with a secure recovery phrase',
+      importPasskey: 'Import with Passkey',
+      importPasskeyDescription: 'Use your biometric authentication to restore your wallet',
+      importSeedPhrase: 'Import with Recovery Phrase',
+      importSeedPhraseDescription: 'Restore your wallet using your 12-word recovery phrase',
+      educationalNote: 'New to crypto? We recommend creating a new wallet to learn step by step with educational guidance.',
       importExisting: 'Import existing wallet',
     },
     

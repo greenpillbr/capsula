@@ -111,6 +111,12 @@ const ptBR = {
       title: 'Vamos começar',
       subtitle: 'Crie uma nova carteira ou importe uma existente',
       createNew: 'Criar nova carteira',
+      createNewDescription: 'Gere uma nova carteira com uma frase de recuperação segura',
+      importPasskey: 'Importar com Passkey',
+      importPasskeyDescription: 'Use sua autenticação biométrica para restaurar sua carteira',
+      importSeedPhrase: 'Importar com Frase de Recuperação',
+      importSeedPhraseDescription: 'Restaure sua carteira usando sua frase de recuperação de 12 palavras',
+      educationalNote: 'Novo em cripto? Recomendamos criar uma nova carteira para aprender passo a passo com orientação educacional.',
       importExisting: 'Importar carteira existente',
     },
     

@@ -1,6 +1,6 @@
 {
   "name": "capsula",
-  "main": "App.tsx",
+  "main": "index.js",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
@@ -11,9 +11,15 @@
     "lint": "expo lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "e2e-tests": "jest --config jest.e2e.config.js",
+    "test:e2e": "jest --config jest.e2e.config.js",
+    "test:e2e:watch": "jest --config jest.e2e.config.js --watch",
+    "test:e2e:coverage": "jest --config jest.e2e.config.js --coverage",
+    "test:all": "yarn test && yarn test:e2e"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~5.0.4",
     "@expo/vector-icons": "^14.1.0",
     "@gluestack-ui/themed": "^1.1.73",
     "@react-native-async-storage/async-storage": "^2.2.0",
@@ -31,7 +37,6 @@
     "expo-linking": "~7.1.7",
     "expo-local-authentication": "^16.0.5",
     "expo-random": "^14.0.1",
-    "expo-router": "~5.1.4",
     "expo-secure-store": "^14.2.3",
     "expo-splash-screen": "~0.30.10",
     "expo-status-bar": "~2.2.3",
@@ -39,6 +44,7 @@
     "expo-system-ui": "~5.0.10",
     "expo-web-browser": "^14.2.0",
     "i18next": "^25.3.2",
+    "puppeteer": "^24.15.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-i18next": "^15.6.1",

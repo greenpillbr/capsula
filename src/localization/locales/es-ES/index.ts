@@ -111,6 +111,12 @@ const esES = {
       title: 'Empecemos',
       subtitle: 'Crea una nueva billetera o importa una existente',
       createNew: 'Crear nueva billetera',
+      createNewDescription: 'Genera una nueva billetera con una frase de recuperación segura',
+      importPasskey: 'Importar con Passkey',
+      importPasskeyDescription: 'Usa tu autenticación biométrica para restaurar tu billetera',
+      importSeedPhrase: 'Importar con Frase de Recuperación',
+      importSeedPhraseDescription: 'Restaura tu billetera usando tu frase de recuperación de 12 palabras',
+      educationalNote: '¿Nuevo en cripto? Recomendamos crear una nueva billetera para aprender paso a paso con orientación educativa.',
       importExisting: 'Importar billetera existente',
     },
     
