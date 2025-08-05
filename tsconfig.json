@@ -1,0 +1,58 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": [
+      "dom",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/screens/*": [
+        "./src/screens/*"
+      ],
+      "@/services/*": [
+        "./src/services/*"
+      ],
+      "@/stores/*": [
+        "./src/stores/*"
+      ],
+      "@/types/*": [
+        "./src/types/*"
+      ],
+      "@/utils/*": [
+        "./src/utils/*"
+      ],
+      "@/constants/*": [
+        "./src/constants/*"
+      ],
+      "@/localization/*": [
+        "./src/localization/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "extends": "expo/tsconfig.base"
+}
