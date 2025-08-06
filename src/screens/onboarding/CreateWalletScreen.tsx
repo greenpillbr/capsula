@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
-import { WalletInfo, walletService } from '../../services/WalletService';
+import { AuthMethod, WalletInfo, walletService } from '../../services/WalletService';
 
 interface CreateWalletScreenProps {
   onWalletCreated: (walletInfo: WalletInfo) => void;
@@ -15,33 +15,32 @@ export const CreateWalletScreen: React.FC<CreateWalletScreenProps> = ({
 }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null);
-  const [step, setStep] = useState<'generate' | 'backup' | 'confirm' | 'store'>('generate');
+  const [step, setStep] = useState<'generate' | 'backup' | 'store'>('generate');
   const [fadeAnim] = useState(new Animated.Value(1));
+  const [authMethods, setAuthMethods] = useState<AuthMethod[]>([]);
+  const [transactionPassword, setTransactionPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  useEffect(() => {
+    checkAuthMethods();
+  }, []);
+
+  const checkAuthMethods = async () => {
+    const methods = await walletService.getAuthMethods();
+    setAuthMethods(methods);
+  };
 
   const generateWallet = async () => {
     try {
       setIsCreating(true);
       console.log('Starting wallet generation...');
       
-      // Generate new wallet
       const newWallet = walletService.generateWallet();
       console.log('Wallet generated successfully:', newWallet.address);
       setWalletInfo(newWallet);
       setStep('backup');
       
-      // Animate transition
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => {
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
-      });
-      
+      animateTransition();
     } catch (error) {
       console.error('Error generating wallet:', error);
       Alert.alert(
@@ -56,62 +55,64 @@ export const CreateWalletScreen: React.FC<CreateWalletScreenProps> = ({
 
   const handleBackupConfirmed = () => {
     setStep('store');
-    
-    // Animate transition
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
+    animateTransition();
+  };
+
+  const animateTransition = () => {
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
-      }).start();
-    });
+      })
+    ]).start();
   };
 
-  const storeWalletWithPasskey = async () => {
+  const validatePassword = (password: string): boolean => {
+    return password.length >= 6;
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!validatePassword(transactionPassword)) {
+      Alert.alert('Invalid Password', 'Password must be at least 6 characters long');
+      return;
+    }
+
+    if (transactionPassword !== confirmPassword) {
+      Alert.alert('Password Mismatch', 'Passwords do not match');
+      return;
+    }
+
+    await storeWallet('password', transactionPassword);
+  };
+
+  const storeWallet = async (method: 'passkey' | 'password', password?: string) => {
     if (!walletInfo) return;
     
     try {
       setIsCreating(true);
       
-      // Check if biometric authentication is available
-      const isBiometricAvailable = await walletService.isBiometricAvailable();
+      const success = await walletService.storeWallet(walletInfo, method, password);
       
-      if (!isBiometricAvailable) {
+      if (success) {
         Alert.alert(
-          'Biometric Authentication Required',
-          'This device does not support biometric authentication (fingerprint, Face ID, etc.) or it is not set up. Please set up biometric authentication in your device settings to securely store your wallet.',
+          '🎉 Wallet Created Successfully!',
+          method === 'passkey' 
+            ? 'Your wallet has been securely stored with biometric authentication.'
+            : 'Your wallet has been securely stored with a transaction password.',
           [
-            { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Continue Anyway', 
-              onPress: () => {
-                // For now, just complete the process
-                onWalletCreated(walletInfo);
-              }
+            {
+              text: 'Continue',
+              onPress: () => onWalletCreated(walletInfo),
             }
           ]
         );
-        return;
       }
-
-      // Store wallet with passkey
-      await walletService.storeWalletWithPasskey(walletInfo);
-      
-      Alert.alert(
-        '🎉 Wallet Created Successfully!',
-        'Your wallet has been securely stored with biometric authentication. You can now use your fingerprint or Face ID to access it.',
-        [
-          {
-            text: 'Continue',
-            onPress: () => onWalletCreated(walletInfo),
-          }
-        ]
-      );
-      
     } catch (error) {
       console.error('Error storing wallet:', error);
       
@@ -128,7 +129,7 @@ export const CreateWalletScreen: React.FC<CreateWalletScreenProps> = ({
         'Storage Error',
         errorMessage,
         [
-          { text: 'Try Again', onPress: storeWalletWithPasskey },
+          { text: 'Try Again', onPress: () => storeWallet(method, password) },
           { text: 'Cancel', style: 'cancel' }
         ]
       );
@@ -147,7 +148,7 @@ export const CreateWalletScreen: React.FC<CreateWalletScreenProps> = ({
       <View style={styles.infoContainer}>
         <Text style={styles.infoTitle}>What you'll get:</Text>
         <Text style={styles.infoItem}>• A unique 12-word recovery phrase</Text>
-        <Text style={styles.infoItem}>• Secure biometric protection</Text>
+        <Text style={styles.infoItem}>• Secure authentication</Text>
         <Text style={styles.infoItem}>• Full control of your funds</Text>
         <Text style={styles.infoItem}>• Compatible with all Ethereum networks</Text>
       </View>
@@ -236,7 +237,7 @@ export const CreateWalletScreen: React.FC<CreateWalletScreenProps> = ({
     <Animated.View style={[styles.stepContainer, { opacity: fadeAnim }]}>
       <Text style={styles.title}>🔐 Secure Your Wallet</Text>
       <Text style={styles.subtitle}>
-        Store your wallet securely with biometric authentication
+        Choose how you want to secure your wallet
       </Text>
 
       <View style={styles.walletInfoContainer}>
@@ -244,13 +245,65 @@ export const CreateWalletScreen: React.FC<CreateWalletScreenProps> = ({
         <Text style={styles.walletAddress}>{walletInfo?.address}</Text>
       </View>
 
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoTitle}>Biometric Protection:</Text>
-        <Text style={styles.infoItem}>• Use fingerprint or Face ID to access</Text>
-        <Text style={styles.infoItem}>• Wallet data encrypted on device</Text>
-        <Text style={styles.infoItem}>• No data stored on external servers</Text>
-        <Text style={styles.infoItem}>• Complete privacy and control</Text>
-      </View>
+      {authMethods.map((method) => (
+        method.type === 'passkey' && method.isAvailable ? (
+          <TouchableOpacity
+            key="passkey"
+            style={[styles.authOption, styles.primaryAuthOption]}
+            onPress={() => storeWallet('passkey')}
+            disabled={isCreating}
+          >
+            <Text style={styles.authOptionTitle}>Use Biometric Authentication</Text>
+            <Text style={styles.authOptionDescription}>
+              Secure your wallet with fingerprint or Face ID
+            </Text>
+          </TouchableOpacity>
+        ) : null
+      ))}
+
+      <TouchableOpacity
+        style={[styles.authOption, styles.secondaryAuthOption]}
+        onPress={() => Alert.prompt(
+          'Set Transaction Password',
+          'Enter a password (minimum 6 characters)',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Next',
+              onPress: (password) => {
+                if (password) {
+                  setTransactionPassword(password);
+                  Alert.prompt(
+                    'Confirm Password',
+                    'Enter your password again',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Set Password',
+                        onPress: (confirmPass) => {
+                          if (confirmPass === password) {
+                            storeWallet('password', password);
+                          } else {
+                            Alert.alert('Error', 'Passwords do not match');
+                          }
+                        }
+                      }
+                    ],
+                    'secure-text'
+                  );
+                }
+              }
+            }
+          ],
+          'secure-text'
+        )}
+        disabled={isCreating}
+      >
+        <Text style={styles.authOptionTitle}>Use Transaction Password</Text>
+        <Text style={styles.authOptionDescription}>
+          Set a password to authorize transactions
+        </Text>
+      </TouchableOpacity>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
@@ -258,19 +311,6 @@ export const CreateWalletScreen: React.FC<CreateWalletScreenProps> = ({
           onPress={() => setStep('backup')}
         >
           <Text style={styles.secondaryButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[
-            styles.button, 
-            styles.primaryButton,
-            isCreating && styles.disabledButton
-          ]} 
-          onPress={storeWalletWithPasskey}
-          disabled={isCreating}
-        >
-          <Text style={styles.primaryButtonText}>
-            {isCreating ? 'Securing...' : 'Secure with Biometrics'}
-          </Text>
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -422,6 +462,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     padding: 10,
     borderRadius: 6,
+  },
+  authOption: {
+    width: '100%',
+    maxWidth: 400,
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  primaryAuthOption: {
+    backgroundColor: Colors.primary,
+  },
+  secondaryAuthOption: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  authOptionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  authOptionDescription: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',

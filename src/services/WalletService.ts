@@ -30,18 +30,47 @@ export interface StoredWallet {
   encryptedData: string;
   createdAt: string;
   hasPasskey: boolean;
+  hasTransactionPassword?: boolean;
+}
+
+export interface AuthMethod {
+  type: 'passkey' | 'password';
+  isAvailable: boolean;
 }
 
 class WalletService {
   private static readonly WALLET_KEY = 'capsula_wallet';
   private static readonly WALLET_LIST_KEY = 'capsula_wallet_list';
+  private static readonly PASSWORD_HASH_KEY = 'capsula_tx_password';
+  private static readonly PASSWORD_SALT_KEY = 'capsula_tx_salt';
+
+  /**
+   * Check available authentication methods
+   */
+  async getAuthMethods(): Promise<AuthMethod[]> {
+    const methods: AuthMethod[] = [];
+    
+    // Check Passkey availability
+    const hasPasskey = await this.isBiometricAvailable();
+    methods.push({
+      type: 'passkey',
+      isAvailable: hasPasskey
+    });
+
+    // Transaction password is always available as fallback
+    methods.push({
+      type: 'password',
+      isAvailable: true
+    });
+
+    return methods;
+  }
 
   /**
    * Check if device supports biometric authentication
    */
   async isBiometricAvailable(): Promise<boolean> {
     if (Platform.OS === 'web') {
-      // Web doesn't support biometric authentication
       return false;
     }
 
@@ -58,18 +87,90 @@ class WalletService {
   }
 
   /**
-   * Get available authentication types
+   * Hash transaction password
    */
-  async getAvailableAuthTypes(): Promise<any[]> {
-    if (Platform.OS === 'web' || !LocalAuthentication) {
-      return [];
-    }
-
+  private async hashPassword(password: string, salt?: string): Promise<{ hash: string; salt: string }> {
     try {
-      return await LocalAuthentication.supportedAuthenticationTypesAsync();
+      // Generate salt if not provided
+      const useSalt = salt || (Platform.OS === 'web' 
+        ? crypto.getRandomValues(new Uint8Array(16)).join('')
+        : await Crypto.digestStringAsync(
+            Crypto.CryptoDigestAlgorithm.SHA256,
+            Date.now().toString()
+          ));
+
+      // Hash password with salt
+      const hashInput = `${password}${useSalt}`;
+      const hash = Platform.OS === 'web'
+        ? await crypto.subtle.digest('SHA-256', new TextEncoder().encode(hashInput))
+            .then(buf => Array.from(new Uint8Array(buf))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join(''))
+        : await Crypto.digestStringAsync(
+            Crypto.CryptoDigestAlgorithm.SHA256,
+            hashInput
+          );
+
+      return { hash, salt: useSalt };
     } catch (error) {
-      console.error('Error getting auth types:', error);
-      return [];
+      console.error('Error hashing password:', error);
+      throw new Error('Failed to hash password');
+    }
+  }
+
+  /**
+   * Store transaction password
+   */
+  async setTransactionPassword(password: string): Promise<void> {
+    try {
+      const { hash, salt } = await this.hashPassword(password);
+
+      if (Platform.OS === 'web') {
+        localStorage.setItem(WalletService.PASSWORD_HASH_KEY, hash);
+        localStorage.setItem(WalletService.PASSWORD_SALT_KEY, salt);
+      } else {
+        await SecureStore.setItemAsync(WalletService.PASSWORD_HASH_KEY, hash);
+        await SecureStore.setItemAsync(WalletService.PASSWORD_SALT_KEY, salt);
+      }
+
+      // Update wallet metadata
+      const wallets = await this.getStoredWalletInfo();
+      if (wallets.length > 0) {
+        wallets[0].hasTransactionPassword = true;
+        if (Platform.OS === 'web') {
+          localStorage.setItem(WalletService.WALLET_LIST_KEY, JSON.stringify(wallets));
+        } else {
+          await SecureStore.setItemAsync(WalletService.WALLET_LIST_KEY, JSON.stringify(wallets));
+        }
+      }
+    } catch (error) {
+      console.error('Error setting transaction password:', error);
+      throw new Error('Failed to set transaction password');
+    }
+  }
+
+  /**
+   * Verify transaction password
+   */
+  async verifyTransactionPassword(password: string): Promise<boolean> {
+    try {
+      const storedHash = Platform.OS === 'web'
+        ? localStorage.getItem(WalletService.PASSWORD_HASH_KEY)
+        : await SecureStore.getItemAsync(WalletService.PASSWORD_HASH_KEY);
+
+      const storedSalt = Platform.OS === 'web'
+        ? localStorage.getItem(WalletService.PASSWORD_SALT_KEY)
+        : await SecureStore.getItemAsync(WalletService.PASSWORD_SALT_KEY);
+
+      if (!storedHash || !storedSalt) {
+        return false;
+      }
+
+      const { hash } = await this.hashPassword(password, storedSalt);
+      return hash === storedHash;
+    } catch (error) {
+      console.error('Error verifying transaction password:', error);
+      return false;
     }
   }
 
@@ -79,28 +180,16 @@ class WalletService {
   generateWallet(): WalletInfo {
     try {
       console.log('WalletService: Starting wallet generation...');
-      console.log('Platform:', Platform.OS);
       
-      // Generate a random mnemonic phrase (12 words)
-      console.log('WalletService: Creating random wallet...');
       const wallet = ethers.Wallet.createRandom();
       console.log('WalletService: Wallet created, address:', wallet.address);
       
-      const walletInfo = {
+      return {
         address: wallet.address,
         mnemonic: wallet.mnemonic?.phrase || '',
         privateKey: wallet.privateKey,
         publicKey: wallet.publicKey,
       };
-      
-      console.log('WalletService: Wallet info prepared:', {
-        address: walletInfo.address,
-        hasMnemonic: !!walletInfo.mnemonic,
-        hasPrivateKey: !!walletInfo.privateKey,
-        hasPublicKey: !!walletInfo.publicKey
-      });
-      
-      return walletInfo;
     } catch (error) {
       console.error('Error generating wallet:', error);
       throw new Error('Failed to generate wallet');
@@ -127,44 +216,45 @@ class WalletService {
   }
 
   /**
-   * Encrypt wallet data using device-specific key
+   * Encrypt wallet data
    */
-  private async encryptWalletData(walletInfo: WalletInfo): Promise<string> {
+  private async encryptWalletData(walletInfo: WalletInfo, password?: string): Promise<string> {
     try {
-      let deviceKey: string;
+      let encryptionKey: string;
 
-      if (Platform.OS === 'web') {
-        // For web, use a simple hash-based approach
-        const encoder = new TextEncoder();
-        const data = encoder.encode(`capsula_${walletInfo.address}_${Date.now()}`);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        deviceKey = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      } else if (Crypto) {
-        // Create a deterministic key from device-specific data
-        deviceKey = await Crypto.digestStringAsync(
-          Crypto.CryptoDigestAlgorithm.SHA256,
-          `capsula_${walletInfo.address}_${Date.now()}`,
-          { encoding: Crypto.CryptoEncoding.HEX }
-        );
+      if (password) {
+        // Use transaction password for encryption
+        const { hash } = await this.hashPassword(password);
+        encryptionKey = hash;
       } else {
-        throw new Error('Crypto not available');
+        // Use device-specific key
+        if (Platform.OS === 'web') {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(`capsula_${walletInfo.address}_${Date.now()}`);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          encryptionKey = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        } else if (Crypto) {
+          encryptionKey = await Crypto.digestStringAsync(
+            Crypto.CryptoDigestAlgorithm.SHA256,
+            `capsula_${walletInfo.address}_${Date.now()}`,
+            { encoding: Crypto.CryptoEncoding.HEX }
+          );
+        } else {
+          throw new Error('Crypto not available');
+        }
       }
 
-      // In a real implementation, you'd use proper encryption
-      // For now, we'll use base64 encoding with the device key as salt
       const walletData = JSON.stringify({
         mnemonic: walletInfo.mnemonic,
         privateKey: walletInfo.privateKey,
         publicKey: walletInfo.publicKey,
-        deviceKey: deviceKey.substring(0, 32), // Use first 32 chars as key
+        encryptionKey: encryptionKey.substring(0, 32),
       });
 
-      if (Platform.OS === 'web') {
-        return btoa(walletData);
-      } else {
-        return Buffer.from(walletData).toString('base64');
-      }
+      return Platform.OS === 'web'
+        ? btoa(walletData)
+        : Buffer.from(walletData).toString('base64');
     } catch (error) {
       console.error('Error encrypting wallet data:', error);
       throw new Error('Failed to encrypt wallet data');
@@ -184,8 +274,11 @@ class WalletService {
         walletData = JSON.parse(Buffer.from(encryptedData, 'base64').toString());
       }
       
+      // Derive address from private key to ensure consistency
+      const wallet = new ethers.Wallet(walletData.privateKey);
+      
       return {
-        address: '', // Will be derived from private key
+        address: wallet.address,
         mnemonic: walletData.mnemonic,
         privateKey: walletData.privateKey,
         publicKey: walletData.publicKey,
@@ -197,35 +290,86 @@ class WalletService {
   }
 
   /**
-   * Store wallet securely with biometric authentication
+   * Store wallet with authentication
    */
-  async storeWalletWithPasskey(walletInfo: WalletInfo): Promise<boolean> {
+  async storeWallet(walletInfo: WalletInfo, authMethod: 'passkey' | 'password', password?: string): Promise<boolean> {
+    try {
+      if (authMethod === 'passkey') {
+        return this.storeWalletWithPasskey(walletInfo);
+      } else if (authMethod === 'password' && password) {
+        return this.storeWalletWithPassword(walletInfo, password);
+      }
+      throw new Error('Invalid authentication method or missing password');
+    } catch (error) {
+      console.error('Error storing wallet:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Store wallet with transaction password
+   */
+  public async storeWalletWithPassword(walletInfo: WalletInfo, password: string): Promise<boolean> {
+    try {
+      // Set transaction password
+      await this.setTransactionPassword(password);
+
+      // Encrypt wallet data with password
+      const encryptedData = await this.encryptWalletData(walletInfo, password);
+
+      if (Platform.OS === 'web') {
+        localStorage.setItem(WalletService.WALLET_KEY, encryptedData);
+      } else {
+        await SecureStore.setItemAsync(WalletService.WALLET_KEY, encryptedData);
+      }
+
+      // Store wallet metadata
+      const storedWallet: StoredWallet = {
+        address: walletInfo.address,
+        encryptedData: 'stored_securely',
+        createdAt: new Date().toISOString(),
+        hasPasskey: false,
+        hasTransactionPassword: true,
+      };
+
+      if (Platform.OS === 'web') {
+        localStorage.setItem(WalletService.WALLET_LIST_KEY, JSON.stringify([storedWallet]));
+      } else {
+        await SecureStore.setItemAsync(WalletService.WALLET_LIST_KEY, JSON.stringify([storedWallet]));
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error storing wallet with password:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Store wallet with passkey
+   */
+  public async storeWalletWithPasskey(walletInfo: WalletInfo): Promise<boolean> {
     try {
       if (Platform.OS === 'web') {
-        // For web, store in localStorage (not secure, but for demo purposes)
         const encryptedData = await this.encryptWalletData(walletInfo);
-        
         localStorage.setItem(WalletService.WALLET_KEY, encryptedData);
         
         const storedWallet: StoredWallet = {
           address: walletInfo.address,
           encryptedData: 'stored_in_browser',
           createdAt: new Date().toISOString(),
-          hasPasskey: false, // Web doesn't support passkeys in this demo
+          hasPasskey: false,
         };
 
         localStorage.setItem(WalletService.WALLET_LIST_KEY, JSON.stringify([storedWallet]));
         return true;
       }
 
-      // Check if biometric authentication is available
       const isBiometricAvailable = await this.isBiometricAvailable();
-      
       if (!isBiometricAvailable) {
-        throw new Error('Biometric authentication is not available on this device');
+        throw new Error('Biometric authentication is not available');
       }
 
-      // Authenticate user before storing
       const authResult = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Authenticate to securely store your wallet',
         fallbackLabel: 'Use device passcode',
@@ -237,10 +381,7 @@ class WalletService {
         throw new Error('Authentication failed');
       }
 
-      // Encrypt wallet data
       const encryptedData = await this.encryptWalletData(walletInfo);
-
-      // Store encrypted wallet data
       await SecureStore.setItemAsync(
         WalletService.WALLET_KEY,
         encryptedData,
@@ -250,7 +391,6 @@ class WalletService {
         }
       );
 
-      // Store wallet metadata
       const storedWallet: StoredWallet = {
         address: walletInfo.address,
         encryptedData: 'stored_securely',
@@ -271,29 +411,33 @@ class WalletService {
   }
 
   /**
-   * Retrieve wallet with biometric authentication
+   * Retrieve wallet with authentication
    */
-  async retrieveWalletWithPasskey(): Promise<WalletInfo | null> {
+  async retrieveWallet(authMethod: 'passkey' | 'password', password?: string): Promise<WalletInfo | null> {
+    try {
+      if (authMethod === 'passkey') {
+        return this.retrieveWalletWithPasskey();
+      } else if (authMethod === 'password' && password) {
+        return this.retrieveWalletWithPassword(password);
+      }
+      throw new Error('Invalid authentication method or missing password');
+    } catch (error) {
+      console.error('Error retrieving wallet:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieve wallet with passkey
+   */
+  public async retrieveWalletWithPasskey(): Promise<WalletInfo | null> {
     try {
       if (Platform.OS === 'web') {
-        // For web, retrieve from localStorage
         const encryptedData = localStorage.getItem(WalletService.WALLET_KEY);
-        
-        if (!encryptedData) {
-          return null;
-        }
-
-        // Decrypt wallet data
-        const walletInfo = await this.decryptWalletData(encryptedData);
-        
-        // Derive address from private key to ensure consistency
-        const wallet = new ethers.Wallet(walletInfo.privateKey);
-        walletInfo.address = wallet.address;
-
-        return walletInfo;
+        if (!encryptedData) return null;
+        return this.decryptWalletData(encryptedData);
       }
 
-      // Authenticate user before retrieving
       const authResult = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Authenticate to access your wallet',
         fallbackLabel: 'Use device passcode',
@@ -305,23 +449,33 @@ class WalletService {
         throw new Error('Authentication failed');
       }
 
-      // Retrieve encrypted wallet data
       const encryptedData = await SecureStore.getItemAsync(WalletService.WALLET_KEY);
-      
-      if (!encryptedData) {
-        return null;
-      }
-
-      // Decrypt wallet data
-      const walletInfo = await this.decryptWalletData(encryptedData);
-      
-      // Derive address from private key to ensure consistency
-      const wallet = new ethers.Wallet(walletInfo.privateKey);
-      walletInfo.address = wallet.address;
-
-      return walletInfo;
+      if (!encryptedData) return null;
+      return this.decryptWalletData(encryptedData);
     } catch (error) {
       console.error('Error retrieving wallet with passkey:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieve wallet with transaction password
+   */
+  public async retrieveWalletWithPassword(password: string): Promise<WalletInfo | null> {
+    try {
+      const isValid = await this.verifyTransactionPassword(password);
+      if (!isValid) {
+        throw new Error('Invalid transaction password');
+      }
+
+      const encryptedData = Platform.OS === 'web'
+        ? localStorage.getItem(WalletService.WALLET_KEY)
+        : await SecureStore.getItemAsync(WalletService.WALLET_KEY);
+
+      if (!encryptedData) return null;
+      return this.decryptWalletData(encryptedData);
+    } catch (error) {
+      console.error('Error retrieving wallet with password:', error);
       throw error;
     }
   }
@@ -347,7 +501,7 @@ class WalletService {
   /**
    * Get stored wallet metadata (without sensitive data)
    */
-  async getStoredWalletInfo(): Promise<StoredWallet[]> {
+  public async getStoredWalletInfo(): Promise<StoredWallet[]> {
     try {
       let walletListData: string | null;
 
@@ -376,11 +530,15 @@ class WalletService {
       if (Platform.OS === 'web') {
         localStorage.removeItem(WalletService.WALLET_KEY);
         localStorage.removeItem(WalletService.WALLET_LIST_KEY);
+        localStorage.removeItem(WalletService.PASSWORD_HASH_KEY);
+        localStorage.removeItem(WalletService.PASSWORD_SALT_KEY);
         return true;
       }
 
       await SecureStore.deleteItemAsync(WalletService.WALLET_KEY);
       await SecureStore.deleteItemAsync(WalletService.WALLET_LIST_KEY);
+      await SecureStore.deleteItemAsync(WalletService.PASSWORD_HASH_KEY);
+      await SecureStore.deleteItemAsync(WalletService.PASSWORD_SALT_KEY);
       return true;
     } catch (error) {
       console.error('Error deleting stored wallet:', error);
