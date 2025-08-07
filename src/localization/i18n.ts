@@ -8,9 +8,15 @@ import esES from './locales/es-ES'
 import ptBR from './locales/pt-BR'
 
 const resources = {
-  'pt-BR': ptBR,
-  'en-US': enUS,
-  'es-ES': esES,
+  'pt-BR': {
+    translation: ptBR
+  },
+  'en-US': {
+    translation: enUS
+  },
+  'es-ES': {
+    translation: esES
+  },
 }
 
 i18n
