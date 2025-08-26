@@ -44,6 +44,48 @@ const ptBR = {
     enterSeedPhrase: 'Digite sua frase de recuperação',
     invalidSeedPhrase: 'Frase de recuperação inválida',
     
+    // Passkey Authentication
+    passkeySetup: 'Configurar Passkey',
+    passkeyEnabled: 'Passkey ativado',
+    passkeyDisabled: 'Passkey desativado',
+    unlockWithPasskey: 'Desbloquear com Passkey',
+    createWithPasskey: 'Criar Carteira com Passkey',
+    enterWithPasskey: 'Entrar com Passkey',
+    passkeyAuthentication: 'Autenticação Passkey',
+    passkeyNotSupported: 'Passkeys Não Suportados',
+    passkeyRegistrationFailed: 'Falha no Registro do Passkey',
+    passkeyAuthenticationFailed: 'Falha na Autenticação do Passkey',
+    
+    // Seed Phrase Backup & Verification
+    backupRecoveryPhrase: 'Backup da Frase de Recuperação',
+    backupDescription: 'Sua frase de recuperação é a chave mestra da sua carteira. Anote-a e guarde-a com segurança.',
+    securityNotice: 'Aviso de Segurança',
+    securityWarnings: 'Nunca compartilhe • Guarde offline • Capsula não pode recuperar frases perdidas',
+    yourRecoveryPhrase: 'Sua Frase de Recuperação',
+    writeDownWords: 'Anote essas 12 palavras em ordem:',
+    backupInstructions: 'Como fazer backup com segurança:',
+    instruction1: 'Escreva as palavras no papel na ordem exata mostrada',
+    instruction2: 'Guarde o papel em local seguro e offline',
+    instruction3: 'Considere fazer várias cópias em locais diferentes',
+    instruction4: 'Nunca tire screenshots ou armazene digitalmente',
+    confirmBackup: 'Anotei e guardei minha frase de recuperação com segurança',
+    continueToVerification: 'Continuar para Verificação',
+    skipBackup: 'Pular Backup (Não Recomendado)',
+    
+    // Seed Phrase Verification
+    verifyRecoveryPhrase: 'Verificar Frase de Recuperação',
+    verificationDescription: 'Selecione a palavra correta para cada posição para verificar se você salvou sua frase de recuperação',
+    verificationProgress: '{{current}} de {{total}}',
+    whatIsWord: 'Qual é a palavra #{{position}}?',
+    positionInPhrase: 'Posição na sua frase de recuperação:',
+    selectCorrectWord: 'Selecione a palavra correta:',
+    skipVerification: 'Pular Verificação',
+    verificationComplete: 'Verificação Completa!',
+    verificationSuccess: 'Você verificou com sucesso sua frase de recuperação. Seu backup da carteira está seguro.',
+    incorrectWord: 'Palavra incorreta. A palavra correta para a posição {{position}} é "{{word}}". Tente novamente.',
+    skipVerificationWarning: 'Pular a verificação significa que você não confirmou que pode recuperar sua carteira. Isso é arriscado e não recomendado.',
+    skipBackupWarning: 'Sem fazer backup da sua frase de recuperação, você perderá acesso à sua carteira se:\n• Perder seu dispositivo\n• Seu dispositivo for danificado\n• Desinstalar o aplicativo\n\nIsso é ALTAMENTE ARRISCADO e não recomendado.',
+    
     // Security
     biometricSetup: 'Configurar Biometria',
     biometricEnabled: 'Biometria ativada',
@@ -105,6 +147,33 @@ const ptBR = {
       title: 'Bem-vindo ao Capsula',
       subtitle: 'Sua carteira regenerativa para a economia do futuro',
       description: 'Gerencie seus ativos digitais e participe de comunidades regenerativas de forma simples e segura.',
+      welcomeBack: 'Bem-vindo de volta! Escolha como gostaria de acessar sua carteira.',
+    },
+    
+    // Simplified Onboarding
+    simplified: {
+      passkeyButton: 'Criar Carteira com Passkey',
+      passkeyButtonExisting: 'Entrar com Passkey',
+      passkeyDescription: 'Crie uma nova carteira protegida com autenticação Passkey',
+      passkeyDescriptionExisting: 'Use autenticação Passkey para acessar sua carteira existente',
+      passkeyDescriptionBiometric: 'Passkeys não disponíveis, mas autenticação biométrica é suportada',
+      passkeyDescriptionLimited: 'Recursos de segurança limitados disponíveis neste dispositivo',
+      
+      manualButton: 'Configuração Manual',
+      manualButtonExisting: 'Entrar com Frase de Recuperação',
+      manualDescription: 'Criar ou restaurar carteira usando frase de recuperação',
+      manualDescriptionExisting: 'Use sua frase de recuperação de 12 palavras para restaurar sua carteira',
+      
+      securityHigh: 'Alta Segurança',
+      securityMedium: 'Segurança Média',
+      securityLow: 'Segurança Básica',
+      
+      capabilityPasskey: 'Seu dispositivo suporta autenticação Passkey para segurança e conveniência aprimoradas.',
+      capabilityBiometric: 'Seu dispositivo suporta autenticação biométrica. Passkeys não estão disponíveis, mas você pode usar impressão digital ou reconhecimento facial.',
+      capabilityBasic: 'Seu dispositivo suporta armazenamento seguro. Você pode usar senhas de transação para proteção da carteira.',
+      capabilityLimited: 'Seu dispositivo tem recursos de segurança limitados. Gerenciamento manual de frase de recuperação é recomendado.',
+      
+      securityNote: 'Os dados da sua carteira são criptografados e armazenados com segurança no seu dispositivo. A Capsula nunca tem acesso às suas chaves privadas ou frase de recuperação.',
     },
     
     createOrImport: {
@@ -174,6 +243,19 @@ const ptBR = {
       import: 'Erro ao importar carteira',
       unlock: 'Erro ao desbloquear carteira',
       transaction: 'Erro na transação',
+    },
+    
+    passkey: {
+      notSupported: 'Seu dispositivo não suporta autenticação Passkey',
+      registrationFailed: 'Falha ao registrar Passkey',
+      authenticationFailed: 'Falha ao autenticar com Passkey',
+      browserNotSupported: 'Seu navegador não suporta WebAuthn/Passkeys ou o recurso está desabilitado',
+      iosRequirement: 'Passkeys requerem iOS 16+ e hardware compatível',
+      androidRequirement: 'Passkeys requerem Android 9+ com Google Play Services e hardware compatível',
+      platformNotSupported: 'Passkeys não são suportados nesta plataforma',
+      fallbackSuggestion: 'Use entrada manual de frase de recuperação ou senha de transação',
+      biometricFallback: 'Você pode tentar usar autenticação biométrica ou senha de transação como alternativas',
+      manualFallback: 'Considere usar entrada manual de frase de recuperação para melhor segurança',
     },
     
     miniApp: {

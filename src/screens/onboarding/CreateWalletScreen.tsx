@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants';
 import { AuthMethod, WalletInfo, walletService } from '../../services/WalletService';
@@ -20,6 +20,34 @@ export const CreateWalletScreen: React.FC<CreateWalletScreenProps> = ({
   const [authMethods, setAuthMethods] = useState<AuthMethod[]>([]);
   const [transactionPassword, setTransactionPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+
+  const handlePasswordEntry = async () => {
+    setPasswordError(null);
+    setConfirmPasswordError(null);
+
+    if (!transactionPassword) {
+      setPasswordError('Password is required.');
+      return;
+    }
+    if (!validatePassword(transactionPassword)) {
+      setPasswordError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (!confirmPassword) {
+      setConfirmPasswordError('Password confirmation is required.');
+      return;
+    }
+    if (transactionPassword !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match.');
+      return;
+    }
+
+    // If validation passes, call storeWallet
+    await storeWallet('password', transactionPassword);
+  };
 
   useEffect(() => {
     checkAuthMethods();
@@ -261,49 +289,46 @@ export const CreateWalletScreen: React.FC<CreateWalletScreenProps> = ({
         ) : null
       ))}
 
-      <TouchableOpacity
-        style={[styles.authOption, styles.secondaryAuthOption]}
-        onPress={() => Alert.prompt(
-          'Set Transaction Password',
-          'Enter a password (minimum 6 characters)',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Next',
-              onPress: (password) => {
-                if (password) {
-                  setTransactionPassword(password);
-                  Alert.prompt(
-                    'Confirm Password',
-                    'Enter your password again',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Set Password',
-                        onPress: (confirmPass) => {
-                          if (confirmPass === password) {
-                            storeWallet('password', password);
-                          } else {
-                            Alert.alert('Error', 'Passwords do not match');
-                          }
-                        }
-                      }
-                    ],
-                    'secure-text'
-                  );
-                }
-              }
-            }
-          ],
-          'secure-text'
-        )}
-        disabled={isCreating}
-      >
+      <View style={[styles.authOption, styles.secondaryAuthOption, { marginBottom: 20 }]}>
         <Text style={styles.authOptionTitle}>Use Transaction Password</Text>
         <Text style={styles.authOptionDescription}>
           Set a password to authorize transactions
         </Text>
-      </TouchableOpacity>
+
+        <TextInput
+          style={[styles.input, passwordError ? styles.inputError : null]}
+          placeholder="Enter password (min 6 characters)"
+          value={transactionPassword}
+          onChangeText={(text) => {
+            setTransactionPassword(text);
+            if (passwordError && text) setPasswordError(null);
+          }}
+          secureTextEntry
+        />
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+
+        <TextInput
+          style={[styles.input, confirmPasswordError ? styles.inputError : null]}
+          placeholder="Confirm password"
+          value={confirmPassword}
+          onChangeText={(text) => {
+            setConfirmPassword(text);
+            if (confirmPasswordError && text) setConfirmPasswordError(null);
+          }}
+          secureTextEntry
+        />
+        {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.button, styles.primaryButton]}
+          onPress={handlePasswordEntry}
+          disabled={isCreating}
+        >
+          <Text style={styles.primaryButtonText}>
+            {isCreating ? 'Setting Password...' : 'Set Password'}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
@@ -525,5 +550,28 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: Colors.textSecondary,
     opacity: 0.6,
+  },
+  input: {
+    width: '100%',
+    maxWidth: 400,
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    fontSize: 16,
+    color: Colors.text,
+  },
+  inputError: {
+    borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 10,
+    width: '100%',
+    maxWidth: 400,
+    textAlign: 'left',
   },
 });

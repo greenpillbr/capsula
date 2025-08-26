@@ -1,6 +1,6 @@
 # 🌱 Capsula - Beginner-Friendly Modular Crypto Wallet
 
-A regenerative, educational crypto wallet built for Greenpill BR with React Native and TypeScript.
+A regenerative, community crypto wallet built for Greenpill BR with React Native and TypeScript.
 
 ## 🌟 Vision
 
