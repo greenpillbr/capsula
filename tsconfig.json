@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["dom", "esnext"],
+    "lib": [
+      "dom",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -25,15 +28,33 @@
     "jsx": "react-jsx",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/common/components/*"],
-      "@/types/*": ["src/common/types/*"],
-      "@/utils/*": ["src/common/utils/*"],
-      "@/store/*": ["src/store/*"],
-      "@/lib/*": ["src/lib/*"],
-      "@/modules/*": ["src/modules/*"],
-      "@/constants/*": ["src/constants/*"],
-      "@/config/*": ["src/config/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@/components/*": [
+        "src/common/components/*"
+      ],
+      "@/types/*": [
+        "src/common/types/*"
+      ],
+      "@/utils/*": [
+        "src/common/utils/*"
+      ],
+      "@/store/*": [
+        "src/store/*"
+      ],
+      "@/lib/*": [
+        "src/lib/*"
+      ],
+      "@/modules/*": [
+        "src/modules/*"
+      ],
+      "@/constants/*": [
+        "src/constants/*"
+      ],
+      "@/config/*": [
+        "src/config/*"
+      ]
     }
   },
   "include": [
@@ -42,5 +63,6 @@
   ],
   "exclude": [
     "node_modules"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }
