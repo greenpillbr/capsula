@@ -1,7 +1,0 @@
-node_modules/
-.expo/
-web-build/
-dist/
-*.d.ts
-babel.config.js
-metro.config.js

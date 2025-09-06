@@ -1,25 +1,19 @@
-module.exports = function(api) {
+module.exports = (api) => {
   api.cache(true);
   return {
-    presets: ['babel-preset-expo'],
-    plugins: [
+    presets: [
       [
-        'module-resolver',
+        "babel-preset-expo",
         {
-          root: ['./src'],
-          alias: {
-            '@': './src',
-            '@/components': './src/common/components',
-            '@/types': './src/common/types',
-            '@/utils': './src/common/utils',
-            '@/store': './src/store',
-            '@/lib': './src/lib',
-            '@/modules': './src/modules',
-            '@/constants': './src/constants',
-            '@/config': './src/config',
-          },
+          jsxImportSource: "nativewind",
+          unstable_transformImportMeta: true,
         },
       ],
+      "nativewind/babel",
+    ],
+    plugins: [
+      "react-native-reanimated/plugin",
+      ["inline-import", { extensions: [".sql"] }],
     ],
   };
 };
