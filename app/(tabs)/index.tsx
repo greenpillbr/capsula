@@ -1,56 +1,276 @@
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
+import { keyManager } from '@/lib/crypto/keyManager';
 import { Bell } from '@/lib/icons/Bell';
+import { Globe } from '@/lib/icons/Globe';
 import { Send } from '@/lib/icons/Send';
-import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { useNetworkStore } from '@/lib/stores/networkStore';
+import { useWalletStore } from '@/lib/stores/walletStore';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
 
 export default function WalletHomeScreen() {
+  const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [balance, setBalance] = useState('0.0');
+  const [balanceUSD, setBalanceUSD] = useState('$0.00');
+  
+  const { 
+    activeWallet, 
+    tokens, 
+    getActiveWalletBalance,
+    getTokensForActiveWallet,
+    refreshBalances,
+    isLoadingBalance 
+  } = useWalletStore();
+  
+  const { activeNetwork, getNetworkByChainId } = useNetworkStore();
+  const { activeWalletId } = useAuthStore();
+
+  // Load wallet data on mount and when active wallet changes
+  useEffect(() => {
+    if (activeWallet && activeNetwork) {
+      loadWalletData();
+    }
+  }, [activeWallet, activeNetwork]);
+
+  const loadWalletData = async () => {
+    if (!activeWallet || !activeNetwork) return;
+
+    try {
+      // Get balance from key manager
+      const balanceResult = await keyManager.getWalletBalance(
+        activeWallet.id, 
+        activeNetwork.chainId
+      );
+      
+      if (balanceResult.success && balanceResult.data) {
+        setBalance(balanceResult.data.balance);
+        // TODO: Convert to USD using price API
+        const usdValue = parseFloat(balanceResult.data.balance) * 2500; // Mock ETH price
+        setBalanceUSD(`$${usdValue.toFixed(2)}`);
+      }
+    } catch (error) {
+      console.error('Failed to load wallet data:', error);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await loadWalletData();
+      await refreshBalances();
+    } catch (error) {
+      console.error('Failed to refresh:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleSend = () => {
+    // TODO: Navigate to send screen when created
+    console.log('Navigate to send screen');
+  };
+
+  const handleReceive = () => {
+    // TODO: Navigate to receive screen when created
+    console.log('Navigate to receive screen');
+  };
+
+  const handleNetworkSwitch = () => {
+    // TODO: Navigate to network selector when created
+    console.log('Open network selector');
+  };
+
+  const handleNotifications = () => {
+    // TODO: Navigate to notifications when created
+    console.log('Open notifications');
+  };
+
+  const formatAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const walletTokens = getTokensForActiveWallet();
+
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView 
+      className="flex-1 bg-background"
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+      }
+    >
       {/* Header */}
       <View className="flex-row justify-between items-center p-4 pt-12">
         <Text className="text-xl font-semibold text-foreground">Capsula</Text>
-        <Bell className="text-foreground" size={24} />
+        <Pressable onPress={handleNotifications}>
+          <Bell className="text-foreground" size={24} />
+        </Pressable>
       </View>
 
-      {/* Wallet Address */}
+      {/* Network & Address */}
       <View className="px-4 mb-4">
-        <Text className="text-sm text-muted-foreground mb-1">Ethereum Mainnet</Text>
-        <Text className="text-base font-medium text-foreground">0x8E1C...E8I</Text>
+        <Pressable 
+          onPress={handleNetworkSwitch}
+          className="flex-row items-center mb-2"
+        >
+          <Globe className="text-muted-foreground mr-2" size={16} />
+          <Text className="text-sm text-muted-foreground">
+            {activeNetwork?.name || 'No Network'}
+          </Text>
+        </Pressable>
+        
+        <Pressable 
+          onPress={() => {
+            // TODO: Copy address to clipboard
+            console.log('Copy address:', activeWallet?.address);
+          }}
+        >
+          <Text className="text-base font-medium text-foreground">
+            {activeWallet ? formatAddress(activeWallet.address) : 'No Wallet'}
+          </Text>
+        </Pressable>
       </View>
 
       {/* Balance Section */}
-      <View className="px-4 mb-6">
-        <Text className="text-3xl font-bold text-primary mb-1">123.456789000... ETH</Text>
-        <Text className="text-lg text-muted-foreground">$456,789.01 USD</Text>
+      <View className="px-4 mb-8">
+        <Text className="text-4xl font-bold text-primary mb-2">
+          {isLoadingBalance ? '...' : `${parseFloat(balance).toFixed(6)} ${activeNetwork?.nativeCurrencySymbol || 'ETH'}`}
+        </Text>
+        <Text className="text-lg text-muted-foreground">
+          {balanceUSD}
+        </Text>
       </View>
 
       {/* Action Buttons */}
       <View className="flex-row px-4 mb-8 gap-4">
-        <Button className="flex-1 bg-primary">
-          <Send className="text-primary-foreground mr-2" size={16} />
-          <Text className="text-primary-foreground font-medium">Send</Text>
+        <Button 
+          onPress={handleSend}
+          className="flex-1 bg-primary"
+          disabled={!activeWallet || isLoadingBalance}
+        >
+          <View className="flex-row items-center">
+            <Send className="text-primary-foreground mr-2" size={16} />
+            <Text className="text-primary-foreground font-medium">Send</Text>
+          </View>
         </Button>
-        <Button variant="outline" className="flex-1">
+        
+        <Button 
+          variant="outline" 
+          onPress={handleReceive}
+          className="flex-1"
+          disabled={!activeWallet}
+        >
           <Text className="text-primary font-medium">Receive</Text>
         </Button>
       </View>
 
-      {/* Mini-Apps Section */}
-      <View className="px-4 mb-6">
-        <Text className="text-lg font-semibold text-foreground mb-4">Installed Mini-apps</Text>
-        <View className="flex-row flex-wrap gap-4">
-          {['Tokens', 'Contacts', 'NFTs', 'CookieJar', 'Gardens', 'Add more'].map((app) => (
-            <View key={app} className="w-20 items-center">
-              <View className="w-16 h-16 bg-muted rounded-lg mb-2 items-center justify-center">
-                <Text className="text-muted-foreground text-xs">{app[0]}</Text>
+      {/* Token List */}
+      {walletTokens.length > 0 && (
+        <View className="px-4 mb-6">
+          <Text className="text-lg font-semibold text-foreground mb-4">Tokens</Text>
+          {walletTokens.map((token) => (
+            <Card key={token.id} className="p-4 mb-3">
+              <View className="flex-row justify-between items-center">
+                <View className="flex-1">
+                  <Text className="text-foreground font-medium">{token.symbol}</Text>
+                  <Text className="text-muted-foreground text-sm">{token.name}</Text>
+                </View>
+                <View className="items-end">
+                  <Text className="text-foreground font-medium">
+                    {token.balance || '0.0'}
+                  </Text>
+                  <Text className="text-muted-foreground text-sm">
+                    ${(parseFloat(token.balance || '0') * 100).toFixed(2)}
+                  </Text>
+                </View>
               </View>
-              <Text className="text-xs text-foreground text-center">{app}</Text>
-            </View>
+            </Card>
           ))}
         </View>
+      )}
+
+      {/* Mini-Apps Section */}
+      <View className="px-4 mb-6">
+        <Text className="text-lg font-semibold text-foreground mb-4">
+          Installed Mini-apps
+        </Text>
+        
+        <View className="flex-row flex-wrap gap-4">
+          {['Tokens', 'Contacts', 'NFTs', 'CookieJar', 'Gardens'].map((app) => (
+            <Pressable
+              key={app}
+              onPress={() => console.log(`Open ${app} mini-app`)}
+              className="w-20 items-center"
+            >
+              <View className="w-16 h-16 bg-muted rounded-lg mb-2 items-center justify-center">
+                <Text className="text-muted-foreground text-lg font-medium">
+                  {app[0]}
+                </Text>
+              </View>
+              <Text className="text-xs text-foreground text-center">{app}</Text>
+            </Pressable>
+          ))}
+          
+          {/* Add More Button */}
+          <Pressable
+            onPress={() => console.log('Open mini-apps marketplace')}
+            className="w-20 items-center"
+          >
+            <View className="w-16 h-16 bg-primary/10 border-2 border-dashed border-primary rounded-lg mb-2 items-center justify-center">
+              <Text className="text-primary text-2xl">+</Text>
+            </View>
+            <Text className="text-xs text-foreground text-center">Add more</Text>
+          </Pressable>
+        </View>
       </View>
+
+      {/* Recent Activity Preview */}
+      <View className="px-4 mb-8">
+        <View className="flex-row justify-between items-center mb-4">
+          <Text className="text-lg font-semibold text-foreground">Recent Activity</Text>
+          <Pressable onPress={() => console.log('Navigate to activity tab')}>
+            <Text className="text-primary text-sm">View All</Text>
+          </Pressable>
+        </View>
+        
+        {/* Mock recent transactions */}
+        <Card className="p-4 mb-3">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-1">
+              <Text className="text-foreground font-medium">Received ETH</Text>
+              <Text className="text-muted-foreground text-sm">2 hours ago</Text>
+            </View>
+            <Text className="text-primary font-medium">+0.05 ETH</Text>
+          </View>
+        </Card>
+        
+        <Card className="p-4">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-1">
+              <Text className="text-foreground font-medium">Sent ETH</Text>
+              <Text className="text-muted-foreground text-sm">1 day ago</Text>
+            </View>
+            <Text className="text-muted-foreground font-medium">-0.1 ETH</Text>
+          </View>
+        </Card>
+      </View>
+
+      {/* Empty State for New Wallets */}
+      {!activeWallet && (
+        <View className="flex-1 items-center justify-center p-8">
+          <Text className="text-center text-muted-foreground mb-4">
+            No wallet selected. Please create or import a wallet to get started.
+          </Text>
+          <Button onPress={() => console.log('Navigate to onboarding')}>
+            <Text className="text-primary-foreground">Create Wallet</Text>
+          </Button>
+        </View>
+      )}
     </ScrollView>
   );
 }

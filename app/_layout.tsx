@@ -1,24 +1,24 @@
-import "./global.css";
+import { PortalHost } from "@/components/primitives/portal";
+import { DatabaseProvider } from "@/db/provider";
+import { useFrameworkReady } from "@/hooks/useFrameworkReady";
+import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
+import { DARK_THEME, LIGHT_THEME } from "@/lib/constants";
+import { getItem, setItem } from "@/lib/storage";
+import { useColorScheme } from "@/lib/useColorScheme";
+import { Inter_400Regular, Inter_600SemiBold, useFonts } from '@expo-google-fonts/inter';
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { type Theme, ThemeProvider } from "@react-navigation/native";
+import { ThemeProvider } from "@react-navigation/native";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { PortalHost } from "@/components/primitives/portal";
-import { DatabaseProvider } from "@/db/provider";
-import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
-import { DARK_THEME, LIGHT_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/useColorScheme";
-import { getItem, setItem } from "@/lib/storage";
-import { useFrameworkReady } from "@/hooks/useFrameworkReady";
-import { Inter_400Regular, Inter_600SemiBold, useFonts } from '@expo-google-fonts/inter';
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import "./global.css";
 
 
 export {
   // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
+  ErrorBoundary
 } from "expo-router";
 
 export const unstable_settings = {
@@ -66,7 +66,10 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
           <BottomSheetModalProvider>
             <Stack>
-              <Stack.Screen name="(tabs)" options={{ title: "Habits", headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ title: "Capsula", headerShown: false }} />
+              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Screen name="send" options={{ headerShown: false }} />
+              <Stack.Screen name="receive" options={{ headerShown: false }} />
               <Stack.Screen options={{
                 headerShadowVisible: false,
               }} name="habits/archive" />
