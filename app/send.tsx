@@ -93,6 +93,7 @@ export default function SendScreen() {
         gasPrice: gasEstimate.gasPrice,
         maxFeePerGas: gasEstimate.maxFeePerGas,
         maxPriorityFeePerGas: gasEstimate.maxPriorityFeePerGas,
+        chainId: activeNetwork.chainId,
       });
 
       if (result.success && result.data) {

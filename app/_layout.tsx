@@ -70,12 +70,7 @@ export default function RootLayout() {
               <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               <Stack.Screen name="send" options={{ headerShown: false }} />
               <Stack.Screen name="receive" options={{ headerShown: false }} />
-              <Stack.Screen options={{
-                headerShadowVisible: false,
-              }} name="habits/archive" />
-              <Stack.Screen options={{
-                headerShadowVisible: false,
-              }} name="habits/[id]" />
+              <Stack.Screen name="mini-app/[id]" options={{ headerShown: false }} />
             </Stack>
           </BottomSheetModalProvider>
         </GestureHandlerRootView>

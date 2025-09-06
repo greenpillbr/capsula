@@ -133,7 +133,7 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: () => {
             logout();
-            router.replace('/onboarding');
+            router.replace('onboarding' as any);
           },
         },
       ]

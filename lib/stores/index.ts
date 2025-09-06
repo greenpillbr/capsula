@@ -1,5 +1,6 @@
 // Export all Zustand stores
 export { useAuthStore } from './authStore';
+export { useMiniAppStore, type MiniAppManifest } from './miniAppStore';
 export { useNetworkStore } from './networkStore';
 export { useWalletStore } from './walletStore';
 

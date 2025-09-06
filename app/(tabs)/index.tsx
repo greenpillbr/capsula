@@ -6,6 +6,7 @@ import { Bell } from '@/lib/icons/Bell';
 import { Globe } from '@/lib/icons/Globe';
 import { Send } from '@/lib/icons/Send';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { useMiniAppStore } from '@/lib/stores/miniAppStore';
 import { useNetworkStore } from '@/lib/stores/networkStore';
 import { useWalletStore } from '@/lib/stores/walletStore';
 import { useRouter } from 'expo-router';
@@ -18,22 +19,36 @@ export default function WalletHomeScreen() {
   const [balance, setBalance] = useState('0.0');
   const [balanceUSD, setBalanceUSD] = useState('$0.00');
   
-  const { 
-    activeWallet, 
-    tokens, 
+  const {
+    activeWallet,
+    tokens,
     getActiveWalletBalance,
     getTokensForActiveWallet,
     refreshBalances,
-    isLoadingBalance 
+    isLoadingBalance
   } = useWalletStore();
   
   const { activeNetwork, getNetworkByChainId } = useNetworkStore();
   const { activeWalletId } = useAuthStore();
+  
+  const {
+    initializeBuiltInMiniApps,
+    getMiniAppsForNetwork,
+    launchMiniApp,
+    availableMiniAppsForNetwork,
+    refreshAvailableMiniApps,
+  } = useMiniAppStore();
+
+  // Initialize mini-apps and load wallet data on mount
+  useEffect(() => {
+    initializeBuiltInMiniApps();
+  }, []);
 
   // Load wallet data on mount and when active wallet changes
   useEffect(() => {
     if (activeWallet && activeNetwork) {
       loadWalletData();
+      refreshAvailableMiniApps(activeNetwork.chainId);
     }
   }, [activeWallet, activeNetwork]);
 
@@ -71,13 +86,11 @@ export default function WalletHomeScreen() {
   };
 
   const handleSend = () => {
-    // TODO: Navigate to send screen when created
-    console.log('Navigate to send screen');
+    router.push('send' as any);
   };
 
   const handleReceive = () => {
-    // TODO: Navigate to receive screen when created
-    console.log('Navigate to receive screen');
+    router.push('receive' as any);
   };
 
   const handleNetworkSwitch = () => {
@@ -88,6 +101,19 @@ export default function WalletHomeScreen() {
   const handleNotifications = () => {
     // TODO: Navigate to notifications when created
     console.log('Open notifications');
+  };
+
+  const handleLaunchMiniApp = async (miniAppId: string) => {
+    try {
+      const success = await launchMiniApp(miniAppId);
+      if (success) {
+        router.push(`mini-app/${miniAppId}` as any);
+      } else {
+        console.error('Failed to launch mini-app:', miniAppId);
+      }
+    } catch (error) {
+      console.error('Error launching mini-app:', error);
+    }
   };
 
   const formatAddress = (address: string) => {
@@ -197,36 +223,45 @@ export default function WalletHomeScreen() {
       {/* Mini-Apps Section */}
       <View className="px-4 mb-6">
         <Text className="text-lg font-semibold text-foreground mb-4">
-          Installed Mini-apps
+          Mini-Apps
         </Text>
         
         <View className="flex-row flex-wrap gap-4">
-          {['Tokens', 'Contacts', 'NFTs', 'CookieJar', 'Gardens'].map((app) => (
+          {availableMiniAppsForNetwork.map((miniApp) => (
             <Pressable
-              key={app}
-              onPress={() => console.log(`Open ${app} mini-app`)}
+              key={miniApp.id}
+              onPress={() => handleLaunchMiniApp(miniApp.id)}
               className="w-20 items-center"
             >
-              <View className="w-16 h-16 bg-muted rounded-lg mb-2 items-center justify-center">
-                <Text className="text-muted-foreground text-lg font-medium">
-                  {app[0]}
+              <View className="w-16 h-16 bg-primary/10 rounded-lg mb-2 items-center justify-center">
+                <Text className="text-primary text-lg font-medium">
+                  {miniApp.title[0]}
                 </Text>
               </View>
-              <Text className="text-xs text-foreground text-center">{app}</Text>
+              <Text className="text-xs text-foreground text-center">{miniApp.title}</Text>
             </Pressable>
           ))}
           
-          {/* Add More Button */}
+          {/* Add More Button (Future: Mini-App Marketplace) */}
           <Pressable
-            onPress={() => console.log('Open mini-apps marketplace')}
+            onPress={() => console.log('Future: Open mini-apps marketplace')}
             className="w-20 items-center"
           >
-            <View className="w-16 h-16 bg-primary/10 border-2 border-dashed border-primary rounded-lg mb-2 items-center justify-center">
-              <Text className="text-primary text-2xl">+</Text>
+            <View className="w-16 h-16 bg-muted border-2 border-dashed border-muted-foreground rounded-lg mb-2 items-center justify-center">
+              <Text className="text-muted-foreground text-xl">+</Text>
             </View>
-            <Text className="text-xs text-foreground text-center">Add more</Text>
+            <Text className="text-xs text-muted-foreground text-center">More</Text>
           </Pressable>
         </View>
+        
+        {/* No Mini-Apps Message */}
+        {availableMiniAppsForNetwork.length === 0 && (
+          <Card className="p-4">
+            <Text className="text-center text-muted-foreground text-sm">
+              No mini-apps available for {activeNetwork?.name || 'this network'}
+            </Text>
+          </Card>
+        )}
       </View>
 
       {/* Recent Activity Preview */}

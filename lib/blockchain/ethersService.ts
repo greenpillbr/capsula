@@ -351,6 +351,197 @@ class EthersService {
   formatUnits(value: string | bigint, decimals: number): string {
     return ethers.formatUnits(value, decimals);
   }
+
+  /**
+   * Call a contract function (write operation)
+   */
+  async callContract(
+    chainId: number,
+    contractAddress: string,
+    abi: any[],
+    functionName: string,
+    args: any[] = [],
+    value?: string,
+    signer?: ethers.Signer
+  ): Promise<ethers.TransactionResponse> {
+    try {
+      const provider = this.getProvider(chainId);
+      const contract = new ethers.Contract(contractAddress, abi, signer || provider);
+      
+      const options: any = {};
+      if (value) {
+        options.value = ethers.parseEther(value);
+      }
+      
+      return await contract[functionName](...args, options);
+    } catch (error) {
+      console.error(`Failed to call contract function ${functionName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Read from a contract (view/pure function)
+   */
+  async readContract(
+    chainId: number,
+    contractAddress: string,
+    abi: any[],
+    functionName: string,
+    args: any[] = [],
+    blockTag?: string | number
+  ): Promise<any> {
+    try {
+      const provider = this.getProvider(chainId);
+      const contract = new ethers.Contract(contractAddress, abi, provider);
+      
+      if (blockTag) {
+        return await contract[functionName](...args, { blockTag });
+      }
+      
+      return await contract[functionName](...args);
+    } catch (error) {
+      console.error(`Failed to read contract function ${functionName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get ERC-20 token information
+   */
+  async getTokenInfo(
+    tokenAddress: string,
+    chainId?: number
+  ): Promise<{
+    name: string;
+    symbol: string;
+    decimals: number;
+    totalSupply: string;
+  }> {
+    try {
+      const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
+      
+      const erc20Abi = [
+        'function name() view returns (string)',
+        'function symbol() view returns (string)',
+        'function decimals() view returns (uint8)',
+        'function totalSupply() view returns (uint256)',
+      ];
+      
+      const contract = new ethers.Contract(tokenAddress, erc20Abi, provider);
+      
+      const [name, symbol, decimals, totalSupply] = await Promise.all([
+        contract.name(),
+        contract.symbol(),
+        contract.decimals(),
+        contract.totalSupply(),
+      ]);
+      
+      return {
+        name,
+        symbol,
+        decimals: Number(decimals),
+        totalSupply: ethers.formatUnits(totalSupply, decimals),
+      };
+    } catch (error) {
+      console.error('Failed to get token info:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send raw signed transaction
+   */
+  async sendRawTransaction(
+    signedTransaction: string,
+    chainId?: number
+  ): Promise<ethers.TransactionResponse> {
+    try {
+      const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
+      return await provider.broadcastTransaction(signedTransaction);
+    } catch (error) {
+      console.error('Failed to send raw transaction:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a contract instance
+   */
+  createContract(
+    contractAddress: string,
+    abi: any[],
+    signerOrProvider?: ethers.Signer | ethers.Provider,
+    chainId?: number
+  ): ethers.Contract {
+    const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
+    return new ethers.Contract(contractAddress, abi, signerOrProvider || provider);
+  }
+
+  /**
+   * Parse transaction receipt logs
+   */
+  parseTransactionLogs(
+    receipt: ethers.TransactionReceipt,
+    contractInterface: ethers.Interface
+  ): ethers.LogDescription[] {
+    try {
+      return receipt.logs
+        .map(log => {
+          try {
+            return contractInterface.parseLog(log);
+          } catch {
+            return null;
+          }
+        })
+        .filter((log): log is ethers.LogDescription => log !== null);
+    } catch (error) {
+      console.error('Failed to parse transaction logs:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Parse a signed transaction to get details
+   */
+  parseSignedTransaction(signedTx: string): {
+    hash: string;
+    signature: { r: string; s: string; v: number };
+    to: string;
+    value: string;
+    data: string;
+    gasLimit: string;
+    gasPrice?: string;
+    maxFeePerGas?: string;
+    maxPriorityFeePerGas?: string;
+    nonce: number;
+    chainId: number;
+  } {
+    try {
+      const parsedTx = ethers.Transaction.from(signedTx);
+      
+      return {
+        hash: parsedTx.hash || '',
+        signature: {
+          r: parsedTx.signature?.r || '0x0',
+          s: parsedTx.signature?.s || '0x0',
+          v: parsedTx.signature?.v || 27,
+        },
+        to: parsedTx.to || '',
+        value: parsedTx.value?.toString() || '0',
+        data: parsedTx.data || '0x',
+        gasLimit: parsedTx.gasLimit?.toString() || '0',
+        gasPrice: parsedTx.gasPrice?.toString(),
+        maxFeePerGas: parsedTx.maxFeePerGas?.toString(),
+        maxPriorityFeePerGas: parsedTx.maxPriorityFeePerGas?.toString(),
+        nonce: parsedTx.nonce || 0,
+        chainId: Number(parsedTx.chainId) || 1,
+      };
+    } catch (error) {
+      console.error('Failed to parse signed transaction:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

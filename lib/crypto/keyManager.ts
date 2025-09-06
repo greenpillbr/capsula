@@ -228,33 +228,193 @@ class KeyManager {
       gasPrice?: string;
       maxFeePerGas?: string;
       maxPriorityFeePerGas?: string;
+      nonce?: number;
+      chainId: number;
     }
-  ): Promise<KeyManagerResult<{ transactionHash: string }>> {
+  ): Promise<KeyManagerResult<{
+    signedTransaction: string;
+    transactionHash: string;
+    signature: { r: string; s: string; v: number };
+  }>> {
     try {
       // Update last accessed time
       useWalletStore.getState().updateWallet(walletId, {
         lastAccessedAt: new Date().toISOString(),
       });
 
-      // Sign transaction using PasskeyService
-      const result = await passkeyService.signTransactionWithPasskey(walletId, transaction);
-      
-      if (!result.success || !result.signedTransaction) {
+      // Get wallet credential
+      const credential = await passkeyService.getWalletCredential(walletId);
+      if (!credential || !credential.mnemonic) {
         return {
           success: false,
-          error: result.error || 'Failed to sign transaction',
+          error: 'Wallet credentials not found',
         };
       }
 
+      // Create ethers wallet from mnemonic
+      const { wallets } = useWalletStore.getState();
+      const walletData = wallets.find(w => w.id === walletId);
+      if (!walletData) {
+        return {
+          success: false,
+          error: 'Wallet not found',
+        };
+      }
+
+      const ethersWallet = ethersService.createWalletFromMnemonic(
+        credential.mnemonic,
+        walletData.derivationPath || "m/44'/60'/0'/0/0"
+      );
+
+      // Connect wallet to the appropriate provider
+      const provider = ethersService.getProvider(transaction.chainId);
+      const connectedWallet = ethersWallet.connect(provider);
+
+      // Prepare transaction object
+      const txRequest = {
+        to: transaction.to,
+        value: transaction.value ? ethersService.parseEther(transaction.value) : BigInt(0),
+        data: transaction.data || '0x',
+        gasLimit: transaction.gasLimit ? BigInt(transaction.gasLimit) : undefined,
+        gasPrice: transaction.gasPrice ? BigInt(transaction.gasPrice) : undefined,
+        maxFeePerGas: transaction.maxFeePerGas ? BigInt(transaction.maxFeePerGas) : undefined,
+        maxPriorityFeePerGas: transaction.maxPriorityFeePerGas ? BigInt(transaction.maxPriorityFeePerGas) : undefined,
+        nonce: transaction.nonce,
+        chainId: transaction.chainId,
+      };
+
+      // Sign the transaction
+      const signedTx = await connectedWallet.signTransaction(txRequest);
+      
+      // Parse the signed transaction to get hash and signature components
+      const parsedTx = ethersService.parseSignedTransaction(signedTx);
+      
       return {
         success: true,
-        data: { transactionHash: result.signedTransaction },
+        data: {
+          signedTransaction: signedTx,
+          transactionHash: parsedTx.hash,
+          signature: parsedTx.signature,
+        },
       };
     } catch (error) {
       console.error('Failed to sign transaction:', error);
       return {
         success: false,
         error: 'Transaction signing failed',
+      };
+    }
+  }
+
+  /**
+   * Send a signed transaction
+   */
+  async sendSignedTransaction(
+    signedTransaction: string,
+    chainId: number
+  ): Promise<KeyManagerResult<{ transactionHash: string; receipt?: any }>> {
+    try {
+      const txResponse = await ethersService.sendRawTransaction(signedTransaction, chainId);
+      
+      return {
+        success: true,
+        data: {
+          transactionHash: txResponse.hash,
+          receipt: txResponse,
+        },
+      };
+    } catch (error) {
+      console.error('Failed to send transaction:', error);
+      return {
+        success: false,
+        error: 'Failed to send transaction',
+      };
+    }
+  }
+
+  /**
+   * Estimate gas for transaction
+   */
+  async estimateTransactionGas(
+    walletId: string,
+    transaction: {
+      to: string;
+      value?: string;
+      data?: string;
+    },
+    chainId: number
+  ): Promise<KeyManagerResult<{
+    gasLimit: string;
+    gasPrice: string;
+    maxFeePerGas?: string;
+    maxPriorityFeePerGas?: string;
+  }>> {
+    try {
+      const { wallets } = useWalletStore.getState();
+      const wallet = wallets.find(w => w.id === walletId);
+      
+      if (!wallet) {
+        return {
+          success: false,
+          error: 'Wallet not found',
+        };
+      }
+
+      const gasEstimate = await ethersService.estimateGas({
+        ...transaction,
+        from: wallet.address,
+      }, chainId);
+
+      return {
+        success: true,
+        data: gasEstimate,
+      };
+    } catch (error) {
+      console.error('Failed to estimate gas:', error);
+      return {
+        success: false,
+        error: 'Gas estimation failed',
+      };
+    }
+  }
+
+  /**
+   * Get token balance for wallet
+   */
+  async getTokenBalance(
+    walletId: string,
+    tokenAddress: string,
+    chainId?: number
+  ): Promise<KeyManagerResult<{ balance: string; decimals: number; symbol: string }>> {
+    try {
+      const { wallets } = useWalletStore.getState();
+      const wallet = wallets.find(w => w.id === walletId);
+      
+      if (!wallet) {
+        return {
+          success: false,
+          error: 'Wallet not found',
+        };
+      }
+
+      const [balance, tokenInfo] = await Promise.all([
+        ethersService.getTokenBalance(tokenAddress, wallet.address, chainId),
+        ethersService.getTokenInfo(tokenAddress, chainId),
+      ]);
+
+      return {
+        success: true,
+        data: {
+          balance,
+          decimals: tokenInfo.decimals,
+          symbol: tokenInfo.symbol,
+        },
+      };
+    } catch (error) {
+      console.error('Failed to get token balance:', error);
+      return {
+        success: false,
+        error: 'Failed to get token balance',
       };
     }
   }
