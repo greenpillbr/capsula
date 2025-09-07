@@ -13,7 +13,7 @@ import { useWalletStore } from '@/lib/stores/walletStore';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, TextInput, View } from 'react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -305,9 +305,17 @@ export default function ProfileScreen() {
       <ScrollView className="flex-1">
         {/* Header */}
         <View className="p-4 pt-12 items-center">
-          <Avatar alt="Profile" className="w-20 h-20 mb-4">
-            <Text className="text-2xl">👤</Text>
-          </Avatar>
+          {activeWallet ? (
+            <Image
+              source={{ uri: `https://effigy.im/a/${activeWallet.address}.png` }}
+              className="w-20 h-20 mb-4 rounded-full"
+              style={{ width: 80, height: 80, borderRadius: 40 }}
+            />
+          ) : (
+            <Avatar alt="Profile" className="w-20 h-20 mb-4">
+              <Text className="text-2xl">👤</Text>
+            </Avatar>
+          )}
           
           <Text className="text-xl font-bold text-foreground mb-1">
             {activeWallet?.name || 'Capsula User'}
