@@ -1,70 +1,242 @@
-# Expo Local-first Template  [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow%20%40expostarter)](https://twitter.com/expostarter)
-
-[![Open in Bolt.new](https://www.expostarter.com/images/open-in-bolt.svg)](https://bolt.new/~/github.com/expo-starter/expo-local-first-template)
+# Capsula: The Greenpill BR Crypto Wallet
 
 <p align="center">
-  <a href="https://expostarter.com/"><img src="assets/github-banner.png?raw=true" alt="Expo Starter Kit"></a>
+  <img src="assets/capsula-logo.png?raw=true" alt="Capsula - Your gateway to autonomy and regeneration" width="200">
 </p>
-
-The `Expo Local-First Template` is a free project model with up-to-date frameworks and configurations for your new local-first Expo project.
-
-If you're searching for a more production-ready template, consider purchasing the [Expo Starter Kit](https://expostarter.com). Your support will help us maintaining our free templates as well.
-
-For local-first example with remote sync please check our [article](https://www.expostarter.com/blog/expo-libsql-improve-app-performance)
-
-## 📚 What's inside
-
-- ⚡ [Expo v53](https://expo.dev) - Built with Expo for cross-platform support
-- ⚛️ [React Native v0.79.2](https://reactnative.dev) for building native apps using React
-- 💽 Local-first based on [Expo SQLite for](https://docs.expo.dev/versions/latest/sdk/sqlite/) for native and [Sqlite.js](https://github.com/sql-js/sql.js) for Web
-- 💽 Full integrated with [DrizzleORM](https://drizzle.dev) including live query
-- 💎 Integrate with [NativeWind v4](https://www.nativewind.dev), Tailwind CSS for React Native
-- 📦 [zustand](docs.pmnd.rs/zustand)
-- 🎨 Common components from the [rn-reusables](https://github.com/mrzachnugent/react-native-reusables)
-- 🌗 Dark and light mode - Android Navigation Bar matches mode and Persistant mode
-- 📏 Linter and Code Formatter with [biome](https://biomejs.dev/)
-- 🗂 VSCode recommended extensions, settings, and snippets to enhance the developer experience.
-
-
-
-### Requirements
-
-- Node.js 20+ and pnpm or bun
-- [iOS Simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Android Studio Emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- For Windows users: [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) is required
-
-
-### Getting started
-
-Run the following command on your local environment:
-
-```shell
-bunx create-expo-app --template https://github.com/expo-starter/expo-local-first-template
-```
-
-Then, you can run locally in development mode with live reload:
-
-```shell
-bun run dev:ios
-# Or
-bun run dev:android
-```
 
 <p align="center">
-  <a href="https://expostarter.dev/"><img src="assets/preview-banner.png?raw=true" alt="React Native Expo Starter Kit"></a>
+  <strong>A native-first mobile crypto wallet built for the Greenpill BR community</strong>
 </p>
 
-This will open the app in the iOS simulator or Android emulator.
-
-### Contributions
-
-Everyone is welcome to contribute to this project. Feel free to open an issue if you have question or found a bug. Totally open to any suggestions and improvements.
-
-### License
-
-See [LICENSE](LICENSE) for more information.
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#mini-app-development">Mini-App Development</a> •
+  <a href="#contributing">Contributing</a>
+</p>
 
 ---
 
-[Expo starter](expostarter.com) [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow%20%40y0x53)](https://twitter.com/expostarter)
+## 🌱 About Capsula
+
+Capsula is a **minimalistic, vibrant, and incredibly easy-to-use** crypto wallet specifically designed for the Greenpill BR (GPBR) community. Built with React Native and Expo, it provides a simplified, beginner-friendly entry point into the world of crypto for individuals interested in **autonomy and regeneration**.
+
+### 🎯 Vision
+Architected for a future of **limitless, user-installed functionality** through a revolutionary **modular mini-app system** - the central pillar of the application's design.
+
+## ✨ Features
+
+### 🔐 Core Wallet Functionality
+- **Passkey-First Authentication**: Single-click onboarding with biometric security
+- **Multi-Network Support**: Ethereum Mainnet, CELO, and Gnosis Chain
+- **Secure Key Management**: Hardware-backed secure storage with optional seed phrase export
+- **Send & Receive**: Full transaction flows with gas estimation and QR code support
+- **Transaction History**: Comprehensive activity tracking with real-time status updates
+
+### 🧩 Mini-App System (Central Pillar)
+- **Modular Architecture**: Extensible system for adding new functionality
+- **Built-in Mini-Apps**:
+  - **Tokens Module**: ERC-20 token management and custom token addition
+  - **Example Module**: SDK demonstration for developers
+- **Network-Based Filtering**: Mini-apps automatically show/hide based on current network
+- **Secure Integration**: All mini-app transactions require Passkey authentication
+
+### 🛠 Developer Experience
+- **Complete Mini-App SDK**: TypeScript interfaces for wallet, network, UI, storage, and events
+- **Permission System**: Granular control over mini-app capabilities
+- **Error Boundaries**: Robust error handling and recovery
+- **Hot Reloading**: Fast development iteration with Metro bundler
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Node.js** 18+ 
+- **Bun** package manager
+- **Android Studio** (for Android development)
+- **Expo CLI**: `bun add -g @expo/cli`
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/greenpillbr/capsula.git
+   cd capsula
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   bun install
+   ```
+
+3. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your Infura API key
+   ```
+
+4. **Generate database schema:**
+   ```bash
+   bun run db:generate
+   ```
+
+### Development
+
+```bash
+# Start Metro bundler
+bun run dev
+
+# Run on Android device/emulator
+bun run android
+
+# Run on iOS device/simulator (macOS only)
+bun run ios
+```
+
+## 🏗 Architecture
+
+### Technology Stack
+- **React Native** + **TypeScript** + **Expo** for cross-platform development
+- **Zustand** for state management with MMKV persistence
+- **Ethers.js** for blockchain interactions
+- **Drizzle ORM** with SQLite for local-first data storage
+- **Expo SecureStore** for cryptographic key management
+
+### Mini-App System Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Core Wallet   │    │  Mini-App SDK   │    │  Built-in Apps  │
+│                 │    │                 │    │                 │
+│ • Authentication│◄──►│ • Wallet API    │◄──►│ • Tokens        │
+│ • Network Mgmt  │    │ • Network API   │    │ • Example       │
+│ • Transactions  │    │ • Storage API   │    │ • [Future Apps] │
+│ • Key Mgmt      │    │ • UI API        │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Key Components
+- **[`lib/stores/miniAppStore.ts`](lib/stores/miniAppStore.ts)** - Mini-app state management
+- **[`lib/mini-apps/sdk/`](lib/mini-apps/sdk/)** - Complete SDK for mini-app development
+- **[`lib/blockchain/ethersService.ts`](lib/blockchain/ethersService.ts)** - Enhanced Ethereum integration
+- **[`lib/crypto/keyManager.ts`](lib/crypto/keyManager.ts)** - Secure wallet management
+- **[`db/schema.ts`](db/schema.ts)** - Complete database schema
+
+## 🧩 Mini-App Development
+
+### Creating a Mini-App
+
+1. **Create your module:**
+   ```bash
+   mkdir -p lib/mini-apps/modules/your-app
+   ```
+
+2. **Implement the interface:**
+   ```typescript
+   import type { MiniAppProps } from '@/lib/mini-apps/sdk';
+   
+   export default function YourMiniApp({ sdk, onClose, isActive }: MiniAppProps) {
+     // Access wallet
+     const wallet = sdk.wallet.getActiveWallet();
+     
+     // Read from smart contract
+     const data = await sdk.network.readContract({
+       contractAddress: '0x...',
+       abi: [...],
+       functionName: 'getData',
+       args: []
+     });
+     
+     // Sign transaction with Passkey
+     const tx = await sdk.wallet.signTransaction(params);
+     
+     return <YourUI />;
+   }
+   ```
+
+3. **Register in host:**
+   Add your module to [`lib/mini-apps/host/MiniAppHost.tsx`](lib/mini-apps/host/MiniAppHost.tsx)
+
+### Available SDK APIs
+
+- **Wallet API**: `getActiveWallet()`, `getBalance()`, `signTransaction()`
+- **Network API**: `getActiveNetwork()`, `readContract()`, `callContract()`
+- **UI API**: `showToast()`, `navigate()`, `showModal()`
+- **Storage API**: `getItem()`, `setItem()`, session storage
+- **Events API**: `onWalletChange()`, `onNetworkChange()`, custom events
+
+## 📱 Supported Networks
+
+- **Ethereum Mainnet** (Chain ID: 1)
+- **CELO Mainnet** (Chain ID: 42220) 
+- **Gnosis Chain** (Chain ID: 100)
+- Extensible architecture for future EVM-compatible networks
+
+## 🔒 Security
+
+- **Passkey Authentication**: Hardware-backed biometric security
+- **Secure Key Storage**: Private keys encrypted in device secure storage
+- **Permission System**: Mini-apps have controlled access to wallet functions
+- **Transaction Authorization**: All blockchain operations require Passkey confirmation
+
+## 📚 Documentation
+
+- **[Development Workflow](docs/development-workflow.md)** - Setup and contribution guide
+- **[Mini-App System Architecture](docs/mini-app-system-mvp-architecture.md)** - Technical architecture
+- **[Complete Specification](docs/capsula_all_documentation.md)** - Full project requirements
+
+## 🛠 Build & Deploy
+
+### Development Testing
+```bash
+bun run dev              # Start Metro bundler
+bun run android         # Test on Android device
+```
+
+### Production Build
+```bash
+./scripts/build-android.sh  # Build Android APK
+```
+
+### Automated Deployment
+GitHub Actions automatically builds APKs on push to main branch.
+
+## 🗺 Roadmap
+
+### ✅ MVP Complete (Current)
+- [x] Core wallet functionality with Passkey authentication
+- [x] Multi-network support (Ethereum, CELO, Gnosis)
+- [x] Complete mini-app system infrastructure
+- [x] Tokens module for ERC-20 token management
+- [x] Example module for developer guidance
+- [x] Android build pipeline
+
+### 🔮 Future Phases
+- [ ] Mini-app marketplace with search and categories
+- [ ] Community following system for network/app recommendations
+- [ ] Contacts module for address book management
+- [ ] NFT module for ERC-721/ERC-1155 viewing
+- [ ] Advanced DeFi integrations
+
+## 🤝 Contributing
+
+We welcome contributions from the Greenpill BR community and crypto developers worldwide!
+
+### For Developers
+1. Read the [development workflow](docs/development-workflow.md)
+2. Study the [Example module](lib/mini-apps/modules/example/ExampleModule.tsx)
+3. Follow the mini-app development guide above
+
+### For Community
+- Report issues and suggest features
+- Test the app and provide feedback
+- Help with documentation and translations
+
+## 📄 License
+
+[MIT License](LICENSE) - Feel free to use this project for your own community wallet needs.
+
+---
+
+**Built with ❤️ for the Greenpill BR community**  
+*Your gateway to autonomy and regeneration*
