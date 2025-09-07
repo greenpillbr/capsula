@@ -75,13 +75,6 @@ class EthersService {
         throw new Error(`No RPC URL configured for chain ${chainId}`);
       }
 
-      console.log(`🌐 Creating provider for ${config?.name || `Chain ${chainId}`}:`, {
-        chainId,
-        rpcUrl: url,
-        isInfura: url.includes('infura.io'),
-        isPublic: url.includes('cloudflare-eth.com')
-      });
-
       const provider = new ethers.JsonRpcProvider(url, {
         chainId,
         name: config?.name || `Chain ${chainId}`,
@@ -127,8 +120,6 @@ class EthersService {
     try {
       const targetChainId = chainId || this.currentChainId;
       const provider = this.getProvider(targetChainId);
-      
-      console.log(`💰 Getting balance for ${address} on chain ${targetChainId}`);
       
       // Test provider connection first
       try {
