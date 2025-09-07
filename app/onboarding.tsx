@@ -93,13 +93,12 @@ export default function OnboardingScreen() {
   };
 
   const handleImportWallet = () => {
-    Alert.alert('Import Wallet', 'Import wallet feature will be available soon.');
+    router.push('/import-wallet');
   };
 
   const handleCopyMnemonic = async () => {
     try {
       await Clipboard.setStringAsync(walletMnemonic);
-      Alert.alert('Success', 'Recovery phrase copied to clipboard');
     } catch (error) {
       Alert.alert('Error', 'Failed to copy recovery phrase');
     }

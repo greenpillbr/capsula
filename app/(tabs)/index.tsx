@@ -113,7 +113,6 @@ export default function WalletHomeScreen() {
     
     try {
       await Clipboard.setStringAsync(activeWallet.address);
-      Alert.alert('Success', 'Address copied to clipboard');
     } catch (error) {
       console.error('Failed to copy address:', error);
       Alert.alert('Error', 'Failed to copy address');

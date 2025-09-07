@@ -107,9 +107,7 @@ export default function ProfileScreen() {
     try {
       const result = await keyManager.switchWallet(walletId);
       
-      if (result.success) {
-        Alert.alert('Success', 'Wallet switched successfully');
-      } else {
+      if (!result.success) {
         Alert.alert('Error', result.error || 'Failed to switch wallet');
       }
     } catch (error) {
@@ -136,7 +134,6 @@ export default function ProfileScreen() {
       if (result.success) {
         setShowNameInput(false);
         setNewWalletName('');
-        Alert.alert('Success', 'New wallet created successfully');
       } else {
         Alert.alert('Error', result.error || 'Failed to create wallet');
       }
@@ -166,7 +163,6 @@ export default function ProfileScreen() {
   const handleCopyMnemonic = async () => {
     try {
       await Clipboard.setStringAsync(seedPhrase);
-      Alert.alert('Success', 'Recovery phrase copied to clipboard');
     } catch (error) {
       Alert.alert('Error', 'Failed to copy recovery phrase');
     }
@@ -344,6 +340,26 @@ export default function ProfileScreen() {
                     <Text className="text-foreground font-medium">Add Wallet</Text>
                     <Text className="text-muted-foreground text-sm">
                       Create a new wallet with custom name.
+                    </Text>
+                  </View>
+                </View>
+                <Text className="text-muted-foreground">›</Text>
+              </View>
+            </Pressable>
+          </Card>
+
+          {/* Import Wallet */}
+          <Card className="p-4 mb-3">
+            <Pressable onPress={() => router.push('/import-wallet')}>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                  <View className="w-10 h-10 bg-primary rounded-full items-center justify-center mr-3">
+                    <Shield className="text-primary-foreground" size={20} />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-foreground font-medium">Import Wallet</Text>
+                    <Text className="text-muted-foreground text-sm">
+                      Import an existing wallet using recovery phrase.
                     </Text>
                   </View>
                 </View>

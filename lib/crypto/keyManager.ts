@@ -1,6 +1,7 @@
 import type { Wallet } from '@/db/schema';
 import * as Crypto from 'expo-crypto';
 import { passkeyService } from '../auth/passkeyService';
+import { pinService } from '../auth/pinService';
 import { ethersService } from '../blockchain/ethersService';
 import { useAuthStore } from '../stores/authStore';
 import { useWalletStore } from '../stores/walletStore';
@@ -38,16 +39,34 @@ class KeyManager {
    */
   private validateMnemonic(mnemonic: string): boolean {
     try {
+      // Clean and normalize the mnemonic
+      const cleanMnemonic = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
+      const words = cleanMnemonic.split(' ');
+      
       // Basic validation - check if it's 12 or 24 words
-      const words = mnemonic.trim().split(/\s+/);
       if (words.length !== 12 && words.length !== 24) {
+        console.log('Mnemonic validation failed: wrong word count', words.length);
         return false;
       }
       
-      // Try to create a wallet to validate the mnemonic
-      ethersService.createWalletFromMnemonic(mnemonic);
+      // Check if all words are non-empty
+      if (words.some(word => !word || word.length === 0)) {
+        console.log('Mnemonic validation failed: empty words found');
+        return false;
+      }
+      
+      // Try to create a wallet to validate the mnemonic using ethers.js
+      const testWallet = ethersService.createWalletFromMnemonic(cleanMnemonic);
+      
+      // Additional check - make sure we got a valid address
+      if (!testWallet.address || !ethersService.isValidAddress(testWallet.address)) {
+        console.log('Mnemonic validation failed: invalid address generated');
+        return false;
+      }
+      
       return true;
-    } catch {
+    } catch (error) {
+      console.log('Mnemonic validation failed with error:', error);
       return false;
     }
   }
@@ -147,53 +166,103 @@ class KeyManager {
   }
 
   /**
-   * Import wallet from mnemonic or private key
+   * Import wallet from mnemonic
    */
   async importWallet(
-    importData: { mnemonic?: string; privateKey?: string },
+    importData: { mnemonic: string },
     name: string = 'Imported Wallet'
   ): Promise<KeyManagerResult<WalletImportResult>> {
     try {
-      // Validate input
-      if (importData.mnemonic) {
-        if (!this.validateMnemonic(importData.mnemonic)) {
-          return {
-            success: false,
-            error: 'Invalid recovery phrase. Please check and try again.',
-          };
-        }
-      } else if (importData.privateKey) {
-        if (!this.validatePrivateKey(importData.privateKey)) {
-          return {
-            success: false,
-            error: 'Invalid private key. Please check and try again.',
-          };
-        }
-      } else {
+      // Validate mnemonic
+      if (!this.validateMnemonic(importData.mnemonic)) {
         return {
           success: false,
-          error: 'Please provide either a recovery phrase or private key.',
+          error: 'Invalid recovery phrase. Please check and try again.',
         };
       }
 
-      // Import wallet using PasskeyService
-      const result = await passkeyService.importWalletWithPasskey(importData, name);
+      // Check if Passkey is supported
+      const isPasskeySupported = await passkeyService.isPasskeySupported();
       
-      if (!result.success || !result.wallet) {
+      if (isPasskeySupported) {
+        // Import wallet using PasskeyService
+        const result = await passkeyService.importWalletWithPasskey(importData, name);
+        
+        if (!result.success || !result.wallet) {
+          return {
+            success: false,
+            error: result.error || 'Failed to import wallet',
+          };
+        }
+
+        // Create wallet object for database
+        const wallet: Wallet = {
+          id: result.wallet.id,
+          name: result.wallet.name,
+          address: result.wallet.address,
+          publicKey: '', // Will be derived when needed
+          keyRefId: result.wallet.id, // Reference to SecureStore
+          isPasskeyBacked: true,
+          derivationPath: "m/44'/60'/0'/0/0",
+          createdAt: new Date().toISOString(),
+          lastAccessedAt: new Date().toISOString(),
+        };
+
+        // Add to wallet store
+        useWalletStore.getState().addWallet(wallet);
+
+        return {
+          success: true,
+          data: { wallet },
+        };
+      } else {
+        // Import wallet using PIN-based storage (no Passkey)
+        return await this.importWalletWithPin(importData, name);
+      }
+    } catch (error) {
+      console.error('Failed to import wallet:', error);
+      return {
+        success: false,
+        error: 'Failed to import wallet',
+      };
+    }
+  }
+
+  /**
+   * Import wallet with PIN-based security (fallback when Passkey not available)
+   */
+  async importWalletWithPin(
+    importData: { mnemonic: string },
+    name: string = 'Imported Wallet'
+  ): Promise<KeyManagerResult<WalletImportResult>> {
+    try {
+      // Validate mnemonic
+      if (!this.validateMnemonic(importData.mnemonic)) {
         return {
           success: false,
-          error: result.error || 'Failed to import wallet',
+          error: 'Invalid recovery phrase. Please check and try again.',
         };
       }
+
+      // Create wallet from mnemonic
+      const ethersWallet = ethersService.createWalletFromMnemonic(importData.mnemonic);
+      const walletId = this.generateWalletId();
+
+      // Store wallet credentials in SecureStore (without Passkey protection)
+      await passkeyService.storeWalletCredential(walletId, {
+        privateKey: ethersWallet.privateKey,
+        mnemonic: importData.mnemonic,
+        address: ethersWallet.address,
+      }, true); // Skip auth since we're using PIN instead
 
       // Create wallet object for database
       const wallet: Wallet = {
-        id: result.wallet.id,
-        name: result.wallet.name,
-        address: result.wallet.address,
-        publicKey: '', // Will be derived when needed
-        keyRefId: result.wallet.id, // Reference to SecureStore
-        isPasskeyBacked: true,
+        id: walletId,
+        name: name,
+        address: ethersWallet.address,
+        publicKey: ethersWallet.publicKey,
+        keyRefId: walletId,
+        isPasskeyBacked: false, // PIN-based instead
         derivationPath: "m/44'/60'/0'/0/0",
         createdAt: new Date().toISOString(),
         lastAccessedAt: new Date().toISOString(),
@@ -207,10 +276,34 @@ class KeyManager {
         data: { wallet },
       };
     } catch (error) {
-      console.error('Failed to import wallet:', error);
+      console.error('Failed to import wallet with PIN:', error);
       return {
         success: false,
         error: 'Failed to import wallet',
+      };
+    }
+  }
+
+  /**
+   * Authenticate with PIN for transaction signing
+   */
+  async authenticateWithPin(pin: string): Promise<KeyManagerResult<void>> {
+    try {
+      const result = await pinService.validatePin(pin);
+      
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error || 'PIN validation failed',
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to authenticate with PIN:', error);
+      return {
+        success: false,
+        error: 'PIN authentication failed',
       };
     }
   }

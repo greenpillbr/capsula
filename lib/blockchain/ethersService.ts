@@ -325,8 +325,21 @@ class EthersService {
    * Create a wallet from mnemonic
    */
   createWalletFromMnemonic(mnemonic: string, path: string = "m/44'/60'/0'/0/0"): ethers.HDNodeWallet {
-    const wallet = ethers.Wallet.fromPhrase(mnemonic);
-    return wallet.derivePath(path);
+    try {
+      // Clean and normalize mnemonic
+      const cleanMnemonic = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
+      
+      // Create mnemonic object first to validate
+      const mnemonicObj = ethers.Mnemonic.fromPhrase(cleanMnemonic);
+      
+      // Create HD wallet from mnemonic
+      const hdWallet = ethers.HDNodeWallet.fromMnemonic(mnemonicObj, path);
+      
+      return hdWallet;
+    } catch (error) {
+      console.error('Failed to create wallet from mnemonic:', error);
+      throw new Error('Invalid mnemonic phrase');
+    }
   }
 
   /**
@@ -341,20 +354,10 @@ class EthersService {
    */
   generateRandomWallet(): ethers.HDNodeWallet {
     try {
-      // Generate secure random bytes using expo-crypto
-      const randomBytes = Crypto.getRandomBytes(32);
+      // Generate secure random bytes using expo-crypto (16 bytes = 128 bits for mnemonic)
+      const randomBytes = Crypto.getRandomBytes(16);
       
-      // Convert to hex string
-      const privateKeyHex = Array.from(randomBytes)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-      
-      const privateKey = '0x' + privateKeyHex;
-      
-      // Create wallet from private key
-      const wallet = new ethers.Wallet(privateKey);
-      
-      // Create HD wallet with mnemonic
+      // Create HD wallet with mnemonic from entropy
       const mnemonic = ethers.Mnemonic.fromEntropy(randomBytes);
       const hdNode = ethers.HDNodeWallet.fromMnemonic(mnemonic);
       
