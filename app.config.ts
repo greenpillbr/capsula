@@ -2,8 +2,8 @@ import type { ConfigContext, ExpoConfig } from "@expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "Expo Starter",
-  slug: "expostarter",
+  name: "Capsula Wallet",
+  slug: "capsula",
   newArchEnabled: true,
   version: "1.0.0",
   orientation: "portrait",
@@ -21,7 +21,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   assetBundlePatterns: ["**/*"],
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.expostarter.base",
+    bundleIdentifier: "com.capsula.wallet",
   },
   android: {
     adaptiveIcon: {
@@ -36,10 +36,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: "./assets/images/favicon.png",
   },
   plugins: ["expo-router", "expo-sqlite", "expo-font", "expo-web-browser"],
-  experiments: {
-    typedRoutes: true,
-    baseUrl: "/expo-local-first-template",
-  },
+  // experiments: {
+  //   typedRoutes: true,
+  //   baseUrl: "/expo-local-first-template",
+  // },
   extra: {
     eas: {
       projectId: "",
