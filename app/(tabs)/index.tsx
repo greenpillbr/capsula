@@ -94,10 +94,36 @@ export default function WalletHomeScreen() {
   };
 
   const handleNetworkSwitch = () => {
+    const { networks, switchNetwork } = useNetworkStore.getState();
+    
+    if (networks.length === 0) {
+      Alert.alert('Error', 'No networks available');
+      return;
+    }
+
+    const networkOptions = networks.map(network => ({
+      text: network.name,
+      onPress: async () => {
+        try {
+          const success = await switchNetwork(network.chainId);
+          if (success) {
+            Alert.alert('Success', `Switched to ${network.name}`);
+          } else {
+            Alert.alert('Error', `Failed to switch to ${network.name}`);
+          }
+        } catch (error) {
+          Alert.alert('Error', 'Failed to switch network');
+        }
+      }
+    }));
+
     Alert.alert(
-      'Switch Network',
-      'Network selector will be available in the next update.',
-      [{ text: 'OK' }]
+      'Select Network',
+      'Choose a network to connect to:',
+      [
+        ...networkOptions,
+        { text: 'Cancel', style: 'cancel' }
+      ]
     );
   };
 
