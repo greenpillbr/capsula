@@ -41,7 +41,6 @@ export default function ReceiveScreen() {
       setTimeout(() => setCopiedToClipboard(false), 3000);
       
       // Show toast-like feedback
-      Alert.alert('Copied!', 'Address copied to clipboard');
     } catch (error) {
       console.error('Failed to copy address:', error);
       Alert.alert('Error', 'Failed to copy address to clipboard');
