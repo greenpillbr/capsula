@@ -17,9 +17,7 @@ export const NETWORK_CONFIGS: Record<number, Network> = {
   1: {
     chainId: 1,
     name: 'Ethereum Mainnet',
-    rpcUrl: INFURA_API_KEY !== 'demo_key_replace_with_real_key'
-      ? `https://mainnet.infura.io/v3/${INFURA_API_KEY}`
-      : 'https://cloudflare-eth.com', // Public fallback
+    rpcUrl: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
     explorerUrl: 'https://etherscan.io',
     nativeCurrencySymbol: 'ETH',
     nativeCurrencyDecimals: 18,
@@ -144,7 +142,6 @@ class EthersService {
       const balance = await provider.getBalance(address);
       const formattedBalance = ethers.formatEther(balance);
       
-      console.log(`💰 Balance retrieved: ${formattedBalance} ETH`);
       return formattedBalance;
     } catch (error) {
       console.error('❌ Failed to get balance:', {

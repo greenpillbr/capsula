@@ -29,21 +29,16 @@ const getInfuraApiKey = () => {
   return key || 'demo_key_replace_with_real_key';
 };
 
-// Dynamic default networks configuration with proper API key and fallbacks
+// Dynamic default networks configuration with proper API key
 const getDefaultNetworks = (): Network[] => {
   const infuraKey = getInfuraApiKey();
   const timestamp = new Date().toISOString();
-  
-  // Use public RPC endpoints as fallback if Infura key is not available
-  const ethereumRpcUrl = infuraKey !== 'demo_key_replace_with_real_key'
-    ? `https://mainnet.infura.io/v3/${infuraKey}`
-    : 'https://cloudflare-eth.com'; // Public Ethereum RPC
   
   return [
     {
       chainId: 1,
       name: 'Ethereum Mainnet',
-      rpcUrl: ethereumRpcUrl,
+      rpcUrl: `https://mainnet.infura.io/v3/${infuraKey}`,
       explorerUrl: 'https://etherscan.io',
       nativeCurrencySymbol: 'ETH',
       nativeCurrencyDecimals: 18,
