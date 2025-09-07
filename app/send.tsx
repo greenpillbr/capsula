@@ -8,6 +8,7 @@ import { keyManager } from '@/lib/crypto/keyManager';
 import { Send } from '@/lib/icons/Send';
 import { useNetworkStore } from '@/lib/stores/networkStore';
 import { useWalletStore } from '@/lib/stores/walletStore';
+import { BarcodeScanningResult, CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
@@ -30,6 +31,8 @@ export default function SendScreen() {
   const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const { activeWallet, addPendingTransaction } = useWalletStore();
   const { activeNetwork } = useNetworkStore();
@@ -157,6 +160,100 @@ export default function SendScreen() {
     }
   };
 
+  const handleQRScan = async () => {
+    if (!permission) {
+      // Camera permissions not loaded yet
+      return;
+    }
+
+    if (!permission.granted) {
+      const permissionResult = await requestPermission();
+      if (!permissionResult.granted) {
+        Alert.alert(
+          'Camera Permission Required',
+          'Please allow camera access to scan QR codes for addresses.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+    }
+
+    setShowQRScanner(true);
+  };
+
+  const handleBarCodeScanned = ({ data }: BarcodeScanningResult) => {
+    console.log('QR Code scanned:', data);
+    
+    // Extract address from QR code data
+    let address = data;
+    
+    // Handle ethereum: URI format
+    if (data.startsWith('ethereum:')) {
+      const match = data.match(/ethereum:([^?]+)/);
+      if (match) {
+        address = match[1];
+      }
+    }
+    
+    // Validate the address
+    if (ethersService.isValidAddress(address)) {
+      setRecipient(address);
+      setShowQRScanner(false);
+    } else {
+      Alert.alert(
+        'Invalid QR Code',
+        'The scanned QR code does not contain a valid Ethereum address.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const renderQRScanner = () => {
+    if (!showQRScanner) return null;
+
+    return (
+      <View className="absolute inset-0 bg-black z-50">
+        <CameraView
+          style={{ flex: 1 }}
+          facing="back"
+          onBarcodeScanned={handleBarCodeScanned}
+          barcodeScannerSettings={{
+            barcodeTypes: ['qr'],
+          }}
+        >
+          <View className="flex-1 justify-center items-center">
+            {/* QR Scanner Overlay */}
+            <View className="absolute inset-0 bg-black/50" />
+            
+            {/* Scanner Frame */}
+            <View className="w-64 h-64 border-2 border-primary rounded-lg bg-transparent">
+              <View className="absolute -top-1 -left-1 w-8 h-8 border-l-4 border-t-4 border-primary rounded-tl-lg" />
+              <View className="absolute -top-1 -right-1 w-8 h-8 border-r-4 border-t-4 border-primary rounded-tr-lg" />
+              <View className="absolute -bottom-1 -left-1 w-8 h-8 border-l-4 border-b-4 border-primary rounded-bl-lg" />
+              <View className="absolute -bottom-1 -right-1 w-8 h-8 border-r-4 border-b-4 border-primary rounded-br-lg" />
+            </View>
+            
+            {/* Instructions */}
+            <Text className="text-white text-center mt-8 px-8">
+              Point your camera at a QR code containing an Ethereum address
+            </Text>
+            
+            {/* Cancel Button */}
+            <View className="absolute bottom-20 left-0 right-0 px-8">
+              <Button
+                variant="outline"
+                onPress={() => setShowQRScanner(false)}
+                className="w-full border-white"
+              >
+                <Text className="text-white">Cancel</Text>
+              </Button>
+            </View>
+          </View>
+        </CameraView>
+      </View>
+    );
+  };
+
   const renderRecipientStep = () => (
     <View className="flex-1 p-6">
       <View className="flex-row justify-between items-center mb-6">
@@ -180,10 +277,18 @@ export default function SendScreen() {
       </View>
 
       <View className="flex-row gap-3 mb-8">
-        <Button variant="outline" className="flex-1">
+        <Button
+          variant="outline"
+          className="flex-1"
+          onPress={handleQRScan}
+        >
           <Text className="text-primary">Scan QR</Text>
         </Button>
-        <Button variant="outline" className="flex-1">
+        <Button
+          variant="outline"
+          className="flex-1"
+          onPress={() => Alert.alert('Coming Soon', 'Contacts feature will be available in the next update.')}
+        >
           <Text className="text-primary">Contacts</Text>
         </Button>
       </View>
@@ -439,6 +544,9 @@ export default function SendScreen() {
       {currentStep === 1 && renderAmountStep()}
       {currentStep === 2 && renderReviewStep()}
       {currentStep === 3 && renderSendingStep()}
+      
+      {/* QR Scanner Modal */}
+      {renderQRScanner()}
     </View>
   );
 }
