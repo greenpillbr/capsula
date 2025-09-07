@@ -1,7 +1,8 @@
+import { EditNetworkModal } from '@/components/network/EditNetworkModal';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { Check, ChevronLeft, Globe, Plus } from '@/lib/icons';
+import { Check, ChevronLeft, Edit, Globe, Plus, Trash } from '@/lib/icons';
 import { useNetworkStore } from '@/lib/stores/networkStore';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -122,17 +123,19 @@ const NetworkSearch = React.memo(({
 
 export default function NetworkManagerScreen() {
   const router = useRouter();
-  const { 
-    networks, 
-    activeNetwork, 
-    setActiveNetwork, 
+  const {
+    networks,
+    activeNetwork,
+    setActiveNetwork,
     addCustomNetwork,
-    removeNetwork 
+    removeNetwork,
+    updateNetwork
   } = useNetworkStore();
 
   const [showAddNetwork, setShowAddNetwork] = useState(false);
   const [loading, setLoading] = useState(false);
   const [chainlistNetworks, setChainlistNetworks] = useState<ChainlistNetwork[]>([]);
+  const [editingNetwork, setEditingNetwork] = useState<any>(null);
 
   // Pre-load chainlist data on component mount to avoid focus issues
   useEffect(() => {
@@ -268,11 +271,34 @@ export default function NetworkManagerScreen() {
     );
   };
 
-  const NetworkCard = ({ network, isActive, onPress, onRemove }: {
+  const handleEditNetwork = (network: any) => {
+    setEditingNetwork(network);
+  };
+
+  const handleSaveNetworkEdit = async (updates: any) => {
+    if (editingNetwork) {
+      const wasActiveNetwork = activeNetwork?.chainId === editingNetwork.chainId;
+      
+      // Update the network in the store
+      updateNetwork(editingNetwork.chainId, updates);
+      
+      // If this was the active network, update the active network reference
+      // and potentially reconnect with the new settings
+      if (wasActiveNetwork) {
+        const updatedNetwork = { ...editingNetwork, ...updates };
+        setActiveNetwork(updatedNetwork);
+      }
+      
+      setEditingNetwork(null);
+    }
+  };
+
+  const NetworkCard = ({ network, isActive, onPress, onRemove, onEdit }: {
     network: any;
     isActive: boolean;
     onPress: () => void;
     onRemove?: () => void;
+    onEdit?: () => void;
   }) => (
     <Card className="mb-3">
       <Pressable 
@@ -307,18 +333,28 @@ export default function NetworkManagerScreen() {
             </View>
           )}
           
+          {onEdit && !network.isDefault && (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              className="w-8 h-8 items-center justify-center rounded-lg bg-muted active:bg-muted/80"
+            >
+              <Edit className="text-foreground" size={16} />
+            </Pressable>
+          )}
+          
           {onRemove && !network.isDefault && (
-            <Button
-              variant="outline"
-              size="sm"
+            <Pressable
               onPress={(e) => {
                 e.stopPropagation();
                 onRemove();
               }}
-              className="border-error"
+              className="w-8 h-8 items-center justify-center rounded-lg bg-muted active:bg-muted/80"
             >
-              <Text className="text-error text-xs">Remove</Text>
-            </Button>
+              <Trash className="text-error" size={16} />
+            </Pressable>
           )}
         </View>
       </Pressable>
@@ -377,6 +413,7 @@ export default function NetworkManagerScreen() {
               network={network}
               isActive={network.chainId === activeNetwork?.chainId}
               onPress={() => handleNetworkSelect(network)}
+              onEdit={!network.isDefault ? () => handleEditNetwork(network) : undefined}
               onRemove={!network.isDefault ? () => handleRemoveNetwork(network.chainId, network.name) : undefined}
             />
           ))}
@@ -429,6 +466,16 @@ export default function NetworkManagerScreen() {
           </Card>
         </View>
       </ScrollView>
+
+      {/* Edit Network Modal */}
+      {editingNetwork && (
+        <EditNetworkModal
+          network={editingNetwork}
+          isOpen={!!editingNetwork}
+          onClose={() => setEditingNetwork(null)}
+          onSave={handleSaveNetworkEdit}
+        />
+      )}
     </View>
   );
 }
