@@ -151,15 +151,17 @@ class PasskeyService {
   /**
    * Retrieve wallet credentials securely
    */
-  async getWalletCredential(walletId: string): Promise<WalletCredential | null> {
+  async getWalletCredential(walletId: string, skipAuth: boolean = false): Promise<WalletCredential | null> {
     try {
-      // Authenticate the user first
-      const authResult = await this.authenticateWithPasskey(
-        'Authenticate to access your wallet'
-      );
+      // Skip authentication if already authenticated in calling function
+      if (!skipAuth) {
+        const authResult = await this.authenticateWithPasskey(
+          'Authenticate to access your wallet'
+        );
 
-      if (!authResult.success) {
-        throw new Error('Authentication required to access wallet');
+        if (!authResult.success) {
+          throw new Error('Authentication required to access wallet');
+        }
       }
 
       const credentialData = await SecureStore.getItemAsync(
@@ -437,7 +439,7 @@ class PasskeyService {
         };
       }
 
-      const credential = await this.getWalletCredential(walletId);
+      const credential = await this.getWalletCredential(walletId, true);
       
       if (!credential || !credential.mnemonic) {
         return {
