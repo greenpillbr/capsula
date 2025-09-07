@@ -12,7 +12,7 @@ import { useWalletStore } from '@/lib/stores/walletStore';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Alert, Image, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 
 export default function WalletHomeScreen() {
   const router = useRouter();
@@ -94,37 +94,7 @@ export default function WalletHomeScreen() {
   };
 
   const handleNetworkSwitch = () => {
-    const { networks, switchNetwork } = useNetworkStore.getState();
-    
-    if (networks.length === 0) {
-      Alert.alert('Error', 'No networks available');
-      return;
-    }
-
-    const networkOptions = networks.map(network => ({
-      text: network.name,
-      onPress: async () => {
-        try {
-          const success = await switchNetwork(network.chainId);
-          if (success) {
-            Alert.alert('Success', `Switched to ${network.name}`);
-          } else {
-            Alert.alert('Error', `Failed to switch to ${network.name}`);
-          }
-        } catch (error) {
-          Alert.alert('Error', 'Failed to switch network');
-        }
-      }
-    }));
-
-    Alert.alert(
-      'Select Network',
-      'Choose a network to connect to:',
-      [
-        ...networkOptions,
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
+    router.push('/network-manager' as any);
   };
 
   const handleNotifications = () => {
@@ -193,11 +163,21 @@ export default function WalletHomeScreen() {
 
       {/* Network & Address */}
       <View className="px-4 mb-4">
-        <Pressable 
+        <Pressable
           onPress={handleNetworkSwitch}
           className="flex-row items-center mb-2"
         >
-          <Globe className="text-muted-foreground mr-2" size={16} />
+          <View className="w-4 h-4 rounded-full overflow-hidden mr-2 items-center justify-center">
+            {activeNetwork?.iconUrl ? (
+              <Image
+                source={{ uri: activeNetwork.iconUrl }}
+                style={{ width: 16, height: 16, borderRadius: 8 }}
+                onError={() => console.log('Failed to load network icon')}
+              />
+            ) : (
+              <Globe className="text-muted-foreground" size={16} />
+            )}
+          </View>
           <Text className="text-sm text-muted-foreground">
             {activeNetwork?.name || 'No Network'}
           </Text>

@@ -95,6 +95,7 @@ interface NetworkState {
   
   // Actions - Network Management
   addNetwork: (network: Network) => void;
+  addCustomNetwork: (network: Omit<Network, 'createdAt' | 'updatedAt'>) => void;
   removeNetwork: (chainId: number) => void;
   updateNetwork: (chainId: number, updates: Partial<Network>) => void;
   setActiveNetwork: (network: Network) => void;
@@ -134,6 +135,19 @@ export const useNetworkStore = create<NetworkState>()(
       
       // Network Management Actions
       addNetwork: (network: Network) => {
+        set((state) => ({
+          networks: [...state.networks.filter(n => n.chainId !== network.chainId), network],
+        }));
+      },
+      
+      addCustomNetwork: (networkData: Omit<Network, 'createdAt' | 'updatedAt'>) => {
+        const timestamp = new Date().toISOString();
+        const network: Network = {
+          ...networkData,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        };
+        
         set((state) => ({
           networks: [...state.networks.filter(n => n.chainId !== network.chainId), network],
         }));
