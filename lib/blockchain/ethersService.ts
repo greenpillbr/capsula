@@ -1,5 +1,6 @@
 import type { Network } from '@/db/schema';
 import { ethers } from 'ethers';
+import * as Crypto from 'expo-crypto';
 
 // Get Infura API key from environment variables
 const INFURA_API_KEY = process.env.INFURA_API_KEY || 'demo_key_replace_with_real_key';
@@ -302,10 +303,32 @@ class EthersService {
   }
 
   /**
-   * Generate a new random wallet
+   * Generate a new random wallet using expo-crypto for React Native compatibility
    */
   generateRandomWallet(): ethers.HDNodeWallet {
-    return ethers.Wallet.createRandom();
+    try {
+      // Generate secure random bytes using expo-crypto
+      const randomBytes = Crypto.getRandomBytes(32);
+      
+      // Convert to hex string
+      const privateKeyHex = Array.from(randomBytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      const privateKey = '0x' + privateKeyHex;
+      
+      // Create wallet from private key
+      const wallet = new ethers.Wallet(privateKey);
+      
+      // Create HD wallet with mnemonic
+      const mnemonic = ethers.Mnemonic.fromEntropy(randomBytes);
+      const hdNode = ethers.HDNodeWallet.fromMnemonic(mnemonic);
+      
+      return hdNode;
+    } catch (error) {
+      console.error('Failed to generate random wallet:', error);
+      throw new Error('Failed to generate secure wallet');
+    }
   }
 
   /**

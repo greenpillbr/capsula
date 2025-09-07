@@ -1,6 +1,5 @@
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
 import { ethersService } from '../blockchain/ethersService';
 
 export interface PasskeyResult {
@@ -53,16 +52,7 @@ class PasskeyService {
    * Get user-friendly biometric type name
    */
   getBiometricTypeName(types: LocalAuthentication.AuthenticationType[]): string {
-    if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
-      return Platform.OS === 'ios' ? 'Face ID' : 'Face Recognition';
-    }
-    if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
-      return Platform.OS === 'ios' ? 'Touch ID' : 'Fingerprint';
-    }
-    if (types.includes(LocalAuthentication.AuthenticationType.IRIS)) {
-      return 'Iris Recognition';
-    }
-    return 'Biometric Authentication';
+    return 'Passkey';
   }
 
   /**

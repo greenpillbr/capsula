@@ -15,15 +15,10 @@ import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "./global.css";
 
-
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary
 } from "expo-router";
-
-export const unstable_settings = {
-  initialRouteName: "(tabs)",
-};
 
 // Prevent the splash screen from auto-hiding before getting the color scheme.
 SplashScreen.preventAutoHideAsync();
@@ -58,6 +53,9 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  if (!loaded) {
+    return null;
+  }
 
   return (
     <DatabaseProvider>
@@ -66,6 +64,7 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
           <BottomSheetModalProvider>
             <Stack>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ title: "Capsula", headerShown: false }} />
               <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               <Stack.Screen name="send" options={{ headerShown: false }} />

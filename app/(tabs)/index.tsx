@@ -9,9 +9,10 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { useMiniAppStore } from '@/lib/stores/miniAppStore';
 import { useNetworkStore } from '@/lib/stores/networkStore';
 import { useWalletStore } from '@/lib/stores/walletStore';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 
 export default function WalletHomeScreen() {
   const router = useRouter();
@@ -64,8 +65,7 @@ export default function WalletHomeScreen() {
       
       if (balanceResult.success && balanceResult.data) {
         setBalance(balanceResult.data.balance);
-        // TODO: Convert to USD using price API
-        const usdValue = parseFloat(balanceResult.data.balance) * 2500; // Mock ETH price
+        const usdValue = parseFloat(balanceResult.data.balance) * 2500; // ETH price placeholder
         setBalanceUSD(`$${usdValue.toFixed(2)}`);
       }
     } catch (error) {
@@ -94,14 +94,40 @@ export default function WalletHomeScreen() {
   };
 
   const handleNetworkSwitch = () => {
-    // TODO: Navigate to network selector when created
-    console.log('Open network selector');
+    Alert.alert(
+      'Switch Network',
+      'Network selector will be available in the next update.',
+      [{ text: 'OK' }]
+    );
   };
 
   const handleNotifications = () => {
-    // TODO: Navigate to notifications when created
-    console.log('Open notifications');
+    Alert.alert(
+      'Notifications',
+      'Notifications feature will be available in the next update.',
+      [{ text: 'OK' }]
+    );
   };
+
+  const handleCopyAddress = async () => {
+    if (!activeWallet?.address) {
+      Alert.alert('Error', 'No wallet address available');
+      return;
+    }
+    
+    try {
+      await Clipboard.setStringAsync(activeWallet.address);
+      Alert.alert('Success', 'Address copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy address:', error);
+      Alert.alert('Error', 'Failed to copy address');
+    }
+  };
+
+  const handleCreateWallet = () => {
+    router.push('/onboarding');
+  };
+
 
   const handleLaunchMiniApp = async (miniAppId: string) => {
     try {
@@ -122,6 +148,7 @@ export default function WalletHomeScreen() {
   };
 
   const walletTokens = getTokensForActiveWallet();
+  const walletTransactions = useWalletStore.getState().getTransactionsForActiveWallet();
 
   return (
     <ScrollView 
@@ -150,12 +177,7 @@ export default function WalletHomeScreen() {
           </Text>
         </Pressable>
         
-        <Pressable 
-          onPress={() => {
-            // TODO: Copy address to clipboard
-            console.log('Copy address:', activeWallet?.address);
-          }}
-        >
+        <Pressable onPress={handleCopyAddress}>
           <Text className="text-base font-medium text-foreground">
             {activeWallet ? formatAddress(activeWallet.address) : 'No Wallet'}
           </Text>
@@ -268,31 +290,39 @@ export default function WalletHomeScreen() {
       <View className="px-4 mb-8">
         <View className="flex-row justify-between items-center mb-4">
           <Text className="text-lg font-semibold text-foreground">Recent Activity</Text>
-          <Pressable onPress={() => console.log('Navigate to activity tab')}>
+          <Pressable onPress={() => router.push('/(tabs)/activity')}>
             <Text className="text-primary text-sm">View All</Text>
           </Pressable>
         </View>
         
-        {/* Mock recent transactions */}
-        <Card className="p-4 mb-3">
-          <View className="flex-row justify-between items-center">
-            <View className="flex-1">
-              <Text className="text-foreground font-medium">Received ETH</Text>
-              <Text className="text-muted-foreground text-sm">2 hours ago</Text>
-            </View>
-            <Text className="text-primary font-medium">+0.05 ETH</Text>
-          </View>
-        </Card>
-        
-        <Card className="p-4">
-          <View className="flex-row justify-between items-center">
-            <View className="flex-1">
-              <Text className="text-foreground font-medium">Sent ETH</Text>
-              <Text className="text-muted-foreground text-sm">1 day ago</Text>
-            </View>
-            <Text className="text-muted-foreground font-medium">-0.1 ETH</Text>
-          </View>
-        </Card>
+        {/* Real transaction history */}
+        {walletTransactions.length > 0 ? (
+          walletTransactions.slice(0, 3).map((transaction) => (
+            <Card key={transaction.id} className="p-4 mb-3">
+              <View className="flex-row justify-between items-center">
+                <View className="flex-1">
+                  <Text className="text-foreground font-medium">
+                    {transaction.isOutgoing ? 'Sent' : 'Received'} {transaction.tokenSymbol || activeNetwork?.nativeCurrencySymbol || 'ETH'}
+                  </Text>
+                  <Text className="text-muted-foreground text-sm">
+                    {transaction.timestamp ? new Date(transaction.timestamp).toLocaleDateString() : 'Pending'}
+                  </Text>
+                </View>
+                <Text className={`font-medium ${
+                  !transaction.isOutgoing ? 'text-primary' : 'text-muted-foreground'
+                }`}>
+                  {!transaction.isOutgoing ? '+' : '-'}{transaction.tokenAmount || transaction.value} {transaction.tokenSymbol || activeNetwork?.nativeCurrencySymbol || 'ETH'}
+                </Text>
+              </View>
+            </Card>
+          ))
+        ) : (
+          <Card className="p-4">
+            <Text className="text-center text-muted-foreground text-sm">
+              No transactions yet
+            </Text>
+          </Card>
+        )}
       </View>
 
       {/* Empty State for New Wallets */}
@@ -301,7 +331,7 @@ export default function WalletHomeScreen() {
           <Text className="text-center text-muted-foreground mb-4">
             No wallet selected. Please create or import a wallet to get started.
           </Text>
-          <Button onPress={() => console.log('Navigate to onboarding')}>
+          <Button onPress={handleCreateWallet}>
             <Text className="text-primary-foreground">Create Wallet</Text>
           </Button>
         </View>
