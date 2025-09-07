@@ -5,13 +5,6 @@ import * as Crypto from 'expo-crypto';
 // Get Infura API key from environment variables (must use EXPO_PUBLIC_ prefix for runtime access)
 const INFURA_API_KEY = process.env.EXPO_PUBLIC_INFURA_API_KEY || 'demo_key_replace_with_real_key';
 
-// Debug environment variables
-console.log('🔍 Environment Debug:', {
-  hasInfuraKey: !!process.env.EXPO_PUBLIC_INFURA_API_KEY,
-  keyLength: process.env.EXPO_PUBLIC_INFURA_API_KEY?.length || 0,
-  allExpoVars: Object.keys(process.env).filter(k => k.startsWith('EXPO_PUBLIC'))
-});
-
 // Network configuration for different chains with fallback RPC endpoints
 export const NETWORK_CONFIGS: Record<number, Network> = {
   1: {

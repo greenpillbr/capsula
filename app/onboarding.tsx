@@ -7,6 +7,8 @@ import { Check } from '@/lib/icons/Check';
 import { Shield } from '@/lib/icons/Shield';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useNetworkStore } from '@/lib/stores/networkStore';
+import { useWalletStore } from '@/lib/stores/walletStore';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
@@ -20,6 +22,7 @@ export default function OnboardingScreen() {
   
   const { setOnboardingComplete, setAuthenticated } = useAuthStore();
   const { initializeDefaultNetworks } = useNetworkStore();
+  const { wallets } = useWalletStore();
 
   // Check biometric support on mount
   useEffect(() => {
@@ -39,6 +42,33 @@ export default function OnboardingScreen() {
     }
   };
 
+  const handleEnterWithPasskey = async () => {
+    setIsLoading(true);
+    try {
+      // Check if any wallets exist
+      if (wallets.length > 0) {
+        // User has existing wallets, authenticate and proceed to main app
+        const authResult = await passkeyService.authenticateWithPasskey(
+          'Authenticate to access your Capsula wallet'
+        );
+        
+        if (authResult.success) {
+          handleCompleteOnboarding();
+        } else {
+          Alert.alert('Authentication Failed', 'Please try again.');
+        }
+      } else {
+        // No wallets exist, proceed to wallet creation
+        setCurrentStep(1);
+      }
+    } catch (error) {
+      console.error('Enter with Passkey error:', error);
+      Alert.alert('Error', 'Authentication failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCreateWallet = async () => {
     setIsLoading(true);
     try {
@@ -46,7 +76,8 @@ export default function OnboardingScreen() {
       
       if (result.success && result.data) {
         setWalletMnemonic(result.data.mnemonic);
-        setCurrentStep(2); // Move to mnemonic display step
+        // Skip backup screen for now - go directly to main app
+        handleCompleteOnboarding();
       } else {
         Alert.alert(
           'Wallet Creation Failed',
@@ -62,8 +93,16 @@ export default function OnboardingScreen() {
   };
 
   const handleImportWallet = () => {
-    // TODO: Navigate to import wallet screen (to be implemented)
     Alert.alert('Import Wallet', 'Import wallet feature will be available soon.');
+  };
+
+  const handleCopyMnemonic = async () => {
+    try {
+      await Clipboard.setStringAsync(walletMnemonic);
+      Alert.alert('Success', 'Recovery phrase copied to clipboard');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy recovery phrase');
+    }
   };
 
   const handleCompleteOnboarding = async () => {
@@ -117,8 +156,8 @@ export default function OnboardingScreen() {
 
       {/* Action Buttons */}
       <View className="w-full max-w-sm">
-        <Button 
-          onPress={() => setCurrentStep(1)}
+        <Button
+          onPress={handleEnterWithPasskey}
           className="w-full mb-4 bg-primary"
           disabled={!biometricType}
         >
@@ -213,7 +252,7 @@ export default function OnboardingScreen() {
           Backup Your Wallet
         </Text>
         <Text className="text-center text-muted-foreground px-4">
-          Write down these 12 words in order and store them safely. 
+          Write down these {walletMnemonic.split(' ').length} words in order and store them safely.
           This is your recovery phrase.
         </Text>
       </View>
@@ -250,9 +289,18 @@ export default function OnboardingScreen() {
         </View>
       </Card>
 
+      {/* Copy Button */}
+      <Button
+        variant="outline"
+        onPress={handleCopyMnemonic}
+        className="w-full mb-4"
+      >
+        <Text className="text-primary font-medium">Copy to Clipboard</Text>
+      </Button>
+
       {/* Action Buttons */}
       <View className="space-y-3">
-        <Button 
+        <Button
           onPress={handleCompleteOnboarding}
           className="w-full bg-primary"
         >
@@ -261,8 +309,8 @@ export default function OnboardingScreen() {
           </Text>
         </Button>
         
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onPress={() => setCurrentStep(1)}
         >
           <Text className="text-primary font-medium">Back</Text>
