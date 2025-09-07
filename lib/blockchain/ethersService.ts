@@ -1,4 +1,5 @@
 import type { Network } from '@/db/schema';
+import { useNetworkStore } from '@/lib/stores/networkStore';
 import { ethers } from 'ethers';
 import * as Crypto from 'expo-crypto';
 
@@ -61,12 +62,28 @@ class EthersService {
    */
   getProvider(chainId: number, rpcUrl?: string): ethers.JsonRpcProvider {
     if (!this.providers.has(chainId)) {
-      const config = NETWORK_CONFIGS[chainId];
-      const url = rpcUrl || config?.rpcUrl;
+      let config = NETWORK_CONFIGS[chainId];
+      let url = rpcUrl || config?.rpcUrl;
+      
+      // If no hardcoded config, check the networkStore for custom networks
+      if (!url) {
+        try {
+          const networkState = useNetworkStore.getState();
+          const customNetwork = networkState.networks.find(n => n.chainId === chainId);
+          if (customNetwork) {
+            config = customNetwork;
+            url = customNetwork.rpcUrl;
+          }
+        } catch (error) {
+          console.error('Failed to get network from store:', error);
+        }
+      }
       
       if (!url) {
         throw new Error(`No RPC URL configured for chain ${chainId}`);
       }
+
+      console.log(`🌐 Creating provider for ${config?.name || `Chain ${chainId}`} with RPC: ${url}`);
 
       const provider = new ethers.JsonRpcProvider(url, {
         chainId,

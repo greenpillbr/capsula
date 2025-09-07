@@ -154,10 +154,20 @@ export const useNetworkStore = create<NetworkState>()(
       },
       
       removeNetwork: (chainId: number) => {
-        set((state) => ({
-          networks: state.networks.filter(n => n.chainId !== chainId),
-          activeNetwork: state.activeNetwork?.chainId === chainId ? null : state.activeNetwork,
-        }));
+        set((state) => {
+          const updatedNetworks = state.networks.filter(n => n.chainId !== chainId);
+          let newActiveNetwork = state.activeNetwork;
+          
+          // If removing the currently active network, switch to Ethereum Mainnet
+          if (state.activeNetwork?.chainId === chainId) {
+            newActiveNetwork = updatedNetworks.find(n => n.chainId === 1) || updatedNetworks[0] || null;
+          }
+          
+          return {
+            networks: updatedNetworks,
+            activeNetwork: newActiveNetwork,
+          };
+        });
       },
       
       updateNetwork: (chainId: number, updates: Partial<Network>) => {

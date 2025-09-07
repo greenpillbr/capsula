@@ -4,13 +4,18 @@ import { Text } from '@/components/ui/text';
 import { Check, ChevronLeft, Globe, Plus } from '@/lib/icons';
 import { useNetworkStore } from '@/lib/stores/networkStore';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, TextInput, View } from 'react-native';
+
+interface ChainlistRpcEntry {
+  url: string;
+  tracking?: string;
+}
 
 interface ChainlistNetwork {
   name: string;
   chainId: number;
-  rpc: string[];
+  rpc: (string | ChainlistRpcEntry)[];
   nativeCurrency: {
     symbol: string;
     name: string;
@@ -24,6 +29,97 @@ interface ChainlistNetwork {
   infoURL?: string;
 }
 
+// Simple search component that avoids focus issues by pre-loading data
+const NetworkSearch = React.memo(({
+  onNetworkAdd,
+  existingNetworks,
+  chainlistData
+}: {
+  onNetworkAdd: (network: ChainlistNetwork) => void;
+  existingNetworks: any[];
+  chainlistData: ChainlistNetwork[];
+}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const inputRef = useRef<TextInput>(null);
+
+  // Immediate filtering without state updates that cause re-renders
+  const searchResults = React.useMemo(() => {
+    if (!searchQuery.trim() || chainlistData.length === 0) {
+      return [];
+    }
+
+    const queryLower = searchQuery.toLowerCase();
+    return chainlistData
+      .filter(network =>
+        network.name.toLowerCase().includes(queryLower) ||
+        network.nativeCurrency.symbol.toLowerCase().includes(queryLower) ||
+        network.chainId.toString().includes(queryLower)
+      )
+      .slice(0, 8);
+  }, [searchQuery, chainlistData]);
+
+  const handleNetworkSelect = useCallback((network: ChainlistNetwork) => {
+    onNetworkAdd(network);
+    setSearchQuery('');
+  }, [onNetworkAdd]);
+
+  return (
+    <View>
+      <TextInput
+        ref={inputRef}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder="Type network name (e.g., Polygon, Arbitrum)"
+        className="border border-border rounded-lg p-3 text-foreground bg-background"
+        autoCapitalize="none"
+        autoCorrect={false}
+        clearButtonMode="while-editing"
+      />
+      
+      {/* Results shown inline */}
+      {searchResults.length > 0 && (
+        <View className="mt-4 border border-border rounded-lg overflow-hidden">
+          <Text className="text-foreground font-medium p-3 bg-muted">Search Results</Text>
+          {searchResults.map((network) => {
+            const isAlreadyAdded = existingNetworks.some(n => n.chainId === network.chainId);
+            
+            return (
+              <Pressable
+                key={network.chainId}
+                onPress={() => !isAlreadyAdded && handleNetworkSelect(network)}
+                className={`p-3 border-t border-border flex-row items-center justify-between ${
+                  isAlreadyAdded ? 'opacity-50' : 'active:bg-muted'
+                }`}
+              >
+                <View className="flex-1">
+                  <Text className="text-foreground font-medium">{network.name}</Text>
+                  <Text className="text-muted-foreground text-sm">
+                    {network.nativeCurrency.symbol} • Chain ID: {network.chainId}
+                  </Text>
+                </View>
+                
+                {isAlreadyAdded ? (
+                  <Text className="text-muted-foreground text-xs">Added</Text>
+                ) : (
+                  <Text className="text-primary text-xs">Tap to add</Text>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+      
+      {searchResults.length === 0 && searchQuery.trim() && chainlistData.length > 0 && (
+        <View className="mt-4 border border-border rounded-lg p-4">
+          <Text className="text-muted-foreground text-sm text-center">
+            No networks found for "{searchQuery}"
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+});
+
 export default function NetworkManagerScreen() {
   const router = useRouter();
   const { 
@@ -35,79 +131,95 @@ export default function NetworkManagerScreen() {
   } = useNetworkStore();
 
   const [showAddNetwork, setShowAddNetwork] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [chainlistNetworks, setChainlistNetworks] = useState<ChainlistNetwork[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filteredNetworks, setFilteredNetworks] = useState<ChainlistNetwork[]>([]);
+  const [chainlistNetworks, setChainlistNetworks] = useState<ChainlistNetwork[]>([]);
 
-  // Fetch chainlist data when adding network
-  const fetchChainlistData = async () => {
-    if (chainlistNetworks.length > 0) return; // Already loaded
-
-    setLoading(true);
-    try {
-      const response = await fetch('https://chainlist.org/rpcs.json');
-      const data = await response.json();
-      
-      // Filter out networks with empty RPC arrays and sort by popularity
-      const validNetworks = Object.values(data as Record<string, ChainlistNetwork>)
-        .filter((network: ChainlistNetwork) => 
-          network.rpc && 
-          network.rpc.length > 0 && 
-          network.nativeCurrency &&
-          network.name &&
-          !network.name.toLowerCase().includes('deprecated')
-        )
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      setChainlistNetworks(validNetworks);
-    } catch (error) {
-      console.error('Failed to fetch chainlist data:', error);
-      Alert.alert('Error', 'Failed to load network list from Chainlist.org');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Filter networks based on search query
+  // Pre-load chainlist data on component mount to avoid focus issues
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredNetworks([]);
-      return;
-    }
+    const loadChainlistData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('https://chainlist.org/rpcs.json');
+        const data = await response.json();
+        
+        const validNetworks = Object.values(data as Record<string, ChainlistNetwork>)
+          .filter((network: ChainlistNetwork) =>
+            network.rpc &&
+            network.rpc.length > 0 &&
+            network.nativeCurrency &&
+            network.name &&
+            !network.name.toLowerCase().includes('deprecated')
+          )
+          .sort((a, b) => a.name.localeCompare(b.name));
 
-    const query = searchQuery.toLowerCase();
-    const filtered = chainlistNetworks
-      .filter(network => 
-        network.name.toLowerCase().includes(query) ||
-        network.nativeCurrency.symbol.toLowerCase().includes(query) ||
-        network.chainId.toString().includes(query)
-      )
-      .slice(0, 10); // Limit to 10 results for performance
+        setChainlistNetworks(validNetworks);
+      } catch (error) {
+        console.error('Failed to fetch chainlist data:', error);
+        Alert.alert('Error', 'Failed to load network list from Chainlist.org');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setFilteredNetworks(filtered);
-  }, [searchQuery, chainlistNetworks]);
+    loadChainlistData();
+  }, []);
 
   const handleNetworkSelect = async (network: any) => {
     try {
       setActiveNetwork(network);
-      Alert.alert('Success', `Switched to ${network.name}`);
       router.back();
     } catch (error) {
       Alert.alert('Error', 'Failed to switch network');
     }
   };
 
-  const handleAddNetwork = async (chainlistNetwork: ChainlistNetwork) => {
+  const handleAddNetwork = useCallback(async (chainlistNetwork: ChainlistNetwork) => {
     try {
-      // Find a working RPC URL
-      const workingRpc = chainlistNetwork.rpc.find(rpc => 
-        !rpc.includes('${') && 
-        (rpc.startsWith('https://') || rpc.startsWith('http://'))
+      console.log('Adding network:', chainlistNetwork.name, 'Chain ID:', chainlistNetwork.chainId);
+      
+      // Check if network already exists
+      const existingNetwork = networks.find(n => n.chainId === chainlistNetwork.chainId);
+      if (existingNetwork) {
+        Alert.alert('Network Already Added', `${chainlistNetwork.name} is already in your networks`);
+        return;
+      }
+
+      // Debug: Log all RPC URLs for this network
+      console.log('All RPC URLs for', chainlistNetwork.name, ':', chainlistNetwork.rpc);
+      
+      // Parse RPC entries and prioritize those with tracking "none" or "limited"
+      const rpcCandidates = chainlistNetwork.rpc
+        .map(rpc => {
+          if (typeof rpc === 'string') {
+            return { url: rpc, tracking: 'none' };
+          } else if (rpc && typeof rpc === 'object' && rpc.url) {
+            return { url: rpc.url, tracking: rpc.tracking || 'none' };
+          }
+          return null;
+        })
+        .filter(Boolean)
+        .filter(rpc => rpc && rpc.url && typeof rpc.url === 'string')
+        .filter(rpc => rpc!.url.trim().length > 0)
+        .filter(rpc => !rpc!.url.includes('${'))
+        .filter(rpc => !rpc!.url.includes('YOUR_API_KEY'))
+        .filter(rpc => !rpc!.url.includes('<api'))
+        .filter(rpc => rpc!.url.startsWith('https://'));
+      
+      
+      // Prioritize RPCs with tracking "none"
+      const preferredRpc = rpcCandidates.find(rpc =>
+        rpc && (rpc.tracking === 'none')
       );
+      
+      // Fallback to any valid RPC if no preferred tracking found
+      const workingRpc = preferredRpc?.url || rpcCandidates[0]?.url;
+      
 
       if (!workingRpc) {
-        Alert.alert('Error', 'No working RPC URL found for this network');
+        Alert.alert(
+          'No Valid RPC Found',
+          `Could not find a working RPC URL for ${chainlistNetwork.name}. This network may not be properly configured in Chainlist.org.`
+        );
         return;
       }
 
@@ -124,14 +236,16 @@ export default function NetworkManagerScreen() {
         isRecommended: false,
       };
 
+      console.log('Network to add:', newNetwork);
+
       addCustomNetwork(newNetwork);
-      Alert.alert('Success', `Added ${chainlistNetwork.name} to your networks`);
+      
       setShowAddNetwork(false);
-      setSearchQuery('');
     } catch (error) {
-      Alert.alert('Error', 'Failed to add network');
+      console.error('Error adding network:', error);
+      Alert.alert('Error', `Failed to add network: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+  }, [addCustomNetwork, networks]);
 
   const handleRemoveNetwork = async (chainId: number, networkName: string) => {
     Alert.alert(
@@ -145,7 +259,6 @@ export default function NetworkManagerScreen() {
           onPress: async () => {
             try {
               removeNetwork(chainId);
-              Alert.alert('Success', `Removed ${networkName}`);
             } catch (error) {
               Alert.alert('Error', 'Failed to remove network');
             }
@@ -222,53 +335,17 @@ export default function NetworkManagerScreen() {
           Search from Chainlist.org's database of EVM networks
         </Text>
         
-        <TextInput
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Type network name (e.g., Polygon, Arbitrum)"
-          className="border border-border rounded-lg p-3 mb-4 text-foreground"
-          onFocus={fetchChainlistData}
-        />
-        
-        {loading && (
-          <View className="items-center py-4">
-            <ActivityIndicator size="small" color="#4CAF50" />
-            <Text className="text-muted-foreground text-sm mt-2">Loading networks...</Text>
+        {loading ? (
+          <View className="items-center py-8">
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text className="text-muted-foreground text-sm mt-2">Loading network database...</Text>
           </View>
-        )}
-        
-        {filteredNetworks.length > 0 && (
-          <View>
-            <Text className="text-foreground font-medium mb-2">Search Results</Text>
-            {filteredNetworks.map((network) => {
-              const isAlreadyAdded = networks.some(n => n.chainId === network.chainId);
-              
-              return (
-                <Card key={network.chainId} className="mb-2">
-                  <View className="p-3 flex-row items-center justify-between">
-                    <View className="flex-1">
-                      <Text className="text-foreground font-medium">{network.name}</Text>
-                      <Text className="text-muted-foreground text-sm">
-                        {network.nativeCurrency.symbol} • Chain ID: {network.chainId}
-                      </Text>
-                    </View>
-                    
-                    {isAlreadyAdded ? (
-                      <Text className="text-muted-foreground text-sm">Added</Text>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onPress={() => handleAddNetwork(network)}
-                        className="bg-primary"
-                      >
-                        <Text className="text-primary-foreground text-xs">Add</Text>
-                      </Button>
-                    )}
-                  </View>
-                </Card>
-              );
-            })}
-          </View>
+        ) : (
+          <NetworkSearch
+            onNetworkAdd={handleAddNetwork}
+            existingNetworks={networks}
+            chainlistData={chainlistNetworks}
+          />
         )}
       </Card>
     </View>
@@ -330,8 +407,6 @@ export default function NetworkManagerScreen() {
                 variant="outline"
                 onPress={() => {
                   setShowAddNetwork(false);
-                  setSearchQuery('');
-                  setFilteredNetworks([]);
                 }}
                 className="w-full"
               >
