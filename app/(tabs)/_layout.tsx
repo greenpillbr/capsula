@@ -37,12 +37,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Profile className="text-foreground" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null, // Hide this tab from navigation
-        }}
-      />
     </Tabs>
   );
 }
