@@ -29,11 +29,12 @@ export default function ProfileScreen() {
     removeWallet 
   } = useWalletStore();
   
-  const { 
+  const {
     isAuthenticated,
     passkeyEnabled,
     setPasskeyEnabled,
-    logout 
+    setOnboardingComplete,
+    logout
   } = useAuthStore();
   
   const { activeNetwork } = useNetworkStore();
@@ -64,9 +65,11 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteWallet = (walletId: string, walletName: string) => {
+    const isLastWallet = wallets.length === 1;
+    
     Alert.alert(
       '⚠️ Delete Wallet',
-      `Are you sure you want to permanently delete "${walletName}"?\n\n• This action is FINAL and NOT REVERSIBLE\n• Make sure you have backed up your seed phrase\n• All wallet data will be permanently lost`,
+      `Are you sure you want to permanently delete "${walletName}"?\n\n• This action is FINAL and NOT REVERSIBLE\n• Make sure you have backed up your seed phrase\n• All wallet data will be permanently lost${isLastWallet ? '\n• You will be redirected to create a new wallet' : ''}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -77,7 +80,14 @@ export default function ProfileScreen() {
               const result = await keyManager.deleteWallet(walletId);
               
               if (result.success) {
-                Alert.alert('Success', 'Wallet deleted successfully');
+                if (isLastWallet) {
+                  // Reset onboarding status and redirect to onboarding
+                  setOnboardingComplete(false);
+                  logout();
+                  router.replace('/onboarding');
+                } else {
+                  Alert.alert('Success', 'Wallet deleted successfully');
+                }
               } else {
                 Alert.alert('Error', result.error || 'Failed to delete wallet');
               }
