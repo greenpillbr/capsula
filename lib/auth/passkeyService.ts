@@ -112,16 +112,19 @@ class PasskeyService {
    */
   async storeWalletCredential(
     walletId: string,
-    credential: Omit<WalletCredential, 'id' | 'createdAt'>
+    credential: Omit<WalletCredential, 'id' | 'createdAt'>,
+    skipAuth: boolean = false
   ): Promise<boolean> {
     try {
-      // First authenticate the user
-      const authResult = await this.authenticateWithPasskey(
-        'Authenticate to secure your wallet'
-      );
+      // Skip authentication if already authenticated in calling function
+      if (!skipAuth) {
+        const authResult = await this.authenticateWithPasskey(
+          'Authenticate to secure your wallet'
+        );
 
-      if (!authResult.success) {
-        throw new Error('Authentication required to store wallet');
+        if (!authResult.success) {
+          throw new Error('Authentication required to store wallet');
+        }
       }
 
       const walletCredential: WalletCredential = {
@@ -212,12 +215,12 @@ class PasskeyService {
       const hdWallet = ethersService.generateRandomWallet();
       const walletId = `wallet_${Date.now()}`;
 
-      // Store wallet credentials securely
+      // Store wallet credentials securely (skip auth since we already authenticated)
       const stored = await this.storeWalletCredential(walletId, {
         privateKey: hdWallet.privateKey,
         mnemonic: hdWallet.mnemonic?.phrase,
         address: hdWallet.address,
-      });
+      }, true);
 
       if (!stored) {
         return {
@@ -286,12 +289,12 @@ class PasskeyService {
 
       const walletId = `wallet_${Date.now()}`;
 
-      // Store wallet credentials securely
+      // Store wallet credentials securely (skip auth since we already authenticated)
       const stored = await this.storeWalletCredential(walletId, {
         privateKey: wallet.privateKey,
         mnemonic: importData.mnemonic,
         address: wallet.address,
-      });
+      }, true);
 
       if (!stored) {
         return {
