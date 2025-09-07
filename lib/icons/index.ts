@@ -16,3 +16,5 @@ export { Smartphone } from "./SmartPhone";
 export { Star } from "./Star";
 export { Sun } from "./Sun";
 
+
+export { Grid } from "./Grid";

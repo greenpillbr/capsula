@@ -1,4 +1,5 @@
 import { Activity } from '@/lib/icons/Activity';
+import { Grid } from '@/lib/icons/Grid';
 import { Profile } from '@/lib/icons/Profile';
 import { Wallet } from '@/lib/icons/Wallet';
 import { Tabs } from 'expo-router';
@@ -21,6 +22,13 @@ export default function TabLayout() {
         options={{
           title: 'Wallet',
           tabBarIcon: ({ color, size }) => <Wallet className="text-foreground" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="mini-apps"
+        options={{
+          title: 'Mini-apps',
+          tabBarIcon: ({ color, size }) => <Grid className="text-foreground" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
