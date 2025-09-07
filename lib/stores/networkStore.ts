@@ -18,51 +18,72 @@ const zustandStorage = {
   },
 };
 
-// Default networks configuration
-const DEFAULT_NETWORKS: Network[] = [
-  {
-    chainId: 1,
-    name: 'Ethereum Mainnet',
-    rpcUrl: 'https://mainnet.infura.io/v3/your-project-id',
-    explorerUrl: 'https://etherscan.io',
-    nativeCurrencySymbol: 'ETH',
-    nativeCurrencyDecimals: 18,
-    nativeCurrencyName: 'Ether',
-    iconUrl: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-    isDefault: true,
-    isRecommended: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    chainId: 42220,
-    name: 'Celo Mainnet',
-    rpcUrl: 'https://forno.celo.org',
-    explorerUrl: 'https://explorer.celo.org',
-    nativeCurrencySymbol: 'CELO',
-    nativeCurrencyDecimals: 18,
-    nativeCurrencyName: 'Celo',
-    iconUrl: 'https://assets.coingecko.com/coins/images/11090/small/icon-celo-CELO-color-500.png',
-    isDefault: true,
-    isRecommended: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    chainId: 100,
-    name: 'Gnosis Chain',
-    rpcUrl: 'https://rpc.gnosischain.com',
-    explorerUrl: 'https://gnosisscan.io',
-    nativeCurrencySymbol: 'xDAI',
-    nativeCurrencyDecimals: 18,
-    nativeCurrencyName: 'xDAI',
-    iconUrl: 'https://assets.coingecko.com/coins/images/11062/small/xdai.png',
-    isDefault: true,
-    isRecommended: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+// Get Infura API key for network configuration
+const getInfuraApiKey = () => {
+  const key = process.env.EXPO_PUBLIC_INFURA_API_KEY;
+  console.log('Environment check:', {
+    hasInfuraKey: !!key,
+    keyPreview: key ? key.substring(0, 8) + '...' : 'NOT FOUND',
+    allEnvKeys: Object.keys(process.env).filter(k => k.startsWith('EXPO_PUBLIC'))
+  });
+  return key || 'demo_key_replace_with_real_key';
+};
+
+// Dynamic default networks configuration with proper API key and fallbacks
+const getDefaultNetworks = (): Network[] => {
+  const infuraKey = getInfuraApiKey();
+  const timestamp = new Date().toISOString();
+  
+  // Use public RPC endpoints as fallback if Infura key is not available
+  const ethereumRpcUrl = infuraKey !== 'demo_key_replace_with_real_key'
+    ? `https://mainnet.infura.io/v3/${infuraKey}`
+    : 'https://cloudflare-eth.com'; // Public Ethereum RPC
+  
+  return [
+    {
+      chainId: 1,
+      name: 'Ethereum Mainnet',
+      rpcUrl: ethereumRpcUrl,
+      explorerUrl: 'https://etherscan.io',
+      nativeCurrencySymbol: 'ETH',
+      nativeCurrencyDecimals: 18,
+      nativeCurrencyName: 'Ether',
+      iconUrl: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+      isDefault: true,
+      isRecommended: true,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+    {
+      chainId: 42220,
+      name: 'Celo Mainnet',
+      rpcUrl: 'https://forno.celo.org',
+      explorerUrl: 'https://explorer.celo.org',
+      nativeCurrencySymbol: 'CELO',
+      nativeCurrencyDecimals: 18,
+      nativeCurrencyName: 'Celo',
+      iconUrl: 'https://assets.coingecko.com/coins/images/11090/small/icon-celo-CELO-color-500.png',
+      isDefault: true,
+      isRecommended: true,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+    {
+      chainId: 100,
+      name: 'Gnosis Chain',
+      rpcUrl: 'https://rpc.gnosischain.com',
+      explorerUrl: 'https://gnosisscan.io',
+      nativeCurrencySymbol: 'xDAI',
+      nativeCurrencyDecimals: 18,
+      nativeCurrencyName: 'xDAI',
+      iconUrl: 'https://assets.coingecko.com/coins/images/11062/small/xdai.png',
+      isDefault: true,
+      isRecommended: true,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+  ];
+};
 
 interface NetworkState {
   // Network management
@@ -148,9 +169,10 @@ export const useNetworkStore = create<NetworkState>()(
       initializeDefaultNetworks: () => {
         const { networks } = get();
         if (networks.length === 0) {
+          const defaultNetworks = getDefaultNetworks();
           set({
-            networks: DEFAULT_NETWORKS,
-            activeNetwork: DEFAULT_NETWORKS[0], // Set Ethereum as default
+            networks: defaultNetworks,
+            activeNetwork: defaultNetworks[0], // Set Ethereum as default
           });
         }
       },

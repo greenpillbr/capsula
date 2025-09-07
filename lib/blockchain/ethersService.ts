@@ -5,12 +5,21 @@ import * as Crypto from 'expo-crypto';
 // Get Infura API key from environment variables (must use EXPO_PUBLIC_ prefix for runtime access)
 const INFURA_API_KEY = process.env.EXPO_PUBLIC_INFURA_API_KEY || 'demo_key_replace_with_real_key';
 
-// Network configuration for different chains
+// Debug environment variables
+console.log('🔍 Environment Debug:', {
+  hasInfuraKey: !!process.env.EXPO_PUBLIC_INFURA_API_KEY,
+  keyLength: process.env.EXPO_PUBLIC_INFURA_API_KEY?.length || 0,
+  allExpoVars: Object.keys(process.env).filter(k => k.startsWith('EXPO_PUBLIC'))
+});
+
+// Network configuration for different chains with fallback RPC endpoints
 export const NETWORK_CONFIGS: Record<number, Network> = {
   1: {
     chainId: 1,
     name: 'Ethereum Mainnet',
-    rpcUrl: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
+    rpcUrl: INFURA_API_KEY !== 'demo_key_replace_with_real_key'
+      ? `https://mainnet.infura.io/v3/${INFURA_API_KEY}`
+      : 'https://cloudflare-eth.com', // Public fallback
     explorerUrl: 'https://etherscan.io',
     nativeCurrencySymbol: 'ETH',
     nativeCurrencyDecimals: 18,
@@ -57,7 +66,7 @@ class EthersService {
   private currentChainId: number = 1; // Default to Ethereum
 
   /**
-   * Get or create a provider for a specific chain
+   * Get or create a provider for a specific chain with better error handling
    */
   getProvider(chainId: number, rpcUrl?: string): ethers.JsonRpcProvider {
     if (!this.providers.has(chainId)) {
@@ -67,6 +76,13 @@ class EthersService {
       if (!url) {
         throw new Error(`No RPC URL configured for chain ${chainId}`);
       }
+
+      console.log(`🌐 Creating provider for ${config?.name || `Chain ${chainId}`}:`, {
+        chainId,
+        rpcUrl: url,
+        isInfura: url.includes('infura.io'),
+        isPublic: url.includes('cloudflare-eth.com')
+      });
 
       const provider = new ethers.JsonRpcProvider(url, {
         chainId,
@@ -107,15 +123,35 @@ class EthersService {
   }
 
   /**
-   * Get balance for an address
+   * Get balance for an address with improved error handling
    */
   async getBalance(address: string, chainId?: number): Promise<string> {
     try {
-      const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
+      const targetChainId = chainId || this.currentChainId;
+      const provider = this.getProvider(targetChainId);
+      
+      console.log(`💰 Getting balance for ${address} on chain ${targetChainId}`);
+      
+      // Test provider connection first
+      try {
+        const network = await provider.getNetwork();
+        console.log(`✅ Connected to ${network.name} (${network.chainId})`);
+      } catch (networkError) {
+        console.error('❌ Network connection failed:', networkError);
+        throw new Error('Unable to connect to network');
+      }
+      
       const balance = await provider.getBalance(address);
-      return ethers.formatEther(balance);
+      const formattedBalance = ethers.formatEther(balance);
+      
+      console.log(`💰 Balance retrieved: ${formattedBalance} ETH`);
+      return formattedBalance;
     } catch (error) {
-      console.error('Failed to get balance:', error);
+      console.error('❌ Failed to get balance:', {
+        error: error instanceof Error ? error.message : error,
+        address,
+        chainId: chainId || this.currentChainId
+      });
       return '0';
     }
   }
