@@ -354,7 +354,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* My Wallets Section */}
-        {wallets.length > 1 && (
+        {wallets.length > 0 && (
           <View className="p-4">
             <Text className="text-lg font-semibold text-foreground mb-4">My Wallets</Text>
             
