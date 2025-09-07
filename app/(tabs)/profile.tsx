@@ -1,3 +1,5 @@
+import { NotificationItem } from '@/components/settings/NotificationItem';
+import { ThemeSettingItem } from '@/components/settings/ThemeItem';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +15,7 @@ import { useWalletStore } from '@/lib/stores/walletStore';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Alert, Image, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -421,6 +423,22 @@ export default function ProfileScreen() {
           </View>
         )}
 
+
+        {/* Settings Section */}
+        <View className="p-4">
+          <Text className="text-lg font-semibold text-foreground mb-4">Settings</Text>
+          
+          <Card className="p-0 mb-4">
+            <View className="px-4 py-2">
+              <ThemeSettingItem />
+            </View>
+            {Platform.OS !== "web" && (
+              <View className="px-4 py-2 border-t border-border">
+                <NotificationItem />
+              </View>
+            )}
+          </Card>
+        </View>
 
         {/* About Section */}
         <View className="p-4">
