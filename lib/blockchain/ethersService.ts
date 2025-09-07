@@ -2,8 +2,8 @@ import type { Network } from '@/db/schema';
 import { ethers } from 'ethers';
 import * as Crypto from 'expo-crypto';
 
-// Get Infura API key from environment variables
-const INFURA_API_KEY = process.env.INFURA_API_KEY || 'demo_key_replace_with_real_key';
+// Get Infura API key from environment variables (must use EXPO_PUBLIC_ prefix for runtime access)
+const INFURA_API_KEY = process.env.EXPO_PUBLIC_INFURA_API_KEY || 'demo_key_replace_with_real_key';
 
 // Network configuration for different chains
 export const NETWORK_CONFIGS: Record<number, Network> = {
