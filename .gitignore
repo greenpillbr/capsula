@@ -41,8 +41,5 @@ app-example
 # Keystore files
 *.keystore
 *.jks
-capsula-upload-keystore.keystore
-# Keystore files
-*.keystore
-*.jks
-capsula-upload-keystore.keystore
+# Allow debug keystore for local builds
+!android/app/debug.keystore
