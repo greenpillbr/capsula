@@ -1,32 +1,32 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { keyManager } from '@/lib/crypto/keyManager';
 import { Bell } from '@/lib/icons/Bell';
 import { Globe } from '@/lib/icons/Globe';
 import { Send } from '@/lib/icons/Send';
+import { balanceMonitorService } from '@/lib/services/balanceMonitorService';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useMiniAppStore } from '@/lib/stores/miniAppStore';
 import { useNetworkStore } from '@/lib/stores/networkStore';
 import { useWalletStore } from '@/lib/stores/walletStore';
 import * as Clipboard from 'expo-clipboard';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Image, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 
 export default function WalletHomeScreen() {
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [balance, setBalance] = useState('0.0');
-  const [balanceUSD, setBalanceUSD] = useState('$0.00');
   
   const {
     activeWallet,
     tokens,
+    balances,
     getActiveWalletBalance,
     getTokensForActiveWallet,
     refreshBalances,
-    isLoadingBalance
+    isLoadingBalance,
+    lastBalanceUpdate
   } = useWalletStore();
   
   const { activeNetwork, getNetworkByChainId } = useNetworkStore();
@@ -40,34 +40,52 @@ export default function WalletHomeScreen() {
     refreshAvailableMiniApps,
   } = useMiniAppStore();
 
-  // Initialize mini-apps and load wallet data on mount
+  // Initialize mini-apps on mount
   useEffect(() => {
     initializeBuiltInMiniApps();
   }, []);
 
-  // Load wallet data on mount and when active wallet changes
+  // Handle wallet and network changes with automatic monitoring
   useEffect(() => {
     if (activeWallet && activeNetwork) {
       loadWalletData();
       refreshAvailableMiniApps(activeNetwork.chainId);
+      
+      // Start automatic balance monitoring
+      balanceMonitorService.startMonitoring();
     }
+    
+    return () => {
+      // Cleanup monitoring when component unmounts or dependencies change
+      balanceMonitorService.stopMonitoring();
+    };
   }, [activeWallet, activeNetwork]);
+
+  // Focus effect to restart monitoring when screen becomes active
+  useFocusEffect(
+    useCallback(() => {
+      if (activeWallet && activeNetwork) {
+        // Force immediate balance update when screen becomes focused
+        balanceMonitorService.forceBalanceUpdate();
+        
+        // Restart monitoring if it's not active
+        if (!balanceMonitorService.isMonitoringActive()) {
+          balanceMonitorService.startMonitoring();
+        }
+      }
+      
+      return () => {
+        // Don't stop monitoring when screen loses focus, keep it running
+      };
+    }, [activeWallet, activeNetwork])
+  );
 
   const loadWalletData = async () => {
     if (!activeWallet || !activeNetwork) return;
 
     try {
-      // Get balance from key manager
-      const balanceResult = await keyManager.getWalletBalance(
-        activeWallet.id, 
-        activeNetwork.chainId
-      );
-      
-      if (balanceResult.success && balanceResult.data) {
-        setBalance(balanceResult.data.balance);
-        const usdValue = parseFloat(balanceResult.data.balance) * 2500; // ETH price placeholder
-        setBalanceUSD(`$${usdValue.toFixed(2)}`);
-      }
+      // Trigger balance refresh which will update the store
+      await refreshBalances();
     } catch (error) {
       console.error('Failed to load wallet data:', error);
     }
@@ -77,7 +95,8 @@ export default function WalletHomeScreen() {
     setIsRefreshing(true);
     try {
       await loadWalletData();
-      await refreshBalances();
+      // Force immediate balance update from monitoring service
+      await balanceMonitorService.forceBalanceUpdate();
     } catch (error) {
       console.error('Failed to refresh:', error);
     } finally {
@@ -142,8 +161,27 @@ export default function WalletHomeScreen() {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  // Get current wallet data
   const walletTokens = getTokensForActiveWallet();
   const walletTransactions = useWalletStore.getState().getTransactionsForActiveWallet();
+  
+  // Calculate display balance from tokens
+  const getNativeTokenBalance = () => {
+    if (!activeWallet || !activeNetwork) return '0.0';
+    
+    const nativeToken = walletTokens.find(
+      t => t.chainId === activeNetwork.chainId && t.type === 'Native'
+    );
+    
+    if (nativeToken && balances[nativeToken.id]) {
+      return balances[nativeToken.id];
+    }
+    
+    return '0.0';
+  };
+
+  const balance = getNativeTokenBalance();
+  const balanceUSD = `$${(parseFloat(balance) * 2500).toFixed(2)}`; // ETH price placeholder
 
   return (
     <ScrollView 
@@ -197,6 +235,11 @@ export default function WalletHomeScreen() {
         <Text className="text-lg text-muted-foreground">
           {balanceUSD}
         </Text>
+        {lastBalanceUpdate && (
+          <Text className="text-xs text-muted-foreground">
+            Updated {new Date(lastBalanceUpdate).toLocaleTimeString()}
+          </Text>
+        )}
       </View>
 
       {/* Action Buttons */}

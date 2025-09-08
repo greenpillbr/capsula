@@ -1,4 +1,5 @@
 import type { Token, Transaction, Wallet } from '@/db/schema';
+import { ethersService } from '@/lib/blockchain/ethersService';
 import { MMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -97,6 +98,12 @@ export const useWalletStore = create<WalletState>()(
       
       setActiveWallet: (wallet: Wallet | null) => {
         set({ activeWallet: wallet });
+        
+        // Notify balance monitoring service of wallet change
+        // Import dynamically to avoid circular dependencies
+        import('@/lib/services/balanceMonitorService').then(({ balanceMonitorService }) => {
+          balanceMonitorService.onWalletOrNetworkChange();
+        });
       },
       
       updateWallet: (walletId: string, updates: Partial<Wallet>) => {
@@ -135,22 +142,76 @@ export const useWalletStore = create<WalletState>()(
       
       refreshBalances: async () => {
         const { activeWallet, tokens } = get();
-        if (!activeWallet) return;
+        const { activeNetwork } = await import('@/lib/stores/networkStore').then(m => m.useNetworkStore.getState());
+        
+        if (!activeWallet || !activeNetwork) return;
         
         set({ isLoadingBalance: true });
         
         try {
-          // TODO: Implement actual balance fetching with Ethers.js
-          // This is a placeholder that would integrate with the blockchain service
-          console.log('Refreshing balances for wallet:', activeWallet.address);
+          console.log('🔄 Refreshing balances for wallet:', activeWallet.address);
           
-          // Simulate balance update
-          setTimeout(() => {
-            set({
-              isLoadingBalance: false,
-              lastBalanceUpdate: Date.now(),
-            });
-          }, 1000);
+          // Get tokens for current wallet and network
+          const walletTokens = tokens.filter(
+            t => t.walletId === activeWallet.id && t.chainId === activeNetwork.chainId
+          );
+
+          // Update each token balance
+          for (const token of walletTokens) {
+            try {
+              let balance: string;
+              
+              if (token.type === 'Native') {
+                // Native token balance
+                balance = await ethersService.getBalance(activeWallet.address, activeNetwork.chainId);
+              } else if (token.contractAddress && token.type === 'ERC20') {
+                // ERC-20 token balance
+                balance = await ethersService.getTokenBalance(
+                  token.contractAddress,
+                  activeWallet.address,
+                  activeNetwork.chainId
+                );
+              } else {
+                continue; // Skip unsupported token types
+              }
+
+              // Update balance in store
+              get().updateTokenBalance(token.id, balance);
+              
+              console.log(`💰 Updated ${token.symbol} balance: ${balance}`);
+            } catch (error) {
+              console.error(`Failed to update balance for token ${token.symbol}:`, error);
+            }
+          }
+
+          // If no native token exists, create one
+          const hasNativeToken = walletTokens.some(t => t.type === 'Native');
+          if (!hasNativeToken) {
+            const nativeBalance = await ethersService.getBalance(activeWallet.address, activeNetwork.chainId);
+            
+            const nativeToken: Token = {
+              id: `native_${activeWallet.id}_${activeNetwork.chainId}`,
+              walletId: activeWallet.id,
+              chainId: activeNetwork.chainId,
+              contractAddress: null,
+              symbol: activeNetwork.nativeCurrencySymbol,
+              name: activeNetwork.nativeCurrencyName,
+              decimals: activeNetwork.nativeCurrencyDecimals,
+              type: 'Native',
+              logoUrl: activeNetwork.iconUrl,
+              isCustom: false,
+              balance: nativeBalance,
+              lastBalanceUpdate: new Date().toISOString(),
+            };
+            
+            get().addToken(nativeToken);
+            get().updateTokenBalance(nativeToken.id, nativeBalance);
+          }
+          
+          set({
+            isLoadingBalance: false,
+            lastBalanceUpdate: Date.now(),
+          });
         } catch (error) {
           console.error('Failed to refresh balances:', error);
           set({ isLoadingBalance: false });
