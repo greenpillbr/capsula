@@ -3,12 +3,13 @@ import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import type { Transaction } from '@/db/schema';
 import { ethersService } from '@/lib/blockchain/ethersService';
+import { ExternalLink } from '@/lib/icons/ExternalLink';
 import { Globe } from '@/lib/icons/Globe';
 import { Send } from '@/lib/icons/Send';
 import { useNetworkStore } from '@/lib/stores/networkStore';
 import { useWalletStore } from '@/lib/stores/walletStore';
 import React, { useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Linking, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 
 export default function ActivityScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -134,6 +135,15 @@ export default function ActivityScreen() {
     return tx.isOutgoing ? 'text-muted-foreground' : 'text-primary';
   };
 
+  const openTransactionInExplorer = (tx: Transaction) => {
+    if (!activeNetwork || !tx.hash) return;
+    
+    const explorerUrl = `${activeNetwork.explorerUrl}/tx/${tx.hash}`;
+    Linking.openURL(explorerUrl).catch(error => {
+      console.error('Failed to open transaction in explorer:', error);
+    });
+  };
+
   const renderTransactionItem = (tx: Transaction) => (
     <Card key={tx.id} className="p-4 mb-3">
       <View className="flex-row items-center justify-between">
@@ -153,7 +163,7 @@ export default function ActivityScreen() {
             </View>
             
             <Text className="text-muted-foreground text-sm">
-              {tx.isOutgoing 
+              {tx.isOutgoing
                 ? `To ${tx.toAddress.slice(0, 8)}...${tx.toAddress.slice(-6)}`
                 : `From ${tx.fromAddress.slice(0, 8)}...${tx.fromAddress.slice(-6)}`
               }
@@ -166,14 +176,28 @@ export default function ActivityScreen() {
         </View>
         
         <View className="items-end">
-          <Text className={`font-medium ${getTransactionAmountColor(tx)}`}>
-            {getTransactionAmount(tx)}
-          </Text>
-          {tx.status === 'Confirmed' && (
-            <Text className="text-muted-foreground text-xs">
-              Block #{tx.blockNumber}
-            </Text>
-          )}
+          <View className="flex-row items-center gap-2">
+            <View className="items-end">
+              <Text className={`font-medium ${getTransactionAmountColor(tx)}`}>
+                {getTransactionAmount(tx)}
+              </Text>
+              {tx.status === 'Confirmed' && (
+                <Text className="text-muted-foreground text-xs">
+                  Block #{tx.blockNumber}
+                </Text>
+              )}
+            </View>
+            
+            {/* External Link Button */}
+            {tx.hash && (
+              <Pressable
+                onPress={() => openTransactionInExplorer(tx)}
+                className="w-8 h-8 items-center justify-center"
+              >
+                <ExternalLink className="text-muted-foreground" size={16} />
+              </Pressable>
+            )}
+          </View>
         </View>
       </View>
     </Card>

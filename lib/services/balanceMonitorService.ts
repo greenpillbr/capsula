@@ -20,6 +20,8 @@ class BalanceMonitorService {
   private appStateSubscription: any = null;
   private isMonitoring = false;
   private pendingTransactions: Map<string, ethers.TransactionResponse> = new Map();
+  private lastBalanceUpdate: Map<string, number> = new Map(); // Track last update times
+  private isUpdatingBalance = false; // Prevent concurrent balance updates
 
   /**
    * Start monitoring balances and transactions for the active wallet
@@ -76,8 +78,10 @@ class BalanceMonitorService {
       this.appStateSubscription = null;
     }
 
-    // Clear pending transactions
+    // Clear pending transactions and throttling maps
     this.pendingTransactions.clear();
+    this.lastBalanceUpdate.clear();
+    this.isUpdatingBalance = false;
   }
 
   /**
@@ -91,9 +95,9 @@ class BalanceMonitorService {
       clearInterval(this.intervals.get(intervalKey)!);
     }
 
-    // Poll every 30 seconds
+    // Poll every 30 seconds as requested
     const interval = setInterval(async () => {
-      if (this.isMonitoring) {
+      if (this.isMonitoring && !this.isUpdatingBalance) {
         await this.updateBalance(address, chainId);
       }
     }, 30000);
@@ -235,28 +239,52 @@ class BalanceMonitorService {
   }
 
   /**
-   * Update wallet balance
+   * Update wallet balance and detect incoming transactions with throttling
    */
   private async updateBalance(address: string, chainId: number): Promise<void> {
+    const updateKey = `${address}_${chainId}`;
+    const now = Date.now();
+    const lastUpdate = this.lastBalanceUpdate.get(updateKey) || 0;
+    
+    // Throttle updates - don't update more than once every 10 seconds
+    if (now - lastUpdate < 10000) {
+      console.log(`⏭️ Skipping balance update for ${address} - too recent`);
+      return;
+    }
+
+    // Prevent concurrent updates
+    if (this.isUpdatingBalance) {
+      console.log(`⏭️ Skipping balance update for ${address} - already updating`);
+      return;
+    }
+
     try {
-      const { activeWallet } = useWalletStore.getState();
+      this.isUpdatingBalance = true;
+      this.lastBalanceUpdate.set(updateKey, now);
+
+      const { activeWallet, balances } = useWalletStore.getState();
       if (!activeWallet || activeWallet.address !== address) return;
 
       console.log(`💰 Updating balance for ${address}`);
       
-      const balance = await ethersService.getBalance(address, chainId);
+      const newBalance = await ethersService.getBalance(address, chainId);
       
       // Find or create native token entry
       const { tokens } = useWalletStore.getState();
       const nativeToken = tokens.find(
-        t => t.walletId === activeWallet.id && 
-        t.chainId === chainId && 
+        t => t.walletId === activeWallet.id &&
+        t.chainId === chainId &&
         t.type === 'Native'
       );
 
+      let previousBalance = '0';
+      
       if (nativeToken) {
+        // Get previous balance for comparison
+        previousBalance = balances[nativeToken.id] || '0';
+        
         // Update existing token balance
-        useWalletStore.getState().updateTokenBalance(nativeToken.id, balance);
+        useWalletStore.getState().updateTokenBalance(nativeToken.id, newBalance);
       } else {
         // Create native token entry if it doesn't exist
         const { activeNetwork } = useNetworkStore.getState();
@@ -272,7 +300,7 @@ class BalanceMonitorService {
             type: 'Native' as const,
             logoUrl: activeNetwork.iconUrl,
             isCustom: false,
-            balance: balance,
+            balance: newBalance,
             lastBalanceUpdate: new Date().toISOString(),
           };
           
@@ -280,9 +308,42 @@ class BalanceMonitorService {
         }
       }
 
-      console.log(`✅ Balance updated: ${balance} ${chainId === 1 ? 'ETH' : 'tokens'}`);
+      // Check for balance increase (potential incoming transaction)
+      const prevBalanceNum = parseFloat(previousBalance);
+      const newBalanceNum = parseFloat(newBalance);
+      
+      if (newBalanceNum > prevBalanceNum) {
+        console.log(`📈 Balance increased from ${previousBalance} to ${newBalance} - scheduling transaction scan`);
+        // Schedule the scan in the next tick to avoid blocking
+        setTimeout(() => this.scanForRecentTransactions(address, chainId), 100);
+      }
+
+      console.log(`✅ Balance updated: ${newBalance} ${chainId === 1 ? 'ETH' : 'tokens'}`);
     } catch (error) {
       console.error('Failed to update balance:', error);
+    } finally {
+      this.isUpdatingBalance = false;
+    }
+  }
+
+  /**
+   * Scan for recent transactions when balance increases (throttled)
+   */
+  private async scanForRecentTransactions(address: string, chainId: number): Promise<void> {
+    try {
+      console.log(`🔍 Scanning for recent transactions for ${address}`);
+      
+      const provider = ethersService.getProvider(chainId);
+      const currentBlock = await provider.getBlockNumber();
+      
+      // Scan only last 5 blocks to reduce load
+      const startBlock = Math.max(0, currentBlock - 5);
+      
+      for (let blockNumber = startBlock; blockNumber <= currentBlock; blockNumber++) {
+        await this.checkBlockForTransactions(address, blockNumber, chainId);
+      }
+    } catch (error) {
+      console.error('Failed to scan for recent transactions:', error);
     }
   }
 
@@ -374,15 +435,19 @@ class BalanceMonitorService {
   }
 
   /**
-   * Force immediate balance update
+   * Force immediate balance update (with throttling override)
    */
   async forceBalanceUpdate(): Promise<void> {
     const { activeWallet } = useWalletStore.getState();
     const { activeNetwork } = useNetworkStore.getState();
     
-    if (!activeWallet || !activeNetwork) return;
+    if (!activeWallet || !activeNetwork || this.isUpdatingBalance) return;
     
     console.log('🔄 Force updating balance...');
+    // Clear throttling for forced update
+    const updateKey = `${activeWallet.address}_${activeNetwork.chainId}`;
+    this.lastBalanceUpdate.delete(updateKey);
+    
     await this.updateBalance(activeWallet.address, activeNetwork.chainId);
   }
 

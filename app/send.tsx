@@ -34,20 +34,57 @@ export default function SendScreen() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
 
-  const { activeWallet, addPendingTransaction } = useWalletStore();
+  const { activeWallet, addPendingTransaction, addTransaction, getActiveWalletBalance, refreshBalances } = useWalletStore();
   const { activeNetwork } = useNetworkStore();
+
+  // Get the actual wallet balance
+  const availableBalance = getActiveWalletBalance();
+  const availableBalanceNum = parseFloat(availableBalance);
 
   // Validate recipient address
   const isValidRecipient = ethersService.isValidAddress(recipient);
   
-  // Calculate if amount is valid
-  const isValidAmount = parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat('100'); // Mock max balance
+  // Calculate if amount is valid using actual balance
+  const isValidAmount = parseFloat(amount) > 0 && parseFloat(amount) <= availableBalanceNum;
+
+  // Refresh balances when component mounts
+  useEffect(() => {
+    if (activeWallet && activeNetwork) {
+      refreshBalances();
+    }
+  }, [activeWallet, activeNetwork, refreshBalances]);
 
   useEffect(() => {
     if (currentStep === 2 && recipient && amount && activeWallet) {
       estimateGas();
     }
   }, [currentStep, recipient, amount, activeWallet]);
+
+  const handleUseMax = async () => {
+    if (!activeWallet || !activeNetwork || !recipient) return;
+    
+    try {
+      // Estimate gas for a small transaction to get approximate gas cost
+      const gasEstimate = await ethersService.estimateGas({
+        to: recipient,
+        value: '0.01', // Use small amount for gas estimation
+        from: activeWallet.address,
+      }, activeNetwork.chainId);
+
+      // Calculate gas cost in ETH
+      const gasCostWei = BigInt(gasEstimate.gasLimit) * BigInt(gasEstimate.gasPrice);
+      const gasCostEth = parseFloat(ethersService.formatEther(gasCostWei));
+      
+      // Calculate max sendable amount (balance - gas cost - small buffer)
+      const maxSendable = Math.max(0, availableBalanceNum - gasCostEth - 0.001); // 0.001 ETH buffer
+      
+      setAmount(maxSendable.toString());
+    } catch (error) {
+      console.error('Failed to calculate max amount:', error);
+      // Fallback to 90% of balance as a conservative estimate
+      setAmount((availableBalanceNum * 0.9).toString());
+    }
+  };
 
   const estimateGas = async () => {
     if (!activeWallet || !activeNetwork) return;
@@ -88,8 +125,8 @@ export default function SendScreen() {
     setIsLoading(true);
 
     try {
-      // Sign and send transaction using key manager
-      const result = await keyManager.signTransaction(activeWallet.id, {
+      // First, sign the transaction
+      const signResult = await keyManager.signTransaction(activeWallet.id, {
         to: recipient,
         value: amount,
         gasLimit: gasEstimate.gasLimit,
@@ -99,55 +136,48 @@ export default function SendScreen() {
         chainId: activeNetwork.chainId,
       });
 
-      if (result.success && result.data) {
-        setTransactionHash(result.data.transactionHash);
-        
-        // Add to pending transactions
-        const transaction: Transaction = {
-          id: `tx_${Date.now()}`,
-          walletId: activeWallet.id,
-          chainId: activeNetwork.chainId,
-          hash: result.data.transactionHash,
-          fromAddress: activeWallet.address,
-          toAddress: recipient,
-          value: amount,
-          gasUsed: gasEstimate.gasLimit,
-          gasPrice: gasEstimate.gasPrice,
-          gasLimit: gasEstimate.gasLimit,
-          blockNumber: 0,
-          timestamp: new Date().toISOString(),
-          status: 'Pending',
-          type: 'Native Transfer',
-          tokenContractAddress: null,
-          tokenSymbol: activeNetwork.nativeCurrencySymbol,
-          tokenDecimals: activeNetwork.nativeCurrencyDecimals,
-          tokenAmount: amount,
-          memo: null,
-          isOutgoing: true,
-        };
-
-        addPendingTransaction(transaction);
-
-        // Show success and navigate back
-        setTimeout(() => {
-          Alert.alert(
-            'Transaction Sent!',
-            `Your transaction has been broadcasted to the ${activeNetwork.name} network.`,
-            [
-              {
-                text: 'View in Activity',
-                onPress: () => router.back(),
-              },
-              {
-                text: 'Done',
-                onPress: () => router.back(),
-              },
-            ]
-          );
-        }, 2000);
-      } else {
-        throw new Error(result.error || 'Transaction failed');
+      if (!signResult.success || !signResult.data) {
+        throw new Error(signResult.error || 'Transaction signing failed');
       }
+
+      // Then, broadcast the signed transaction
+      const sendResult = await keyManager.sendSignedTransaction(
+        signResult.data.signedTransaction,
+        activeNetwork.chainId
+      );
+
+      if (!sendResult.success || !sendResult.data) {
+        throw new Error(sendResult.error || 'Transaction broadcast failed');
+      }
+
+      const txHash = sendResult.data.transactionHash;
+      setTransactionHash(txHash);
+      
+      // Add to pending transactions
+      const transaction: Transaction = {
+        id: `tx_${Date.now()}`,
+        walletId: activeWallet.id,
+        chainId: activeNetwork.chainId,
+        hash: txHash,
+        fromAddress: activeWallet.address,
+        toAddress: recipient,
+        value: amount,
+        gasUsed: gasEstimate.gasLimit,
+        gasPrice: gasEstimate.gasPrice,
+        gasLimit: gasEstimate.gasLimit,
+        blockNumber: 0,
+        timestamp: new Date().toISOString(),
+        status: 'Pending',
+        type: 'Native Transfer',
+        tokenContractAddress: null,
+        tokenSymbol: activeNetwork.nativeCurrencySymbol,
+        tokenDecimals: activeNetwork.nativeCurrencyDecimals,
+        tokenAmount: amount,
+        memo: null,
+        isOutgoing: true,
+      };
+
+      addPendingTransaction(transaction);
     } catch (error) {
       console.error('Transaction failed:', error);
       Alert.alert(
@@ -346,9 +376,9 @@ export default function SendScreen() {
       <View className="mb-8">
         <Text className="text-sm text-muted-foreground">Available Balance</Text>
         <Text className="text-lg font-medium text-foreground">
-          100.0 {activeNetwork?.nativeCurrencySymbol || 'ETH'}
+          {parseFloat(availableBalance).toFixed(8)} {activeNetwork?.nativeCurrencySymbol || 'ETH'}
         </Text>
-        <Pressable onPress={() => setAmount('100.0')}>
+        <Pressable onPress={handleUseMax}>
           <Text className="text-primary text-sm">Use Max</Text>
         </Pressable>
       </View>
@@ -502,15 +532,15 @@ export default function SendScreen() {
 
       {transactionHash && (
         <View className="w-full space-y-3">
-          <Button 
-            onPress={() => console.log('Navigate to activity')}
+          <Button
+            onPress={() => router.push('/(tabs)/activity')}
             className="w-full bg-primary"
           >
             <Text className="text-primary-foreground font-medium">View in Activity</Text>
           </Button>
           
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onPress={() => router.back()}
             className="w-full"
           >

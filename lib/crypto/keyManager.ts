@@ -363,6 +363,9 @@ class KeyManager {
       const provider = ethersService.getProvider(transaction.chainId);
       const connectedWallet = ethersWallet.connect(provider);
 
+      // Get current nonce from the network
+      const nonce = transaction.nonce ?? await provider.getTransactionCount(ethersWallet.address, 'pending');
+
       // Prepare transaction object
       const txRequest = {
         to: transaction.to,
@@ -372,9 +375,11 @@ class KeyManager {
         gasPrice: transaction.gasPrice ? BigInt(transaction.gasPrice) : undefined,
         maxFeePerGas: transaction.maxFeePerGas ? BigInt(transaction.maxFeePerGas) : undefined,
         maxPriorityFeePerGas: transaction.maxPriorityFeePerGas ? BigInt(transaction.maxPriorityFeePerGas) : undefined,
-        nonce: transaction.nonce,
+        nonce: nonce,
         chainId: transaction.chainId,
       };
+
+      console.log(`📝 Signing transaction with nonce: ${nonce}`);
 
       // Sign the transaction
       const signedTx = await connectedWallet.signTransaction(txRequest);

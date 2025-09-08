@@ -4,6 +4,7 @@ export { BookOpen } from "./Book";
 export { Check } from "./Check";
 export { ChevronLeft } from "./ChevronLeft";
 export { Edit } from "./Edit";
+export { ExternalLink } from "./ExternalLink";
 export { Globe } from "./Globe";
 export { Languages } from "./Languages";
 export { List } from "./List";
