@@ -11,7 +11,7 @@ import { useWalletStore } from '@/lib/stores/walletStore';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, Image, ScrollView, View } from 'react-native';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -125,12 +125,11 @@ export default function OnboardingScreen() {
     <View className="flex-1 justify-center items-center p-6">
       {/* Logo */}
       <View className="mb-8">
-        <View className="w-24 h-24 bg-primary rounded-full items-center justify-center mb-4">
-          <View className="w-16 h-12 bg-background rounded-lg items-center justify-center">
-            <View className="w-8 h-2 bg-primary rounded-full mb-1" />
-            <View className="w-6 h-2 bg-primary rounded-full" />
-          </View>
-        </View>
+        <Image
+          source={require('../assets/images/icon.png')}
+          className="w-24 h-24 mb-4"
+          resizeMode="contain"
+        />
       </View>
 
       {/* Title */}

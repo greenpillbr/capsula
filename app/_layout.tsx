@@ -41,7 +41,13 @@ export default function RootLayout() {
   // Initialize stores and monitoring service
   const { activeWallet } = useWalletStore();
   const { activeNetwork } = useNetworkStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
+
+  // Force logout on app start to require fresh authentication
+  useEffect(() => {
+    console.log('🔒 Clearing authentication on app startup');
+    logout();
+  }, []);
 
   useEffect(() => {
     const theme = getItem("theme");

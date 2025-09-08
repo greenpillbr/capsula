@@ -18,16 +18,16 @@ const zustandStorage = {
 };
 
 interface AuthState {
-  // Authentication state
+  // Authentication state (never persisted)
   isAuthenticated: boolean;
+  sessionExpiry: number | null;
+  biometricAuthTime: number | null;
+  
+  // Settings state (persisted)
   isOnboardingComplete: boolean;
   passkeyEnabled: boolean;
   pinEnabled: boolean;
   activeWalletId: string | null;
-  
-  // Session management
-  sessionExpiry: number | null;
-  biometricAuthTime: number | null;
   
   // Actions
   setAuthenticated: (authenticated: boolean) => void;
@@ -38,6 +38,7 @@ interface AuthState {
   updateSessionExpiry: (expiry: number) => void;
   setBiometricAuthTime: (time: number) => void;
   logout: () => void;
+  invalidateAuth: () => void;
   
   // Computed getters
   isSessionValid: () => boolean;
@@ -47,7 +48,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      // Initial state
+      // Initial state - authentication always starts as false
       isAuthenticated: false,
       isOnboardingComplete: false,
       passkeyEnabled: true,
@@ -100,6 +101,14 @@ export const useAuthStore = create<AuthState>()(
         });
       },
       
+      invalidateAuth: () => {
+        set({
+          isAuthenticated: false,
+          sessionExpiry: null,
+          biometricAuthTime: null,
+        });
+      },
+      
       // Computed getters
       isSessionValid: () => {
         const { sessionExpiry } = get();
@@ -117,12 +126,13 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'capsula-auth',
       storage: createJSONStorage(() => zustandStorage),
-      // Only persist non-sensitive state
+      // Only persist settings, NEVER authentication state
       partialize: (state) => ({
         isOnboardingComplete: state.isOnboardingComplete,
         passkeyEnabled: state.passkeyEnabled,
         pinEnabled: state.pinEnabled,
         activeWalletId: state.activeWalletId,
+        // Authentication fields are intentionally excluded from persistence
       }),
     }
   )

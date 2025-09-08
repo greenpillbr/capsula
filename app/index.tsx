@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 export default function IndexPage() {
   const [isReady, setIsReady] = useState(false);
-  const { isOnboardingComplete } = useAuthStore();
+  const { isOnboardingComplete, isAuthenticated } = useAuthStore();
   const { initializeDefaultNetworks } = useNetworkStore();
 
   useEffect(() => {
@@ -18,8 +18,8 @@ export default function IndexPage() {
     return null; // Keep splash screen visible
   }
 
-  // Route based on onboarding status
-  if (!isOnboardingComplete) {
+  // Route based on onboarding and authentication status
+  if (!isOnboardingComplete || !isAuthenticated) {
     return <Redirect href="/onboarding" />;
   }
 
