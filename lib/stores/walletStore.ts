@@ -48,7 +48,7 @@ interface WalletState {
   addToken: (token: Token) => void;
   removeToken: (tokenId: string) => void;
   updateTokenBalance: (tokenId: string, balance: string) => void;
-  refreshBalances: () => Promise<void>;
+  refreshBalances: (forceUpdate?: boolean) => Promise<void>;
   
   // Actions - Transaction Management
   addTransaction: (transaction: Transaction) => void;
@@ -140,7 +140,7 @@ export const useWalletStore = create<WalletState>()(
         }));
       },
       
-      refreshBalances: async () => {
+      refreshBalances: async (forceUpdate = false) => {
         const { activeWallet, tokens } = get();
         const { activeNetwork } = await import('@/lib/stores/networkStore').then(m => m.useNetworkStore.getState());
         
@@ -150,6 +150,12 @@ export const useWalletStore = create<WalletState>()(
         
         try {
           console.log('🔄 Refreshing balances for wallet:', activeWallet.address);
+          
+          // Force balance monitor service to update if requested
+          if (forceUpdate) {
+            const { balanceMonitorService } = await import('@/lib/services/balanceMonitorService');
+            await balanceMonitorService.forceBalanceUpdate();
+          }
           
           // Get tokens for current wallet and network
           const walletTokens = tokens.filter(

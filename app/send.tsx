@@ -47,10 +47,10 @@ export default function SendScreen() {
   // Calculate if amount is valid using actual balance
   const isValidAmount = parseFloat(amount) > 0 && parseFloat(amount) <= availableBalanceNum;
 
-  // Refresh balances when component mounts
+  // Refresh balances when component mounts (force update to bypass throttling)
   useEffect(() => {
     if (activeWallet && activeNetwork) {
-      refreshBalances();
+      refreshBalances(true); // Force update on component mount
     }
   }, [activeWallet, activeNetwork, refreshBalances]);
 
@@ -376,7 +376,7 @@ export default function SendScreen() {
       <View className="mb-8">
         <Text className="text-sm text-muted-foreground">Available Balance</Text>
         <Text className="text-lg font-medium text-foreground">
-          {parseFloat(availableBalance).toFixed(8)} {activeNetwork?.nativeCurrencySymbol || 'ETH'}
+          {parseFloat(availableBalance).toFixed(6)} {activeNetwork?.nativeCurrencySymbol || 'ETH'}
         </Text>
         <Pressable onPress={handleUseMax}>
           <Text className="text-primary text-sm">Use Max</Text>

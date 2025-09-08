@@ -84,8 +84,8 @@ export default function WalletHomeScreen() {
     if (!activeWallet || !activeNetwork) return;
 
     try {
-      // Trigger balance refresh which will update the store
-      await refreshBalances();
+      // Trigger balance refresh which will update the store (force update on initial load)
+      await refreshBalances(true);
     } catch (error) {
       console.error('Failed to load wallet data:', error);
     }
@@ -94,7 +94,8 @@ export default function WalletHomeScreen() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await loadWalletData();
+      // Force balance refresh on manual refresh
+      await refreshBalances(true);
       // Force immediate balance update from monitoring service
       await balanceMonitorService.forceBalanceUpdate();
     } catch (error) {
@@ -269,24 +270,27 @@ export default function WalletHomeScreen() {
       {walletTokens.length > 0 && (
         <View className="px-4 mb-6">
           <Text className="text-lg font-semibold text-foreground mb-4">Tokens</Text>
-          {walletTokens.map((token) => (
-            <Card key={token.id} className="p-4 mb-3">
-              <View className="flex-row justify-between items-center">
-                <View className="flex-1">
-                  <Text className="text-foreground font-medium">{token.symbol}</Text>
-                  <Text className="text-muted-foreground text-sm">{token.name}</Text>
+          {walletTokens.map((token) => {
+            const currentBalance = balances[token.id] || '0.0';
+            return (
+              <Card key={token.id} className="p-4 mb-3">
+                <View className="flex-row justify-between items-center">
+                  <View className="flex-1">
+                    <Text className="text-foreground font-medium">{token.symbol}</Text>
+                    <Text className="text-muted-foreground text-sm">{token.name}</Text>
+                  </View>
+                  <View className="items-end">
+                    <Text className="text-foreground font-medium">
+                      {parseFloat(currentBalance).toFixed(6)} {token.symbol}
+                    </Text>
+                    <Text className="text-muted-foreground text-sm">
+                      ${(parseFloat(currentBalance) * 100).toFixed(2)}
+                    </Text>
+                  </View>
                 </View>
-                <View className="items-end">
-                  <Text className="text-foreground font-medium">
-                    {token.balance || '0.0'}
-                  </Text>
-                  <Text className="text-muted-foreground text-sm">
-                    ${(parseFloat(token.balance || '0') * 100).toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </View>
       )}
 

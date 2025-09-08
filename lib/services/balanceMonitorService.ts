@@ -52,8 +52,8 @@ class BalanceMonitorService {
     // Set up app state monitoring
     this.setupAppStateMonitoring();
 
-    // Initial balance fetch
-    await this.updateBalance(activeWallet.address, activeNetwork.chainId);
+    // Initial balance fetch (forced to bypass throttling)
+    await this.updateBalance(activeWallet.address, activeNetwork.chainId, true);
   }
 
   /**
@@ -241,13 +241,13 @@ class BalanceMonitorService {
   /**
    * Update wallet balance and detect incoming transactions with throttling
    */
-  private async updateBalance(address: string, chainId: number): Promise<void> {
+  private async updateBalance(address: string, chainId: number, forceUpdate: boolean = false): Promise<void> {
     const updateKey = `${address}_${chainId}`;
     const now = Date.now();
     const lastUpdate = this.lastBalanceUpdate.get(updateKey) || 0;
     
-    // Throttle updates - don't update more than once every 10 seconds
-    if (now - lastUpdate < 10000) {
+    // Throttle updates - don't update more than once every 5 seconds (unless forced)
+    if (!forceUpdate && now - lastUpdate < 5000) {
       console.log(`⏭️ Skipping balance update for ${address} - too recent`);
       return;
     }
@@ -396,7 +396,7 @@ class BalanceMonitorService {
         const { activeNetwork } = useNetworkStore.getState();
         
         if (activeWallet && activeNetwork && this.isMonitoring) {
-          this.updateBalance(activeWallet.address, activeNetwork.chainId);
+          this.updateBalance(activeWallet.address, activeNetwork.chainId, true); // Force update when app becomes active
         }
       } else if (nextAppState === 'background') {
         console.log('📱 App went to background - monitoring continues');
@@ -441,14 +441,10 @@ class BalanceMonitorService {
     const { activeWallet } = useWalletStore.getState();
     const { activeNetwork } = useNetworkStore.getState();
     
-    if (!activeWallet || !activeNetwork || this.isUpdatingBalance) return;
+    if (!activeWallet || !activeNetwork) return;
     
     console.log('🔄 Force updating balance...');
-    // Clear throttling for forced update
-    const updateKey = `${activeWallet.address}_${activeNetwork.chainId}`;
-    this.lastBalanceUpdate.delete(updateKey);
-    
-    await this.updateBalance(activeWallet.address, activeNetwork.chainId);
+    await this.updateBalance(activeWallet.address, activeNetwork.chainId, true);
   }
 
   /**

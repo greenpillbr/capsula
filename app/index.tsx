@@ -19,9 +19,16 @@ export default function IndexPage() {
   }
 
   // Route based on onboarding and authentication status
-  if (!isOnboardingComplete || !isAuthenticated) {
+  if (!isOnboardingComplete) {
+    // First-time user - go to onboarding
+    return <Redirect href="/onboarding" />;
+  }
+  
+  if (!isAuthenticated) {
+    // Returning user who needs to unlock - go to onboarding (which handles unlock)
     return <Redirect href="/onboarding" />;
   }
 
+  // User is onboarded and authenticated - go to main app
   return <Redirect href="/(tabs)" />;
 }

@@ -116,6 +116,8 @@ export default function RootLayout() {
               <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               <Stack.Screen name="send" options={{ headerShown: false }} />
               <Stack.Screen name="receive" options={{ headerShown: false }} />
+              <Stack.Screen name="import-wallet" options={{ headerShown: false }} />
+              <Stack.Screen name="network-manager" options={{ headerShown: false }} />
               <Stack.Screen name="mini-app/[id]" options={{ headerShown: false }} />
             </Stack>
           </BottomSheetModalProvider>
