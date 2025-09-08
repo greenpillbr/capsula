@@ -6,10 +6,13 @@ import { ActivityIndicator, View } from 'react-native';
 import { useMiniAppSDK } from '../sdk';
 import type { MiniAppProps } from '../sdk/types';
 
-// Import built-in mini-app modules
-const BUILT_IN_MODULES: Record<string, () => Promise<{ default: React.ComponentType<MiniAppProps> }>> = {
-  'tokens-module': () => import('../modules/tokens/TokensModule'),
-  'example-module': () => import('../modules/example/ExampleModule'),
+// Import built-in mini-app modules statically
+import ExampleModule from '../modules/example/ExampleModule';
+import TokensModule from '../modules/tokens/TokensModule';
+
+const BUILT_IN_MODULES: Record<string, { default: React.ComponentType<MiniAppProps> }> = {
+  'tokens-module': { default: TokensModule },
+  'example-module': { default: ExampleModule },
 };
 
 interface MiniAppHostProps {
@@ -49,7 +52,7 @@ export function MiniAppHost({ miniAppId, onClose }: MiniAppHostProps) {
 
       if (miniApp.isBuiltIn && BUILT_IN_MODULES[miniApp.id]) {
         // Load built-in module
-        const module = await BUILT_IN_MODULES[miniApp.id]();
+        const module = BUILT_IN_MODULES[miniApp.id];
         ModuleComponent = module.default;
       } else {
         // For future external mini-apps
