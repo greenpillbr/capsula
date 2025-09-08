@@ -11,14 +11,6 @@
     "ios": {
       "supportsTablet": true
     },
-    "expo": {
-      "userInterfaceStyle": "automatic",
-      "extra": {
-        "eas": {
-          "projectId": "bf0f5b96-60cf-40df-9f9f-b017d492f985"
-        }
-      }
-    },
     "android": {
       "package": "com.capsula.wallet",
       "adaptiveIcon": {
@@ -31,6 +23,11 @@
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/images/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bf0f5b96-60cf-40df-9f9f-b017d492f985"
+      }
     },
     "plugins": [
       [
