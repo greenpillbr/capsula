@@ -8,7 +8,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
-  scheme: "ltstarter",
+  scheme: "capsula",
   userInterfaceStyle: "dark",
   runtimeVersion: {
     policy: "appVersion",
@@ -28,7 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: "./assets/images/adaptive-icon.png",
       backgroundColor: "#ffffff",
     },
-    package: "com.expostarter.base",
+    package: "com.capsula.wallet",
   },
   web: {
     bundler: "metro",

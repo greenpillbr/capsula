@@ -49,9 +49,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.expostarter.base'
+    namespace 'com.capsula.wallet'
     defaultConfig {
-        applicationId 'com.expostarter.base'
+        applicationId 'com.capsula.wallet'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

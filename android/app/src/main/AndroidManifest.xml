@@ -29,8 +29,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="ltstarter"/>
-        <data android:scheme="exp+expostarter"/>
+        <data android:scheme="capsula"/>
+        <data android:scheme="exp+capsula"/>
       </intent-filter>
     </activity>
   </application>

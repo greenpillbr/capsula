@@ -1,4 +1,4 @@
-package com.expostarter.base
+package com.capsula.wallet
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

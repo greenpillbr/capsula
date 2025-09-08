@@ -1,4 +1,4 @@
-package com.expostarter.base
+package com.capsula.wallet
 
 import android.app.Application
 import android.content.res.Configuration
