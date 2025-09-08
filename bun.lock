@@ -34,6 +34,7 @@
         "expo": "53.0.22",
         "expo-camera": "^16.1.11",
         "expo-clipboard": "^7.1.5",
+        "expo-constants": "~17.1.7",
         "expo-crypto": "^14.1.5",
         "expo-dev-client": "~5.2.4",
         "expo-font": "~13.3.2",
