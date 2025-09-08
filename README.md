@@ -1,185 +1,242 @@
-# 🌱 Capsula - Beginner-Friendly Modular Crypto Wallet
+# Capsula: The Greenpill BR Crypto Wallet
 
-A regenerative, community crypto wallet built for Greenpill BR with React Native and TypeScript.
+<p align="center">
+  <img src="assets/images/icon.png" alt="Capsula - Your gateway to autonomy and regeneration" width="200">
+</p>
 
-## 🌟 Vision
+<p align="center">
+  <strong>A native-first mobile crypto wallet built for the Greenpill BR community</strong>
+</p>
 
-Capsula makes crypto accessible through:
-- **Effortless onboarding** with passkey/email signup
-- **Educational approach** with plain language explanations
-- **Modular design** allowing users to add features as they grow
-- **Regenerative values** with earth-friendly design and community focus
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#mini-app-development">Mini-App Development</a> •
+  <a href="#contributing">Contributing</a>
+</p>
 
-## 🚀 Features
+---
 
-### Current (MVP)
-- ✅ **Welcome Screen** with smooth onboarding flow
-- ✅ **Multi-language Support** (Portuguese, English, Spanish)
-- ✅ **Modular Architecture** ready for expansion
-- ✅ **Local Storage** - completely standalone Android app
-- ✅ **Accessibility** built-in from the start
-- ✅ **Testing Setup** with comprehensive test coverage
+## 🌱 About Capsula
 
-### Planned Modules
-- 🔄 **Token Management** - Add tokens by address + network
-- 🖼️ **NFT Viewer** - Monitor selected collections
-- 👥 **Contacts** - Save names + addresses, easy sending
-- 🍪 **Cookie Jar** - Claim tokens with notifications
-- 🗳️ **Community Voting** - Participate in governance
-- 🌿 **Gardens** - Quick proposal voting
-- 🛒 **Sarafu Marketplace** - Products + token swaps
-- 📜 **Hypercerts** - Skills certificates
+Capsula is a **minimalistic, vibrant, and incredibly easy-to-use** crypto wallet specifically designed for the Greenpill BR (GPBR) community. Built with React Native and Expo, it provides a simplified, beginner-friendly entry point into the world of crypto for individuals interested in **autonomy and regeneration**.
 
-## 🛠️ Tech Stack
+### 🎯 Vision
+Architected for a future of **limitless, user-installed functionality** through a revolutionary **modular mini-app system** - the central pillar of the application's design.
 
-- **React Native** - Cross-platform mobile development
-- **TypeScript** - Type-safe development
-- **Expo** - Development and build tooling
-- **Zustand** - Lightweight state management
-- **i18next** - Internationalization
-- **Gluestack UI** - Modern, accessible components
-- **Jest + Testing Library** - Comprehensive testing
-- **Ethers.js** - Ethereum interaction (planned)
+## ✨ Features
 
-## 🏗️ Architecture
+### 🔐 Core Wallet Functionality
+- **Passkey-First Authentication**: Single-click onboarding with biometric security
+- **Multi-Network Support**: Ethereum Mainnet, CELO, and Gnosis Chain
+- **Secure Key Management**: Hardware-backed secure storage with optional seed phrase export
+- **Send & Receive**: Full transaction flows with gas estimation and QR code support
+- **Transaction History**: Comprehensive activity tracking with real-time status updates
 
-```
-src/
-├── components/          # Reusable UI components
-├── screens/            # Screen components
-│   └── onboarding/     # Welcome and setup screens
-├── stores/             # Zustand state management
-├── localization/       # i18n translations
-├── constants/          # App configuration
-├── types/              # TypeScript definitions
-└── utils/              # Helper functions
-```
+### 🧩 Mini-App System (Central Pillar)
+- **Modular Architecture**: Extensible system for adding new functionality
+- **Built-in Mini-Apps**:
+  - **Tokens Module**: ERC-20 token management and custom token addition
+  - **Example Module**: SDK demonstration for developers
+- **Network-Based Filtering**: Mini-apps automatically show/hide based on current network
+- **Secure Integration**: All mini-app transactions require Passkey authentication
+
+### 🛠 Developer Experience
+- **Complete Mini-App SDK**: TypeScript interfaces for wallet, network, UI, storage, and events
+- **Permission System**: Granular control over mini-app capabilities
+- **Error Boundaries**: Robust error handling and recovery
+- **Hot Reloading**: Fast development iteration with Metro bundler
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- Yarn package manager
-- Expo CLI
-- Android Studio (for Android development)
-- Xcode (for iOS development, macOS only)
+- **Node.js** 18+ 
+- **Bun** package manager
+- **Android Studio** (for Android development)
+- **Expo CLI**: `bun add -g @expo/cli`
 
 ### Installation
 
-1. **Clone the repository**
+1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/greenpillbr/capsula.git
    cd capsula
    ```
 
-2. **Install dependencies**
+2. **Install dependencies:**
    ```bash
-   yarn install
+   bun install
    ```
 
-3. **Start the development server**
+3. **Configure environment:**
    ```bash
-   yarn start
+   cp .env.example .env
+   # Edit .env with your Infura API key
    ```
 
-4. **Run on device/simulator**
+4. **Generate database schema:**
    ```bash
-   # Android
-   yarn android
-   
-   # iOS
-   yarn ios
+   bun run db:generate
    ```
 
-## 🧪 Testing
+### Development
 
-Run the test suite:
 ```bash
-# Run all tests
-yarn test
+# Start Metro bundler
+bun run dev
 
-# Run tests in watch mode
-yarn test --watch
+# Run on Android device/emulator
+bun run android
 
-# Run tests with coverage
-yarn test --coverage
+# Run on iOS device/simulator (macOS only)
+bun run ios
 ```
 
-## 🌍 Internationalization
+## 🏗 Architecture
 
-The app supports multiple languages:
-- **Portuguese (pt-BR)** - Primary language for Brazilian users
-- **English (en-US)** - International users
-- **Spanish (es-ES)** - Latin American users
+### Technology Stack
+- **React Native** + **TypeScript** + **Expo** for cross-platform development
+- **Zustand** for state management with MMKV persistence
+- **Ethers.js** for blockchain interactions
+- **Drizzle ORM** with SQLite for local-first data storage
+- **Expo SecureStore** for cryptographic key management
 
-Add new translations in `src/localization/locales/`.
+### Mini-App System Architecture
 
-## 🎨 Design System
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Core Wallet   │    │  Mini-App SDK   │    │  Built-in Apps  │
+│                 │    │                 │    │                 │
+│ • Authentication│◄──►│ • Wallet API    │◄──►│ • Tokens        │
+│ • Network Mgmt  │    │ • Network API   │    │ • Example       │
+│ • Transactions  │    │ • Storage API   │    │ • [Future Apps] │
+│ • Key Mgmt      │    │ • UI API        │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
-### Colors
-- **Primary Green**: Earth-friendly regenerative theme
-- **Bright Accents**: Welcoming, energetic highlights
-- **Neutral Grays**: Clean, modern backgrounds
+### Key Components
+- **[`lib/stores/miniAppStore.ts`](lib/stores/miniAppStore.ts)** - Mini-app state management
+- **[`lib/mini-apps/sdk/`](lib/mini-apps/sdk/)** - Complete SDK for mini-app development
+- **[`lib/blockchain/ethersService.ts`](lib/blockchain/ethersService.ts)** - Enhanced Ethereum integration
+- **[`lib/crypto/keyManager.ts`](lib/crypto/keyManager.ts)** - Secure wallet management
+- **[`db/schema.ts`](db/schema.ts)** - Complete database schema
 
-### Typography
-- Clear hierarchy with accessible font sizes
-- Consistent spacing and rhythm
-- Support for multiple languages
+## 🧩 Mini-App Development
 
-### Components
-- Built with Gluestack UI for consistency
-- Accessible by default
-- Smooth micro-interactions
-- Responsive design
+### Creating a Mini-App
 
-## 🔧 Development
+1. **Create your module:**
+   ```bash
+   mkdir -p lib/mini-apps/modules/your-app
+   ```
 
-### Code Style
-- TypeScript strict mode enabled
-- ESLint + Prettier for code formatting
-- Consistent naming conventions
-- Comprehensive type definitions
+2. **Implement the interface:**
+   ```typescript
+   import type { MiniAppProps } from '@/lib/mini-apps/sdk';
+   
+   export default function YourMiniApp({ sdk, onClose, isActive }: MiniAppProps) {
+     // Access wallet
+     const wallet = sdk.wallet.getActiveWallet();
+     
+     // Read from smart contract
+     const data = await sdk.network.readContract({
+       contractAddress: '0x...',
+       abi: [...],
+       functionName: 'getData',
+       args: []
+     });
+     
+     // Sign transaction with Passkey
+     const tx = await sdk.wallet.signTransaction(params);
+     
+     return <YourUI />;
+   }
+   ```
 
-### State Management
-- Zustand for lightweight, scalable state
-- Local storage for persistence
-- Modular store structure
+3. **Register in host:**
+   Add your module to [`lib/mini-apps/host/MiniAppHost.tsx`](lib/mini-apps/host/MiniAppHost.tsx)
 
-### Testing Strategy
-- Unit tests for components
-- Integration tests for user flows
-- Snapshot tests for UI consistency
-- Accessibility testing included
+### Available SDK APIs
 
-## 📱 Platform Support
+- **Wallet API**: `getActiveWallet()`, `getBalance()`, `signTransaction()`
+- **Network API**: `getActiveNetwork()`, `readContract()`, `callContract()`
+- **UI API**: `showToast()`, `navigate()`, `showModal()`
+- **Storage API**: `getItem()`, `setItem()`, session storage
+- **Events API**: `onWalletChange()`, `onNetworkChange()`, custom events
 
-- **Android**: Primary target platform
-- **iOS**: Future support planned
-- **Web**: Potential future expansion
+## 📱 Supported Networks
+
+- **Ethereum Mainnet** (Chain ID: 1)
+- **CELO Mainnet** (Chain ID: 42220) 
+- **Gnosis Chain** (Chain ID: 100)
+- Extensible architecture for future EVM-compatible networks
+
+## 🔒 Security
+
+- **Passkey Authentication**: Hardware-backed biometric security
+- **Secure Key Storage**: Private keys encrypted in device secure storage
+- **Permission System**: Mini-apps have controlled access to wallet functions
+- **Transaction Authorization**: All blockchain operations require Passkey confirmation
+
+## 📚 Documentation
+
+- **[Development Workflow](docs/development-workflow.md)** - Setup and contribution guide
+- **[Mini-App System Architecture](docs/mini-app-system-mvp-architecture.md)** - Technical architecture
+- **[Complete Specification](docs/capsula_all_documentation.md)** - Full project requirements
+
+## 🛠 Build & Deploy
+
+### Development Testing
+```bash
+bun run dev              # Start Metro bundler
+bun run android         # Test on Android device
+```
+
+### Production Build
+```bash
+./scripts/build-android.sh  # Build Android APK
+```
+
+### Automated Deployment
+GitHub Actions automatically builds APKs on push to main branch.
+
+## 🗺 Roadmap
+
+### ✅ MVP Complete (Current)
+- [x] Core wallet functionality with Passkey authentication
+- [x] Multi-network support (Ethereum, CELO, Gnosis)
+- [x] Complete mini-app system infrastructure
+- [x] Tokens module for ERC-20 token management
+- [x] Example module for developer guidance
+- [x] Android build pipeline
+
+### 🔮 Future Phases
+- [ ] Mini-app marketplace with search and categories
+- [ ] Community following system for network/app recommendations
+- [ ] Contacts module for address book management
+- [ ] NFT module for ERC-721/ERC-1155 viewing
+- [ ] Advanced DeFi integrations
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions from the Greenpill BR community and crypto developers worldwide!
 
-### Development Guidelines
-- Write tests for new features
-- Follow TypeScript best practices
-- Ensure accessibility compliance
-- Add translations for new text
-- Update documentation
+### For Developers
+1. Read the [development workflow](docs/development-workflow.md)
+2. Study the [Example module](lib/mini-apps/modules/example/ExampleModule.tsx)
+3. Follow the mini-app development guide above
+
+### For Community
+- Report issues and suggest features
+- Test the app and provide feedback
+- Help with documentation and translations
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🌱 Greenpill BR
-
-Built with love for the Greenpill Brazil community, promoting regenerative crypto adoption and education.
+[MIT License](LICENSE) - Feel free to use this project for your own community wallet needs.
 
 ---
 
-**Made with 🌱 by the Greenpill BR community**
+**Built with ❤️ for the Greenpill BR community**  
+*Your gateway to autonomy and regeneration*

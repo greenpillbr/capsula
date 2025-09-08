@@ -1,0 +1,63 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🏗 Setup repo
+      uses: actions/checkout@v4
+
+    - name: 🏗 Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+        cache: npm
+
+    - name: 🏗 Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: 🏗 Setup EAS
+      uses: expo/expo-github-action@v8
+      with:
+        expo-version: latest
+        eas-version: latest
+        packager: bun
+        token: ${{ secrets.EXPO_TOKEN }}
+
+    - name: 📦 Install dependencies
+      run: bun install
+
+    - name: 🗄️ Generate database schema
+      run: bun run db:generate
+
+    - name: ✨ Code formatting check
+      run: bun run format
+
+    - name: 🔍 Check Expo dependencies
+      run: bun run expo-check
+
+    - name: 🛠️ Build Android APK
+      run: eas build --platform android --profile preview --non-interactive
+
+    - name: 📱 Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: capsula-android-apk
+        path: "*.apk"
+        retention-days: 30
+
+    - name: 📋 Build summary
+      run: |
+        echo "✅ Capsula Android build completed successfully!"
+        echo "📱 APK artifact uploaded for download"
+        echo "🔧 Install with: adb install capsula.apk"
