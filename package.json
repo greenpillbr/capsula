@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.0",
+    "@expo/cli": "^0.24.20",
     "@gorhom/bottom-sheet": "^5.1.6",
     "@hookform/resolvers": "^3.10.0",
     "@paralleldrive/cuid2": "^2.2.2",
