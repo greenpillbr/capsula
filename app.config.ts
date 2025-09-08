@@ -9,7 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "capsula",
-  userInterfaceStyle: "dark",
+  userInterfaceStyle: "automatic",
   runtimeVersion: {
     policy: "appVersion",
   },
@@ -29,20 +29,36 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: "#ffffff",
     },
     package: "com.capsula.wallet",
+    edgeToEdgeEnabled: true,
   },
   web: {
     bundler: "metro",
-    output: "static",
+    output: "single",
     favicon: "./assets/images/favicon.png",
   },
-  plugins: ["expo-router", "expo-sqlite", "expo-font", "expo-web-browser", "expo-secure-store"],
+  plugins: [
+    "expo-router",
+    "expo-sqlite",
+    "expo-font",
+    "expo-web-browser",
+    "expo-secure-store",
+    [
+      "expo-splash-screen",
+      {
+        image: "./assets/images/splash-icon.png",
+        imageWidth: 200,
+        resizeMode: "contain",
+        backgroundColor: "#ffffff",
+      },
+    ],
+  ],
   // experiments: {
   //   typedRoutes: true,
   //   baseUrl: "/expo-local-first-template",
   // },
   extra: {
     eas: {
-      projectId: "",
+      projectId: "bf0f5b96-60cf-40df-9f9f-b017d492f985",
     },
   },
   owner: "*",
