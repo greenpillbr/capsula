@@ -1,7 +1,7 @@
 # Capsula: The Greenpill BR Crypto Wallet
 
 <p align="center">
-  <img src="assets/images/logo.png?raw=true" alt="Capsula - Your gateway to autonomy and regeneration" width="200">
+  <img src="assets/images/icon.png?raw=true" alt="Capsula - Your gateway to autonomy and regeneration" width="200">
 </p>
 
 <p align="center">
