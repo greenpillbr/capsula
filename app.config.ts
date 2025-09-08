@@ -61,5 +61,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       projectId: "bf0f5b96-60cf-40df-9f9f-b017d492f985",
     },
   },
-  owner: "*",
+  owner: "greenpillbr",
 });
