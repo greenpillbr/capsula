@@ -86,11 +86,11 @@
   "devDependencies": {
     "@babel/core": "^7.26.0",
     "@babel/runtime": "^7.26.0",
-    "@types/react": "^19.0.0",
+    "@types/react": "~19.0.10",
     "@types/sql.js": "^1.4.9",
     "drizzle-kit": "^0.31.1",
     "tailwindcss": "3.4.1",
-    "typescript": "~5.3.3"
+    "typescript": "~5.8.3"
   },
   "trustedDependencies": [
     "tailwindcss",
