@@ -19,7 +19,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 18.x
-        cache: bun
+        cache: npm
 
     - name: 🏗 Setup Bun
       uses: oven-sh/setup-bun@v1
