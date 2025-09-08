@@ -1,6 +1,14 @@
 import { ethersService } from '@/lib/blockchain/ethersService';
-import { setNetworkChangeCallback, useNetworkStore } from '@/lib/stores/networkStore';
-import { useWalletStore } from '@/lib/stores/walletStore';
+import {
+  setNetworkChangeCallback,
+  useNetworkStore
+} from '@/lib/stores/networkStore';
+import {
+  setForceBalanceUpdateCallback,
+  setGetNetworkStateCallback,
+  setWalletChangeCallback,
+  useWalletStore
+} from '@/lib/stores/walletStore';
 import type { ethers } from 'ethers';
 import { AppState, AppStateStatus } from 'react-native';
 
@@ -24,9 +32,21 @@ class BalanceMonitorService {
   private isUpdatingBalance = false; // Prevent concurrent balance updates
 
   constructor() {
-    // Register callback with network store to handle network changes
+    // Register callbacks to avoid circular dependencies
     setNetworkChangeCallback(() => {
       this.onWalletOrNetworkChange();
+    });
+    
+    setWalletChangeCallback(() => {
+      this.onWalletOrNetworkChange();
+    });
+    
+    setGetNetworkStateCallback(() => {
+      return useNetworkStore.getState();
+    });
+    
+    setForceBalanceUpdateCallback(() => {
+      return this.forceBalanceUpdate();
     });
   }
 
