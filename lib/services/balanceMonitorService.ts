@@ -1,6 +1,14 @@
 import { ethersService } from '@/lib/blockchain/ethersService';
-import { useNetworkStore } from '@/lib/stores/networkStore';
-import { useWalletStore } from '@/lib/stores/walletStore';
+import {
+  setNetworkChangeCallback,
+  useNetworkStore
+} from '@/lib/stores/networkStore';
+import {
+  setForceBalanceUpdateCallback,
+  setGetNetworkStateCallback,
+  setWalletChangeCallback,
+  useWalletStore
+} from '@/lib/stores/walletStore';
 import type { ethers } from 'ethers';
 import { AppState, AppStateStatus } from 'react-native';
 
@@ -22,6 +30,25 @@ class BalanceMonitorService {
   private pendingTransactions: Map<string, ethers.TransactionResponse> = new Map();
   private lastBalanceUpdate: Map<string, number> = new Map(); // Track last update times
   private isUpdatingBalance = false; // Prevent concurrent balance updates
+
+  constructor() {
+    // Register callbacks to avoid circular dependencies
+    setNetworkChangeCallback(() => {
+      this.onWalletOrNetworkChange();
+    });
+    
+    setWalletChangeCallback(() => {
+      this.onWalletOrNetworkChange();
+    });
+    
+    setGetNetworkStateCallback(() => {
+      return useNetworkStore.getState();
+    });
+    
+    setForceBalanceUpdateCallback(() => {
+      return this.forceBalanceUpdate();
+    });
+  }
 
   /**
    * Start monitoring balances and transactions for the active wallet

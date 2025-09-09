@@ -4,6 +4,27 @@ import { MMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+// Callback for wallet changes to avoid circular dependencies
+let walletChangeCallback: (() => void) | null = null;
+
+export const setWalletChangeCallback = (callback: () => void) => {
+  walletChangeCallback = callback;
+};
+
+// Callback to get network store state
+let getNetworkStateCallback: (() => any) | null = null;
+
+export const setGetNetworkStateCallback = (callback: () => any) => {
+  getNetworkStateCallback = callback;
+};
+
+// Callback to force balance update
+let forceBalanceUpdateCallback: (() => Promise<void>) | null = null;
+
+export const setForceBalanceUpdateCallback = (callback: () => Promise<void>) => {
+  forceBalanceUpdateCallback = callback;
+};
+
 const storage = new MMKV();
 
 const zustandStorage = {
@@ -100,10 +121,9 @@ export const useWalletStore = create<WalletState>()(
         set({ activeWallet: wallet });
         
         // Notify balance monitoring service of wallet change
-        // Import dynamically to avoid circular dependencies
-        import('@/lib/services/balanceMonitorService').then(({ balanceMonitorService }) => {
-          balanceMonitorService.onWalletOrNetworkChange();
-        });
+        if (walletChangeCallback) {
+          walletChangeCallback();
+        }
       },
       
       updateWallet: (walletId: string, updates: Partial<Wallet>) => {
@@ -142,9 +162,11 @@ export const useWalletStore = create<WalletState>()(
       
       refreshBalances: async (forceUpdate = false) => {
         const { activeWallet, tokens } = get();
-        const { activeNetwork } = await import('@/lib/stores/networkStore').then(m => m.useNetworkStore.getState());
         
-        if (!activeWallet || !activeNetwork) return;
+        if (!activeWallet || !getNetworkStateCallback) return;
+        
+        const { activeNetwork } = getNetworkStateCallback();
+        if (!activeNetwork) return;
         
         set({ isLoadingBalance: true });
         
@@ -152,9 +174,8 @@ export const useWalletStore = create<WalletState>()(
           console.log('🔄 Refreshing balances for wallet:', activeWallet.address);
           
           // Force balance monitor service to update if requested
-          if (forceUpdate) {
-            const { balanceMonitorService } = await import('@/lib/services/balanceMonitorService');
-            await balanceMonitorService.forceBalanceUpdate();
+          if (forceUpdate && forceBalanceUpdateCallback) {
+            await forceBalanceUpdateCallback();
           }
           
           // Get tokens for current wallet and network

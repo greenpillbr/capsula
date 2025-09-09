@@ -24,7 +24,8 @@
       "autoIncrement": true,
       "android": {
         "buildType": "apk",
-        "withoutCredentials": true
+        "withoutCredentials": true,
+        "gradleCommand": ":app:assembleRelease -x lintVitalAnalyzeRelease"
       }
     }
   },

@@ -80,6 +80,13 @@ const getDefaultNetworks = (): Network[] => {
   ];
 };
 
+// Callback for network changes to avoid circular dependencies
+let networkChangeCallback: (() => void) | null = null;
+
+export const setNetworkChangeCallback = (callback: () => void) => {
+  networkChangeCallback = callback;
+};
+
 interface NetworkState {
   // Network management
   networks: Network[];
@@ -185,10 +192,9 @@ export const useNetworkStore = create<NetworkState>()(
         set({ activeNetwork: network });
         
         // Notify balance monitoring service of network change
-        // Import dynamically to avoid circular dependencies
-        import('@/lib/services/balanceMonitorService').then(({ balanceMonitorService }) => {
-          balanceMonitorService.onWalletOrNetworkChange();
-        });
+        if (networkChangeCallback) {
+          networkChangeCallback();
+        }
       },
       
       initializeDefaultNetworks: () => {
@@ -252,9 +258,9 @@ export const useNetworkStore = create<NetworkState>()(
             set({ activeNetwork: network });
             
             // Notify balance monitoring service of network change
-            import('@/lib/services/balanceMonitorService').then(({ balanceMonitorService }) => {
-              balanceMonitorService.onWalletOrNetworkChange();
-            });
+            if (networkChangeCallback) {
+              networkChangeCallback();
+            }
             
             return true;
           }
