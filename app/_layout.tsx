@@ -41,19 +41,17 @@ export default function RootLayout() {
   // Initialize stores and monitoring service
   const { activeWallet } = useWalletStore();
   const { activeNetwork } = useNetworkStore();
-  const { isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
-  // Force logout on app start to require fresh authentication
-  useEffect(() => {
-    console.log('🔒 Clearing authentication on app startup');
-    logout();
-  }, []);
+  // Note: Removed forced logout - wallet should stay locked naturally via session expiry
 
   useEffect(() => {
     const theme = getItem("theme");
     if (!theme) {
-      setAndroidNavigationBar(colorScheme);
-      setItem("theme", colorScheme);
+      // Default to light theme instead of system theme
+      setAndroidNavigationBar("light");
+      setItem("theme", "light");
+      setColorScheme("light");
       return;
     }
     const colorTheme = theme === "dark" ? "dark" : "light";
@@ -72,7 +70,6 @@ export default function RootLayout() {
   // Initialize balance monitoring when wallet and network are available
   useEffect(() => {
     if (isAuthenticated && activeWallet && activeNetwork) {
-      console.log('🚀 Initializing balance monitoring service');
       balanceMonitorService.startMonitoring();
     } else {
       balanceMonitorService.stopMonitoring();
@@ -89,7 +86,6 @@ export default function RootLayout() {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active' && isAuthenticated && activeWallet && activeNetwork) {
         // Restart monitoring when app becomes active
-        console.log('📱 App became active - ensuring monitoring is running');
         if (!balanceMonitorService.isMonitoringActive()) {
           balanceMonitorService.startMonitoring();
         }

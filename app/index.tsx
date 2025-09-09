@@ -1,3 +1,4 @@
+import { useWalletStore } from "@/lib/stores";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useNetworkStore } from "@/lib/stores/networkStore";
 import { Redirect } from "expo-router";
@@ -6,6 +7,7 @@ import { useEffect, useState } from "react";
 export default function IndexPage() {
   const [isReady, setIsReady] = useState(false);
   const { isOnboardingComplete, isAuthenticated } = useAuthStore();
+  const { wallets } = useWalletStore();
   const { initializeDefaultNetworks } = useNetworkStore();
 
   useEffect(() => {
@@ -19,16 +21,17 @@ export default function IndexPage() {
   }
 
   // Route based on onboarding and authentication status
-  if (!isOnboardingComplete) {
-    // First-time user - go to onboarding
+  if (wallets.length === 0) {
     return <Redirect href="/onboarding" />;
   }
   
+  if (!isOnboardingComplete && wallets.length > 0) {
+    useAuthStore.getState().setOnboardingComplete(true);
+  }
+  
   if (!isAuthenticated) {
-    // Returning user who needs to unlock - go to onboarding (which handles unlock)
     return <Redirect href="/onboarding" />;
   }
 
-  // User is onboarded and authenticated - go to main app
   return <Redirect href="/(tabs)" />;
 }
