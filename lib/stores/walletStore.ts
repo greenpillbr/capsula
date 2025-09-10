@@ -290,9 +290,15 @@ export const useWalletStore = create<WalletState>()(
         const { activeWallet, tokens, balances } = get();
         if (!activeWallet) return '0';
         
-        // Get native token balance for active wallet
+        // Get active network info
+        const networkState = getNetworkStateCallback?.();
+        if (!networkState?.activeNetwork) return '0';
+        
+        // Get native token balance for active wallet and active network
         const nativeToken = tokens.find(
-          t => t.walletId === activeWallet.id && t.type === 'Native'
+          t => t.walletId === activeWallet.id && 
+              t.type === 'Native' && 
+              t.chainId === networkState.activeNetwork.chainId
         );
         
         if (nativeToken) {
