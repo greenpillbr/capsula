@@ -83,8 +83,6 @@ class EthersService {
         throw new Error(`No RPC URL configured for chain ${chainId}`);
       }
 
-      console.log(`🌐 Creating provider for ${config?.name || `Chain ${chainId}`} with RPC: ${url}`);
-
       const provider = new ethers.JsonRpcProvider(url, {
         chainId,
         name: config?.name || `Chain ${chainId}`,
@@ -134,7 +132,7 @@ class EthersService {
       // Test provider connection first
       try {
         const network = await provider.getNetwork();
-        console.log(`✅ Connected to ${network.name} (${network.chainId})`);
+        // console.log(`✅ Connected to ${network.name} (${network.chainId})`);
       } catch (networkError) {
         console.error('❌ Network connection failed:', networkError);
         throw new Error('Unable to connect to network');
@@ -289,7 +287,7 @@ class EthersService {
       // This is a basic implementation - in production you'd want to use
       // indexing services like The Graph or Alchemy for better performance
       const currentBlock = await provider.getBlockNumber();
-      const startBlock = Math.max(fromBlock, currentBlock - 100); // Limit to last 100 blocks for performance
+      const startBlock = Math.max(fromBlock, currentBlock - 20); // Limit to last 20 blocks for performance
       
       const transactions: ethers.TransactionResponse[] = [];
       

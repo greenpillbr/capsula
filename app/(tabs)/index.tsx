@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { Bell } from '@/lib/icons/Bell';
+import { Copy } from '@/lib/icons/Copy';
 import { Globe } from '@/lib/icons/Globe';
 import { Send } from '@/lib/icons/Send';
 import { balanceMonitorService } from '@/lib/services/balanceMonitorService';
@@ -26,11 +27,19 @@ export default function WalletHomeScreen() {
     getTokensForActiveWallet,
     refreshBalances,
     isLoadingBalance,
-    lastBalanceUpdate
+    lastBalanceUpdate,
+    wallets
   } = useWalletStore();
   
   const { activeNetwork, getNetworkByChainId } = useNetworkStore();
-  const { activeWalletId } = useAuthStore();
+  const { activeWalletId, isOnboardingComplete } = useAuthStore();
+
+  // Guard: Redirect to onboarding if no wallets exist (first-time user)
+  useEffect(() => {
+    if (wallets.length === 0) {
+      router.replace('/onboarding');
+    }
+  }, [wallets.length, router]);
   
   const {
     initializeBuiltInMiniApps,
@@ -203,28 +212,42 @@ export default function WalletHomeScreen() {
       <View className="px-4 mb-4">
         <Pressable
           onPress={handleNetworkSwitch}
-          className="flex-row items-center mb-2"
+          className="flex-row items-center justify-between mb-2 bg-muted/50 rounded-lg px-3 py-2 border border-border"
         >
-          <View className="w-4 h-4 rounded-full overflow-hidden mr-2 items-center justify-center">
-            {activeNetwork?.iconUrl ? (
-              <Image
-                source={{ uri: activeNetwork.iconUrl }}
-                style={{ width: 16, height: 16, borderRadius: 8 }}
-                onError={() => console.log('Failed to load network icon')}
-              />
-            ) : (
-              <Globe className="text-muted-foreground" size={16} />
-            )}
+          <View className="flex-row items-center">
+            <View className="w-5 h-5 rounded-full overflow-hidden mr-3 items-center justify-center bg-background">
+              {activeNetwork?.iconUrl ? (
+                <Image
+                  source={{ uri: activeNetwork.iconUrl }}
+                  style={{ width: 20, height: 20, borderRadius: 10 }}
+                  onError={() => console.log('Failed to load network icon')}
+                />
+              ) : (
+                <Globe className="text-muted-foreground" size={18} />
+              )}
+            </View>
+            <View>
+              <Text className="text-sm text-muted-foreground">Network</Text>
+              <Text className="text-base font-medium text-foreground">
+                {activeNetwork?.name || 'No Network'}
+              </Text>
+            </View>
           </View>
-          <Text className="text-sm text-muted-foreground">
-            {activeNetwork?.name || 'No Network'}
-          </Text>
+          {/* Down arrow to indicate it's clickable */}
+          <View className="w-6 h-6 items-center justify-center">
+            <Text className="text-muted-foreground text-lg">▼</Text>
+          </View>
         </Pressable>
         
-        <Pressable onPress={handleCopyAddress}>
-          <Text className="text-base font-medium text-foreground">
+        <Pressable onPress={handleCopyAddress} className="flex-row items-center">
+          <Text className="text-base font-medium text-foreground mr-2">
             {activeWallet ? formatAddress(activeWallet.address) : 'No Wallet'}
           </Text>
+          {activeWallet && (
+            <View className="w-4 h-4 items-center justify-center">
+              <Copy className="text-muted-foreground" size={18} />
+            </View>
+          )}
         </Pressable>
       </View>
 

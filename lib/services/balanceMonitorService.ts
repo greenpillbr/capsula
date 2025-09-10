@@ -62,12 +62,9 @@ class BalanceMonitorService {
     const { activeNetwork } = useNetworkStore.getState();
 
     if (!activeWallet || !activeNetwork) {
-      console.log('⚠️ Cannot start monitoring: no active wallet or network');
       return;
     }
 
-    console.log(`🔄 Starting balance monitoring for wallet ${activeWallet.address} on ${activeNetwork.name}`);
-    
     this.isMonitoring = true;
 
     // Set up balance polling
@@ -75,6 +72,9 @@ class BalanceMonitorService {
 
     // Set up transaction event listeners
     await this.setupTransactionListeners(activeWallet.address, activeNetwork.chainId);
+
+    // Set up pending transaction monitoring
+    await this.setupPendingTransactionMonitoring();
 
     // Set up app state monitoring
     this.setupAppStateMonitoring();
@@ -87,8 +87,6 @@ class BalanceMonitorService {
    * Stop all monitoring activities
    */
   stopMonitoring(): void {
-    console.log('🛑 Stopping balance monitoring');
-    
     this.isMonitoring = false;
 
     // Clear all intervals
@@ -130,7 +128,6 @@ class BalanceMonitorService {
     }, 30000);
 
     this.intervals.set(intervalKey, interval);
-    console.log(`📊 Balance polling started for ${address} on chain ${chainId}`);
   }
 
   /**
@@ -164,8 +161,6 @@ class BalanceMonitorService {
         provider.off('block', onBlock);
       };
       this.listeners.set(listenerKey, removeListener);
-
-      console.log(`👂 Transaction listener started for ${address} on chain ${chainId}`);
     } catch (error) {
       console.error('Failed to setup transaction listeners:', error);
     }
@@ -192,7 +187,6 @@ class BalanceMonitorService {
           
           // Check if this transaction involves our wallet
           if (transaction.from === address || transaction.to === address) {
-            console.log(`💰 Found transaction for wallet: ${transaction.hash}`);
             await this.handleTransactionEvent({
               hash: transaction.hash,
               from: transaction.from,
@@ -219,12 +213,6 @@ class BalanceMonitorService {
       const { activeNetwork } = useNetworkStore.getState();
       
       if (!activeWallet || !activeNetwork) return;
-
-      console.log(`🔔 Processing transaction event:`, {
-        hash: event.hash,
-        isIncoming: event.isIncoming,
-        value: event.value,
-      });
 
       // Update balance immediately for incoming transactions
       if (event.isIncoming) {
@@ -275,13 +263,11 @@ class BalanceMonitorService {
     
     // Throttle updates - don't update more than once every 5 seconds (unless forced)
     if (!forceUpdate && now - lastUpdate < 5000) {
-      console.log(`⏭️ Skipping balance update for ${address} - too recent`);
       return;
     }
 
     // Prevent concurrent updates
     if (this.isUpdatingBalance) {
-      console.log(`⏭️ Skipping balance update for ${address} - already updating`);
       return;
     }
 
@@ -292,8 +278,6 @@ class BalanceMonitorService {
       const { activeWallet, balances } = useWalletStore.getState();
       if (!activeWallet || activeWallet.address !== address) return;
 
-      console.log(`💰 Updating balance for ${address}`);
-      
       const newBalance = await ethersService.getBalance(address, chainId);
       
       // Find or create native token entry
@@ -340,12 +324,9 @@ class BalanceMonitorService {
       const newBalanceNum = parseFloat(newBalance);
       
       if (newBalanceNum > prevBalanceNum) {
-        console.log(`📈 Balance increased from ${previousBalance} to ${newBalance} - scheduling transaction scan`);
         // Schedule the scan in the next tick to avoid blocking
         setTimeout(() => this.scanForRecentTransactions(address, chainId), 100);
       }
-
-      console.log(`✅ Balance updated: ${newBalance} ${chainId === 1 ? 'ETH' : 'tokens'}`);
     } catch (error) {
       console.error('Failed to update balance:', error);
     } finally {
@@ -358,8 +339,6 @@ class BalanceMonitorService {
    */
   private async scanForRecentTransactions(address: string, chainId: number): Promise<void> {
     try {
-      console.log(`🔍 Scanning for recent transactions for ${address}`);
-      
       const provider = ethersService.getProvider(chainId);
       const currentBlock = await provider.getBlockNumber();
       
@@ -375,38 +354,98 @@ class BalanceMonitorService {
   }
 
   /**
-   * Monitor pending transactions for confirmation
+   * Monitor pending transactions for confirmation using provider.waitForTransaction
    */
   private async monitorPendingTransactions(): Promise<void> {
     const { activeNetwork } = useNetworkStore.getState();
-    if (!activeNetwork) return;
+    const { pendingTransactions, updateTransaction, removePendingTransaction, addTransaction } = useWalletStore.getState();
+    
+    if (!activeNetwork || pendingTransactions.length === 0) return;
 
-    for (const [hash, tx] of this.pendingTransactions.entries()) {
+    // Monitor each pending transaction
+    for (const pendingTx of pendingTransactions) {
       try {
-        const receipt = await ethersService.waitForTransaction(hash, 1, activeNetwork.chainId);
+        // Use provider.waitForTransaction to check for at least 1 confirmation
+        const receipt = await ethersService.waitForTransaction(pendingTx.hash, 1, activeNetwork.chainId);
         
         if (receipt) {
-          console.log(`✅ Transaction confirmed: ${hash}`);
-          
-          // Remove from pending
-          this.pendingTransactions.delete(hash);
-          
-          // Update transaction status in store
-          useWalletStore.getState().updateTransaction(hash, {
+          // Update transaction status to "Confirmed" with receipt details
+          updateTransaction(pendingTx.id, {
             status: 'Confirmed',
             gasUsed: receipt.gasUsed.toString(),
             blockNumber: receipt.blockNumber,
+            timestamp: new Date().toISOString(), // Update with confirmation time
           });
+          
+          // Also add to recent transactions if not already there
+          const confirmedTransaction = {
+            ...pendingTx,
+            status: 'Confirmed' as const,
+            gasUsed: receipt.gasUsed.toString(),
+            blockNumber: receipt.blockNumber,
+            timestamp: new Date().toISOString(),
+          };
+          
+          addTransaction(confirmedTransaction);
+          
+          // Remove from pending transactions
+          removePendingTransaction(pendingTx.id);
           
           // Update balance after confirmation
           const { activeWallet } = useWalletStore.getState();
           if (activeWallet) {
-            await this.updateBalance(activeWallet.address, activeNetwork.chainId);
+            await this.updateBalance(activeWallet.address, activeNetwork.chainId, true);
           }
+          
+          // Trigger notification about confirmation
+          this.triggerTransactionNotification({
+            hash: pendingTx.hash,
+            from: pendingTx.fromAddress,
+            to: pendingTx.toAddress,
+            value: pendingTx.value,
+            blockNumber: receipt.blockNumber,
+            timestamp: Date.now(),
+            isIncoming: !pendingTx.isOutgoing,
+          });
         }
       } catch (error) {
-        console.error(`Error monitoring transaction ${hash}:`, error);
-        // Keep in pending for retry
+        console.error(`Error monitoring transaction ${pendingTx.hash}:`, error);
+        
+        // Check if transaction failed
+        try {
+          const provider = ethersService.getProvider(activeNetwork.chainId);
+          const tx = await provider.getTransaction(pendingTx.hash);
+          
+          if (tx && tx.blockNumber) {
+            // Transaction is included in a block, get receipt to check if it failed
+            const receipt = await provider.getTransactionReceipt(pendingTx.hash);
+            if (receipt && receipt.status === 0) {
+              console.log(`❌ Transaction failed: ${pendingTx.hash}`);
+              
+              // Mark as failed
+              updateTransaction(pendingTx.id, {
+                status: 'Failed',
+                blockNumber: receipt.blockNumber,
+                timestamp: new Date().toISOString(),
+              });
+              
+              // Add to recent transactions as failed
+              const failedTransaction = {
+                ...pendingTx,
+                status: 'Failed' as const,
+                blockNumber: receipt.blockNumber,
+                timestamp: new Date().toISOString(),
+              };
+              
+              addTransaction(failedTransaction);
+              
+              // Remove from pending
+              removePendingTransaction(pendingTx.id);
+            }
+          }
+        } catch (failureCheckError) {
+          console.error(`Error checking transaction failure for ${pendingTx.hash}:`, failureCheckError);
+        }
       }
     }
   }
@@ -417,7 +456,6 @@ class BalanceMonitorService {
   private setupAppStateMonitoring(): void {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
-        console.log('📱 App became active - resuming balance monitoring');
         // Force immediate balance update when app becomes active
         const { activeWallet } = useWalletStore.getState();
         const { activeNetwork } = useNetworkStore.getState();
@@ -426,12 +464,32 @@ class BalanceMonitorService {
           this.updateBalance(activeWallet.address, activeNetwork.chainId, true); // Force update when app becomes active
         }
       } else if (nextAppState === 'background') {
-        console.log('📱 App went to background - monitoring continues');
         // Keep monitoring in background for a short time
       }
     };
 
     this.appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+  }
+
+  /**
+   * Set up periodic monitoring for pending transactions
+   */
+  private async setupPendingTransactionMonitoring(): Promise<void> {
+    const intervalKey = 'pending_transactions_monitor';
+    
+    // Clear existing interval
+    if (this.intervals.has(intervalKey)) {
+      clearInterval(this.intervals.get(intervalKey)!);
+    }
+
+    // Monitor pending transactions every 15 seconds
+    const interval = setInterval(async () => {
+      if (this.isMonitoring) {
+        await this.monitorPendingTransactions();
+      }
+    }, 15000);
+
+    this.intervals.set(intervalKey, interval);
   }
 
   /**
@@ -470,7 +528,7 @@ class BalanceMonitorService {
     
     if (!activeWallet || !activeNetwork) return;
     
-    console.log('🔄 Force updating balance...');
+    // console.log('🔄 Force updating balance...');
     await this.updateBalance(activeWallet.address, activeNetwork.chainId, true);
   }
 
@@ -530,7 +588,7 @@ class BalanceMonitorService {
           // Update balance in store
           useWalletStore.getState().updateTokenBalance(token.id, balance);
           
-          console.log(`💰 Updated ${token.symbol} balance: ${balance}`);
+          // console.log(`💰 Updated ${token.symbol} balance: ${balance}`);
         } catch (error) {
           console.error(`Failed to update balance for token ${token.symbol}:`, error);
         }

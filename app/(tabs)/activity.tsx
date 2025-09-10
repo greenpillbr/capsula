@@ -9,7 +9,7 @@ import { Send } from '@/lib/icons/Send';
 import { useNetworkStore } from '@/lib/stores/networkStore';
 import { useWalletStore } from '@/lib/stores/walletStore';
 import React, { useEffect, useState } from 'react';
-import { Linking, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Image, Linking, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 
 export default function ActivityScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -27,7 +27,7 @@ export default function ActivityScreen() {
 
   useEffect(() => {
     loadTransactions();
-  }, [activeWallet, activeNetwork]);
+  }, [activeWallet, activeNetwork, recentTransactions, pendingTransactions]);
 
   const loadTransactions = async () => {
     if (!activeWallet || !activeNetwork) return;
@@ -211,13 +211,35 @@ export default function ActivityScreen() {
       <View className="p-4 pt-12">
         <Text className="text-2xl font-bold text-foreground mb-4">Activity</Text>
         
-        {/* Network Info */}
-        <View className="flex-row items-center mb-4">
-          <Globe className="text-muted-foreground mr-2" size={16} />
-          <Text className="text-muted-foreground">
-            {activeNetwork?.name || 'No Network Selected'}
-          </Text>
-        </View>
+        {/* Network Info - Same component as main screen */}
+        <Pressable
+          onPress={() => {/* TODO: Add network switcher navigation */}}
+          className="flex-row items-center justify-between mb-4 bg-muted/50 rounded-lg px-3 py-2 border border-border"
+        >
+          <View className="flex-row items-center">
+            <View className="w-5 h-5 rounded-full overflow-hidden mr-3 items-center justify-center bg-background">
+              {activeNetwork?.iconUrl ? (
+                <Image
+                  source={{ uri: activeNetwork.iconUrl }}
+                  style={{ width: 20, height: 20, borderRadius: 10 }}
+                  onError={() => console.log('Failed to load network icon')}
+                />
+              ) : (
+                <Globe className="text-muted-foreground" size={18} />
+              )}
+            </View>
+            <View>
+              <Text className="text-sm text-muted-foreground">Network</Text>
+              <Text className="text-base font-medium text-foreground">
+                {activeNetwork?.name || 'No Network Selected'}
+              </Text>
+            </View>
+          </View>
+          {/* Down arrow to indicate it's clickable */}
+          <View className="w-6 h-6 items-center justify-center">
+            <Text className="text-muted-foreground text-lg">▼</Text>
+          </View>
+        </Pressable>
 
         {/* Filter Buttons */}
         <View className="flex-row gap-2 mb-4">

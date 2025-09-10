@@ -171,8 +171,6 @@ export const useWalletStore = create<WalletState>()(
         set({ isLoadingBalance: true });
         
         try {
-          console.log('🔄 Refreshing balances for wallet:', activeWallet.address);
-          
           // Force balance monitor service to update if requested
           if (forceUpdate && forceBalanceUpdateCallback) {
             await forceBalanceUpdateCallback();
@@ -205,7 +203,7 @@ export const useWalletStore = create<WalletState>()(
               // Update balance in store
               get().updateTokenBalance(token.id, balance);
               
-              console.log(`💰 Updated ${token.symbol} balance: ${balance}`);
+              //console.log(`💰 Updated ${token.symbol} balance: ${balance}`);
             } catch (error) {
               console.error(`Failed to update balance for token ${token.symbol}:`, error);
             }
