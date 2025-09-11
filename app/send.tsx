@@ -34,11 +34,28 @@ export default function SendScreen() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
 
-  const { activeWallet, addPendingTransaction, addTransaction, getActiveWalletBalance, refreshBalances } = useWalletStore();
+  const { activeWallet, addPendingTransaction, addTransaction, getActiveWalletBalance, refreshBalances, balances } = useWalletStore();
   const { activeNetwork } = useNetworkStore();
 
-  // Get the actual wallet balance
-  const availableBalance = getActiveWalletBalance();
+  // Get current wallet data for active network
+  const walletTokens = useWalletStore.getState().getTokensForActiveWallet();
+  
+  // Get native token balance for current network (same approach as main screen)
+  const getNativeTokenBalance = () => {
+    if (!activeWallet || !activeNetwork) return '0.0';
+    
+    const nativeToken = walletTokens.find(
+      t => t.chainId === activeNetwork.chainId && t.type === 'Native'
+    );
+    
+    if (nativeToken && balances[nativeToken.id]) {
+      return balances[nativeToken.id];
+    }
+    
+    return '0.0';
+  };
+
+  const availableBalance = getNativeTokenBalance();
   const availableBalanceNum = parseFloat(availableBalance);
 
   // Validate recipient address
