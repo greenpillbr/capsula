@@ -55,6 +55,7 @@ Architected for a future of **limitless, user-installed functionality** through 
 - **Bun** package manager
 - **Android Studio** (for Android development)
 - **Expo CLI**: `bun add -g @expo/cli`
+- **Expo Go**: Installed from playstore on your mobile phone
 
 ### Installation
 
@@ -85,6 +86,7 @@ Architected for a future of **limitless, user-installed functionality** through 
 ```bash
 # Start Metro bundler
 bun run dev
+# You should use Expo go instead of development build (press S to switch to expo go)
 
 # Run on Android device/emulator
 bun run android
