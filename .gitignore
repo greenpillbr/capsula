@@ -45,3 +45,6 @@ app-example
 # Keystore files
 *.keystore
 *.jks
+
+# JetBrains / IntelliJ
+.idea/
