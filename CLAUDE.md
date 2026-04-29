@@ -19,7 +19,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Capsula is a React Native crypto wallet built with Expo, focusing on a modular mini-app system architecture.
 
 ### Technology Stack
-- **React Native + Expo** (SDK 53) with TypeScript
+
+- **React Native + Expo** (SDK 54) with TypeScript
 - **Zustand** for state management with MMKV persistence
 - **Ethers.js v6** for blockchain interactions
 - **Drizzle ORM** with SQLite for local-first storage
@@ -30,6 +31,7 @@ Capsula is a React Native crypto wallet built with Expo, focusing on a modular m
 - **Chainlist.org API** for dynamic network management
 
 ### Key Directories
+
 - `app/` - Expo Router file-based routing with tab navigation
 - `lib/` - Core business logic and services
   - `lib/stores/` - Zustand state management stores
@@ -40,25 +42,30 @@ Capsula is a React Native crypto wallet built with Expo, focusing on a modular m
 - `db/` - Drizzle ORM schema and database configuration
 
 ### State Management Architecture
+
 - **authStore** - User authentication and passkey state
 - **walletStore** - Wallet management and transaction history
 - **networkStore** - Multi-chain network management (Ethereum, CELO, Gnosis)
 - **miniAppStore** - Mini-app system state
 
 ### Mini-App System
+
 The core architectural feature is the extensible mini-app system:
+
 - Located in `lib/mini-apps/`
 - Complete SDK in `lib/mini-apps/sdk/`
 - Built-in modules in `lib/mini-apps/modules/`
 - Host system in `lib/mini-apps/host/`
 
 Each mini-app receives an SDK with APIs for:
+
 - Wallet operations (getActiveWallet, signTransaction)
 - Network interactions (readContract, callContract)
 - Storage (persistent and session storage)
 - UI utilities (navigation, toasts, modals)
 
 ### Security Architecture
+
 - **Passkey-first authentication** with biometric security (WebAuthn standard)
 - **Expo SecureStore** for private key encryption with hardware-backed storage
 - **PIN/password fallback** for devices without Passkey support
@@ -67,6 +74,7 @@ Each mini-app receives an SDK with APIs for:
 - All blockchain transactions require passkey confirmation
 
 ### Development Notes
+
 - Uses Biome for formatting/linting instead of ESLint/Prettier
 - No traditional test framework configured - manual testing on devices
 - Development primarily targets Android with Metro bundler
@@ -77,7 +85,9 @@ Each mini-app receives an SDK with APIs for:
 - Community focus: Greenpill BR (Brazilian regenerative agriculture/crypto activists)
 
 ### Database Schema
+
 Located in `db/schema.ts` with tables for:
+
 - **Wallets** - Support for multiple wallets with Passkey integration
 - **Networks** - EVM-compatible chains with Chainlist.org API integration
 - **Transactions** - Comprehensive history with status tracking
@@ -87,11 +97,13 @@ Located in `db/schema.ts` with tables for:
 - **User Settings** - App preferences and configurations
 
 Key security considerations:
+
 - Private keys stored via `keyRefId` references to Expo SecureStore
 - Passkey-backed wallets use system-level credentials
 - Network data re-verified against Chainlist.org API on app startup
 
 ### Key Files to Understand
+
 - `app/_layout.tsx` - Root layout with providers and theme setup
 - `lib/stores/index.ts` - Central store exports
 - `lib/mini-apps/sdk/index.ts` - Mini-app SDK entry point
@@ -99,6 +111,7 @@ Key security considerations:
 - `lib/crypto/keyManager.ts` - Secure wallet management
 
 ### Functional Requirements Summary
+
 - **Onboarding**: Passkey-first with optional seed phrase export
 - **Multi-wallet**: Support for multiple wallets with easy switching
 - **Networks**: Ethereum, CELO, Gnosis + testnets (extensible via Chainlist.org)
@@ -107,12 +120,14 @@ Key security considerations:
 - **Built-in modules**: Tokens, NFTs, Contacts, Example mini-app
 
 ### Performance Requirements
+
 - Load times under 1 second for critical interactions
 - Local caching for all fetched data
 - Responsive animated loading screens
 - GraphQL/external caches preferred over direct blockchain calls
 
 ### Mini-App SDK Features
+
 - ABI-to-UI binding for smart contract interaction
 - JSON configuration for simple mini-apps
 - Custom component support for advanced UIs
