@@ -2,7 +2,7 @@
 
 **A native-first mobile crypto wallet built for the Greenpill BR community**
 
-[Features](#features) • [Getting Started](#getting-started) • [Architecture](#architecture) • [Mini-App Development](#mini-app-development) • [Contributing](#contributing)
+[Features](#-features) • [Getting Started](#-getting-started) • [Running on Your Device](#-running-on-your-device) • [Architecture](#-architecture) • [Mini-App Development](#-mini-app-development) • [Contributing](#-contributing)
 
 ---
 
@@ -45,37 +45,37 @@ Architected for a future of **limitless, user-installed functionality** through 
 ### Prerequisites
 
 - **Node.js** 18+
-- **Bun** package manager
-- **Android Studio** (for Android development)
-- **Expo CLI**: `bun add -g @expo/cli`
-- **Expo Go**: Installed from playstore on your mobile phone
+- **Bun** package manager (`curl -fsSL https://bun.sh/install | bash`)
+- **Git**
+
+> Tooling specific to running the app on a phone or emulator (Android Studio, Java JDK, adb, Expo Go) is covered in the [Running on Your Device](#-running-on-your-device) section below.
 
 ### Installation
 
 1. **Clone the repository:**
 
 ```bash
- git clone https://github.com/greenpillbr/capsula.git
- cd capsula
+git clone https://github.com/greenpillbr/capsula.git
+cd capsula
 ```
 
-1. **Install dependencies:**
+2. **Install dependencies:**
 
 ```bash
- bun install
+bun install
 ```
 
-1. **Configure environment:**
+3. **Configure environment:**
 
 ```bash
- cp .env.example .env
- # Edit .env with your Infura API key
+cp .env.example .env
+# Edit .env with your Infura API key
 ```
 
-1. **Generate database schema:**
+4. **Generate database schema:**
 
 ```bash
- bun run db:generate
+bun run db:generate
 ```
 
 ### Development
@@ -83,14 +83,117 @@ Architected for a future of **limitless, user-installed functionality** through 
 ```bash
 # Start Metro bundler
 bun run dev
-# You should use Expo go instead of development build (press S to switch to expo go)
 
-# Run on Android device/emulator
+# Run on Android device/emulator (requires native toolchain — see "Running on Your Device")
 bun run android
 
 # Run on iOS device/simulator (macOS only)
 bun run ios
 ```
+
+## 📱 Running on Your Device
+
+This project targets **Expo SDK 54** and uses `react-native-mmkv@3.x`, which requires the **New Architecture** (TurboModules). The New Architecture is already enabled in [`app.config.ts`](app.config.ts) (`newArchEnabled: true`), but it means you need an **Expo Go build that matches the SDK version** or, if that fails, a **custom development build**.
+
+> If you're new to Expo, the official [Expo Tutorial](https://docs.expo.dev/tutorial/overview/) and [EAS Tutorial](https://docs.expo.dev/tutorial/eas/introduction/) are the best place to start.
+
+### 1. Install Android Studio
+
+Download and install [Android Studio](https://developer.android.com/studio). During first launch let it install the latest **Android SDK**, **SDK Platform-Tools**, and a system image.
+
+**Create an emulator (optional):** Open **Device Manager** in Android Studio and create a new virtual device (a recent Pixel image with Google Play Services is recommended).
+
+### 2. Install the Java JDK (Linux)
+
+Expo / Gradle requires a JDK (17 is recommended). On Linux, install **Eclipse Temurin (OpenJDK)** following [Adoptium's Linux installation guide](https://adoptium.net/installation/linux):
+
+```bash
+java -version   # verify the installation
+```
+
+### 3. Create an Expo Account
+
+Some flows (Expo Go account features, EAS builds) require a free Expo account.
+
+- Sign up at [expo.dev/signup](https://expo.dev/signup) and set a password at [expo.dev/settings](https://expo.dev/settings).
+
+### 5. Run the App on a Physical Android Device
+
+#### Enable Developer Mode and USB Debugging
+
+1. **Settings → About phone**, tap **Build number** seven times to unlock **Developer options**.
+2. **Settings → Developer options**, enable **USB debugging**.
+3. Connect the phone via USB and accept the debugging prompt. Confirm with `adb devices`.
+
+You can now choose between two run modes:
+
+#### Option A — Expo Go (fastest for UI iteration)
+
+1. Install **Expo Go** on the phone.
+   - The Play Store version is sometimes behind the latest SDK. If you see an SDK mismatch error, download the matching APK directly from Expo:  
+     [`https://expo.dev/go?sdkVersion=54&platform=android&device=true`](https://expo.dev/go?sdkVersion=54&platform=android&device=true)
+2. Start the dev server:
+
+   ```bash
+   bun run dev
+   ```
+
+4. In the Metro terminal, press **`s`** to switch the target from "development build" to **Expo Go**, then scan the QR code with the Expo Go app.
+
+> ⚠️ **MMKV / New Architecture:** if you see `react-native-mmkv 3.x.x requires TurboModules, but the new architecture is not enabled!`, your Expo Go binary is outdated or doesn't have the New Architecture enabled. Reinstall Expo Go from the link above, or fall back to a Development Build (Option B).
+
+#### Option B — Development Build with EAS (recommended for full feature support)
+
+A development build is a custom version of Expo Go that includes this project's exact native modules — required when third-party libraries (like `react-native-mmkv` 3.x) need TurboModules or aren't bundled in stock Expo Go.
+
+1. **Install the EAS CLI** globally:
+
+   ```bash
+   npm install -g eas-cli
+   ```
+
+2. **Log in** with your Expo account:
+
+   ```bash
+   eas login
+   ```
+
+3. **Create an Expo project** on the [Expo dashboard](https://expo.dev/) and copy its `projectId` into your `.env` as `EXPO_PUBLIC_EAS_PROJECT_ID` (consumed by [`app.config.ts`](app.config.ts)).
+
+4. **Configure EAS** (only needed once per repo):
+
+   ```bash
+   eas build:configure
+   ```
+
+5. **Build a development APK** (cloud build):
+
+   ```bash
+   bun run build:android
+   # equivalent to: eas build --platform android --profile development
+   ```
+
+   When the build finishes, install it on your device using one of:
+
+   - The **Install** QR code from the EAS dashboard.
+   - [Expo Orbit](https://expo.dev/orbit) — a desktop helper that installs builds on a connected device or emulator with one click.
+   - `adb install path/to/capsula.apk`.
+
+6. **Run the dev server** and open the installed development build on the device:
+
+   ```bash
+   bun run dev
+   ```
+
+#### Generating Native Projects Locally (advanced)
+
+If you need to inspect or modify the native Android/iOS projects directly (e.g. for native debugging), you can generate them with:
+
+```bash
+bunx expo prebuild
+```
+
+This is **not** required for the Expo Go or EAS development build flows above.
 
 ## 🏗 Architecture
 
@@ -200,8 +303,10 @@ bun run android         # Test on Android device
 ### Expo Development build
 
 ```bash
-bun build:android
+bun run build:android
 ```
+
+See [Running on Your Device → Option B](#option-b--development-build-with-eas-recommended-for-full-feature-support) for the full development build flow.
 
 ### Production Build
 
