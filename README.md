@@ -1,7 +1,5 @@
 # Capsula: The Greenpill BR Crypto Wallet
 
-
-
 **A native-first mobile crypto wallet built for the Greenpill BR community**
 
 [Features](#features) • [Getting Started](#getting-started) • [Architecture](#architecture) • [Mini-App Development](#mini-app-development) • [Contributing](#contributing)
@@ -46,7 +44,7 @@ Architected for a future of **limitless, user-installed functionality** through 
 
 ### Prerequisites
 
-- **Node.js** 18+ 
+- **Node.js** 18+
 - **Bun** package manager
 - **Android Studio** (for Android development)
 - **Expo CLI**: `bun add -g @expo/cli`
@@ -55,23 +53,30 @@ Architected for a future of **limitless, user-installed functionality** through 
 ### Installation
 
 1. **Clone the repository:**
-  ```bash
-   git clone https://github.com/greenpillbr/capsula.git
-   cd capsula
-  ```
-2. **Install dependencies:**
-  ```bash
-   bun install
-  ```
-3. **Configure environment:**
-  ```bash
-   cp .env.example .env
-   # Edit .env with your Infura API key
-  ```
-4. **Generate database schema:**
-  ```bash
-   bun run db:generate
-  ```
+
+```bash
+ git clone https://github.com/greenpillbr/capsula.git
+ cd capsula
+```
+
+1. **Install dependencies:**
+
+```bash
+ bun install
+```
+
+1. **Configure environment:**
+
+```bash
+ cp .env.example .env
+ # Edit .env with your Infura API key
+```
+
+1. **Generate database schema:**
+
+```bash
+ bun run db:generate
+```
 
 ### Development
 
@@ -123,32 +128,36 @@ bun run ios
 ### Creating a Mini-App
 
 1. **Create your module:**
-  ```bash
-   mkdir -p lib/mini-apps/modules/your-app
-  ```
-2. **Implement the interface:**
-  ```typescript
-   import type { MiniAppProps } from '@/lib/mini-apps/sdk';
 
-   export default function YourMiniApp({ sdk, onClose, isActive }: MiniAppProps) {
-     // Access wallet
-     const wallet = sdk.wallet.getActiveWallet();
+```bash
+ mkdir -p lib/mini-apps/modules/your-app
+```
 
-     // Read from smart contract
-     const data = await sdk.network.readContract({
-       contractAddress: '0x...',
-       abi: [...],
-       functionName: 'getData',
-       args: []
-     });
+1. **Implement the interface:**
 
-     // Sign transaction with Passkey
-     const tx = await sdk.wallet.signTransaction(params);
+```typescript
+ import type { MiniAppProps } from '@/lib/mini-apps/sdk';
 
-     return <YourUI />;
-   }
-  ```
-3. **Register in host:**
+ export default function YourMiniApp({ sdk, onClose, isActive }: MiniAppProps) {
+   // Access wallet
+   const wallet = sdk.wallet.getActiveWallet();
+
+   // Read from smart contract
+   const data = await sdk.network.readContract({
+     contractAddress: '0x...',
+     abi: [...],
+     functionName: 'getData',
+     args: []
+   });
+
+   // Sign transaction with Passkey
+   const tx = await sdk.wallet.signTransaction(params);
+
+   return <YourUI />;
+ }
+```
+
+1. **Register in host:**
   Add your module to `[lib/mini-apps/host/MiniAppHost.tsx](lib/mini-apps/host/MiniAppHost.tsx)`
 
 ### Available SDK APIs
@@ -162,7 +171,7 @@ bun run ios
 ## 📱 Supported Networks
 
 - **Ethereum Mainnet** (Chain ID: 1)
-- **CELO Mainnet** (Chain ID: 42220) 
+- **CELO Mainnet** (Chain ID: 42220)
 - **Gnosis Chain** (Chain ID: 100)
 - Extensible architecture for future EVM-compatible networks
 
@@ -186,6 +195,12 @@ bun run ios
 ```bash
 bun run dev              # Start Metro bundler
 bun run android         # Test on Android device
+```
+
+### Expo Development build
+
+```bash
+bun build:android
 ```
 
 ### Production Build
