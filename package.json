@@ -13,7 +13,7 @@
     "build:web": "expo export --platform web",
     "format": "biome check --no-errors-on-unmatched --apply .",
     "db:generate": "bun drizzle-kit generate",
-    "expo-check": "expo install --check",
+    "check": "expo install --check",
     "diagnosis": "bunx expo-doctor",
     "fix": "expo install --fix"
   },
@@ -37,7 +37,8 @@
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.6",
     "@react-native-community/netinfo": "^11.4.1",
-    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/bottom-tabs": "^7.15.10",
+    "@react-navigation/native": "^7.2.2",
     "@shopify/flash-list": "2.0.2",
     "babel-plugin-inline-import": "^3.0.0",
     "baseline-browser-mapping": "^2.10.21",
@@ -104,5 +105,13 @@
     "tailwindcss",
     "nativewind"
   ],
+  "overrides": {
+    "@react-navigation/native": "7.2.2",
+    "@react-navigation/core": "7.17.2"
+  },
+  "resolutions": {
+    "@react-navigation/native": "7.2.2",
+    "@react-navigation/core": "7.17.2"
+  },
   "private": true
 }
