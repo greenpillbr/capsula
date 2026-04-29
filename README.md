@@ -8,7 +8,7 @@
 
 ## 🌱 About Capsula
 
-Capsula is a **minimalistic, vibrant, and incredibly easy-to-use** crypto wallet specifically designed for the Greenpill BR (GPBR) community. Built with React Native and Expo, it provides a simplified, beginner-friendly entry point into the world of crypto for individuals interested in **autonomy and regeneration**.
+Capsula is a **minimalistic, vibrant, and incredibly easy-to-use** crypto wallet specifically designed for the Greenpill BR (GPBR) community. Built with [React Native](https://reactnative.dev/) and [Expo](https://docs.expo.dev/), it provides a simplified, beginner-friendly entry point into the world of crypto for individuals interested in **autonomy and regeneration**.
 
 ### 🎯 Vision
 
@@ -38,7 +38,7 @@ Architected for a future of **limitless, user-installed functionality** through 
 - **Complete Mini-App SDK**: TypeScript interfaces for wallet, network, UI, storage, and events
 - **Permission System**: Granular control over mini-app capabilities
 - **Error Boundaries**: Robust error handling and recovery
-- **Hot Reloading**: Fast development iteration with Metro bundler
+- **Hot Reloading**: Fast development iteration with the [Metro bundler](https://docs.expo.dev/guides/customizing-metro/)
 
 ## 🚀 Getting Started
 
@@ -93,19 +93,19 @@ bun run ios
 
 ## 📱 Running on Your Device
 
-This project targets **Expo SDK 54** and uses `react-native-mmkv@3.x`, which requires the **New Architecture** (TurboModules). The New Architecture is already enabled in [`app.config.ts`](app.config.ts) (`newArchEnabled: true`), but it means you need an **Expo Go build that matches the SDK version** or, if that fails, a **custom development build**.
+This project targets **[Expo SDK 54](https://docs.expo.dev/versions/v54.0.0/)** and uses `react-native-mmkv@3.x`, which requires the [**New Architecture**](https://docs.expo.dev/guides/new-architecture/) (TurboModules). The New Architecture is already enabled in [`app.config.ts`](app.config.ts) (`newArchEnabled: true`), but it means you need an **Expo Go build that matches the SDK version** or, if that fails, a **custom development build**.
 
-> If you're new to Expo, the official [Expo Tutorial](https://docs.expo.dev/tutorial/overview/) and [EAS Tutorial](https://docs.expo.dev/tutorial/eas/introduction/) are the best place to start.
+> If you're new to Expo, the official [Expo Tutorial](https://docs.expo.dev/tutorial/overview/) and [EAS Tutorial](https://docs.expo.dev/tutorial/eas/introduction/) are the best place to start. Expo also publishes a complete [environment setup guide](https://docs.expo.dev/get-started/set-up-your-environment/) covering Android Studio, JDK, and emulator installation per OS.
 
 ### 1. Install Android Studio
 
-Download and install [Android Studio](https://developer.android.com/studio). During first launch let it install the latest **Android SDK**, **SDK Platform-Tools**, and a system image.
+Download and install [Android Studio](https://developer.android.com/studio) (see Expo's [Android Studio emulator guide](https://docs.expo.dev/workflow/android-studio-emulator/)). During first launch let it install the latest **Android SDK**, **SDK Platform-Tools**, and a system image.
 
 **Create an emulator (optional):** Open **Device Manager** in Android Studio and create a new virtual device (a recent Pixel image with Google Play Services is recommended).
 
 ### 2. Install the Java JDK (Linux)
 
-Expo / Gradle requires a JDK (17 is recommended). On Linux, install **Eclipse Temurin (OpenJDK)** following [Adoptium's Linux installation guide](https://adoptium.net/installation/linux):
+Expo / Gradle requires a JDK (17 is recommended — see Expo's [local development setup](https://docs.expo.dev/get-started/set-up-your-environment/?mode=development-build&platform=android&device=physical)). On Linux, install **Eclipse Temurin (OpenJDK)** following [Adoptium's Linux installation guide](https://adoptium.net/installation/linux):
 
 ```bash
 java -version   # verify the installation
@@ -113,40 +113,42 @@ java -version   # verify the installation
 
 ### 3. Create an Expo Account
 
-Some flows (Expo Go account features, EAS builds) require a free Expo account.
+Some flows ([Expo Go](https://docs.expo.dev/get-started/set-up-your-environment/?mode=expo-go) account features, [EAS builds](https://docs.expo.dev/eas/)) require a free Expo account.
 
 - Sign up at [expo.dev/signup](https://expo.dev/signup) and set a password at [expo.dev/settings](https://expo.dev/settings).
 
-### 5. Run the App on a Physical Android Device
+### 4. Run the App on a Physical Android Device
 
 #### Enable Developer Mode and USB Debugging
 
 1. **Settings → About phone**, tap **Build number** seven times to unlock **Developer options**.
 2. **Settings → Developer options**, enable **USB debugging**.
-3. Connect the phone via USB and accept the debugging prompt. Confirm with `adb devices`.
+3. Connect the phone via USB and accept the debugging prompt. Confirm with `adb devices` (see Expo's [Android device setup](https://docs.expo.dev/get-started/set-up-your-environment/?mode=development-build&platform=android&device=physical)).
 
 You can now choose between two run modes:
 
 #### Option A — Expo Go (fastest for UI iteration)
 
+[Expo Go](https://docs.expo.dev/get-started/set-up-your-environment/?mode=expo-go) is a sandbox client that runs your JavaScript without rebuilding native code.
+
 1. Install **Expo Go** on the phone.
-   - The Play Store version is sometimes behind the latest SDK. If you see an SDK mismatch error, download the matching APK directly from Expo:  
+   - The Play Store version is sometimes behind the latest SDK. If you see an SDK mismatch error, download the matching APK directly from Expo (see [Expo Go for older SDKs](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/#expo-go)):  
      [`https://expo.dev/go?sdkVersion=54&platform=android&device=true`](https://expo.dev/go?sdkVersion=54&platform=android&device=true)
-2. Start the dev server:
+2. Start the dev server (powered by [Expo CLI](https://docs.expo.dev/more/expo-cli/)):
 
    ```bash
    bun run dev
    ```
 
-4. In the Metro terminal, press **`s`** to switch the target from "development build" to **Expo Go**, then scan the QR code with the Expo Go app.
+3. In the Metro terminal, press **`s`** to switch the target from "development build" to **Expo Go**, then scan the QR code with the Expo Go app.
 
-> ⚠️ **MMKV / New Architecture:** if you see `react-native-mmkv 3.x.x requires TurboModules, but the new architecture is not enabled!`, your Expo Go binary is outdated or doesn't have the New Architecture enabled. Reinstall Expo Go from the link above, or fall back to a Development Build (Option B).
+> ⚠️ **MMKV / New Architecture:** if you see `react-native-mmkv 3.x.x requires TurboModules, but the new architecture is not enabled!`, your Expo Go binary is outdated or doesn't have the [New Architecture](https://docs.expo.dev/guides/new-architecture/) enabled. Reinstall Expo Go from the link above, or fall back to a Development Build (Option B).
 
 #### Option B — Development Build with EAS (recommended for full feature support)
 
-A development build is a custom version of Expo Go that includes this project's exact native modules — required when third-party libraries (like `react-native-mmkv` 3.x) need TurboModules or aren't bundled in stock Expo Go.
+A [development build](https://docs.expo.dev/develop/development-builds/introduction/) is a custom version of Expo Go that includes this project's exact native modules — required when third-party libraries (like `react-native-mmkv` 3.x) need TurboModules or aren't bundled in stock Expo Go. See Expo's tutorials on [creating](https://docs.expo.dev/tutorial/eas/configure-development-build/) and [installing](https://docs.expo.dev/tutorial/eas/android-development-build/) Android development builds.
 
-1. **Install the EAS CLI** globally:
+1. **Install the [EAS CLI](https://docs.expo.dev/eas/)** globally:
 
    ```bash
    npm install -g eas-cli
@@ -158,15 +160,15 @@ A development build is a custom version of Expo Go that includes this project's 
    eas login
    ```
 
-3. **Create an Expo project** on the [Expo dashboard](https://expo.dev/) and copy its `projectId` into your `.env` as `EXPO_PUBLIC_EAS_PROJECT_ID` (consumed by [`app.config.ts`](app.config.ts)).
+3. **Create an Expo project** on the [Expo dashboard](https://expo.dev/accounts/[account]/projects) and copy its `projectId` into your `.env` as `EXPO_PUBLIC_EAS_PROJECT_ID` (consumed by [`app.config.ts`](app.config.ts)). See [Using EAS with an existing project](https://docs.expo.dev/build/setup/).
 
-4. **Configure EAS** (only needed once per repo):
+4. **Configure EAS** (only needed once per repo — generates [`eas.json`](https://docs.expo.dev/build/eas-json/)):
 
    ```bash
    eas build:configure
    ```
 
-5. **Build a development APK** (cloud build):
+5. **Build a development APK** (cloud build — see [`eas build`](https://docs.expo.dev/build/introduction/)):
 
    ```bash
    bun run build:android
@@ -187,7 +189,7 @@ A development build is a custom version of Expo Go that includes this project's 
 
 #### Generating Native Projects Locally (advanced)
 
-If you need to inspect or modify the native Android/iOS projects directly (e.g. for native debugging), you can generate them with:
+If you need to inspect or modify the native Android/iOS projects directly (e.g. for native debugging), you can generate them with [`expo prebuild`](https://docs.expo.dev/workflow/prebuild/):
 
 ```bash
 bunx expo prebuild
@@ -195,15 +197,24 @@ bunx expo prebuild
 
 This is **not** required for the Expo Go or EAS development build flows above.
 
+#### Useful Expo references
+
+- [Set up your environment](https://docs.expo.dev/get-started/set-up-your-environment/) — official, OS-aware checklist.
+- [Development builds: introduction](https://docs.expo.dev/develop/development-builds/introduction/) — when and why to use one.
+- [EAS Build configuration](https://docs.expo.dev/build/eas-json/) — `eas.json` reference.
+- [Upgrading Expo SDK](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/) — incremental SDK upgrades.
+- [Debugging Expo apps](https://docs.expo.dev/debugging/runtime-issues/) — runtime troubleshooting.
+
 ## 🏗 Architecture
 
 ### Technology Stack
 
-- **React Native** + **TypeScript** + **Expo** for cross-platform development
+- [**React Native**](https://reactnative.dev/) + **TypeScript** + [**Expo**](https://docs.expo.dev/) for cross-platform development
 - **Zustand** for state management with MMKV persistence
 - **Ethers.js** for blockchain interactions
-- **Drizzle ORM** with SQLite for local-first data storage
-- **Expo SecureStore** for cryptographic key management
+- **Drizzle ORM** with [**Expo SQLite**](https://docs.expo.dev/versions/latest/sdk/sqlite/) for local-first data storage
+- [**Expo SecureStore**](https://docs.expo.dev/versions/latest/sdk/securestore/) for cryptographic key management
+- [**Expo Router**](https://docs.expo.dev/router/introduction/) for file-based navigation
 
 ### Mini-App System Architecture
 
@@ -287,9 +298,21 @@ This is **not** required for the Expo Go or EAS development build flows above.
 
 ## 📚 Documentation
 
+### Project docs
+
 - **[Development Workflow](docs/development-workflow.md)** - Setup and contribution guide
 - **[Mini-App System Architecture](docs/mini-app-system-mvp-architecture.md)** - Technical architecture
 - **[Complete Specification](docs/capsula_all_documentation.md)** - Full project requirements
+
+### Expo & React Native references
+
+- [Expo documentation home](https://docs.expo.dev/)
+- [Expo SDK 54 reference](https://docs.expo.dev/versions/v54.0.0/)
+- [Expo CLI commands](https://docs.expo.dev/more/expo-cli/)
+- [EAS Build](https://docs.expo.dev/build/introduction/) and [EAS Submit](https://docs.expo.dev/submit/introduction/)
+- [Expo Router](https://docs.expo.dev/router/introduction/)
+- [New Architecture in Expo](https://docs.expo.dev/guides/new-architecture/)
+- [React Native docs](https://reactnative.dev/docs/getting-started)
 
 ## 🛠 Build & Deploy
 
@@ -306,7 +329,7 @@ bun run android         # Test on Android device
 bun run build:android
 ```
 
-See [Running on Your Device → Option B](#option-b--development-build-with-eas-recommended-for-full-feature-support) for the full development build flow.
+See [Running on Your Device → Option B](#option-b--development-build-with-eas-recommended-for-full-feature-support) for the full flow, and Expo's [development builds guide](https://docs.expo.dev/develop/development-builds/introduction/) for background.
 
 ### Production Build
 
@@ -314,9 +337,11 @@ See [Running on Your Device → Option B](#option-b--development-build-with-eas-
 ./scripts/build-android.sh  # Build Android APK
 ```
 
+For store-ready binaries, see Expo's docs on [internal distribution](https://docs.expo.dev/build/internal-distribution/) and [Google Play submission](https://docs.expo.dev/submit/android/).
+
 ### Automated Deployment
 
-GitHub Actions automatically builds APKs on push to main branch.
+GitHub Actions automatically builds APKs on push to main branch — see Expo's [GitHub Actions integration](https://docs.expo.dev/eas/workflows/get-started/) for reference workflows.
 
 ## 🗺 Roadmap
 
