@@ -1,22 +1,25 @@
-import type { Network } from '@/db/schema';
-import { useNetworkStore } from '@/lib/stores/networkStore';
-import { ethers } from 'ethers';
-import * as Crypto from 'expo-crypto';
+import type { Network } from "@/db/schema";
+import { useNetworkStore } from "@/lib/stores/networkStore";
+import { ethers } from "ethers";
+import * as Crypto from "expo-crypto";
 
 // Get Infura API key from environment variables (must use EXPO_PUBLIC_ prefix for runtime access)
-const INFURA_API_KEY = process.env.EXPO_PUBLIC_INFURA_API_KEY || 'demo_key_replace_with_real_key';
+const INFURA_API_KEY =
+  process.env.EXPO_PUBLIC_INFURA_API_KEY || "demo_key_replace_with_real_key";
+
+console.log("INFURA_API_KEY", INFURA_API_KEY);
 
 // Network configuration for different chains with fallback RPC endpoints
 export const NETWORK_CONFIGS: Record<number, Network> = {
   1: {
     chainId: 1,
-    name: 'Ethereum Mainnet',
+    name: "Ethereum Mainnet",
     rpcUrl: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
-    explorerUrl: 'https://etherscan.io',
-    nativeCurrencySymbol: 'ETH',
+    explorerUrl: "https://etherscan.io",
+    nativeCurrencySymbol: "ETH",
     nativeCurrencyDecimals: 18,
-    nativeCurrencyName: 'Ether',
-    iconUrl: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+    nativeCurrencyName: "Ether",
+    iconUrl: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
     isDefault: true,
     isRecommended: true,
     createdAt: new Date().toISOString(),
@@ -24,13 +27,14 @@ export const NETWORK_CONFIGS: Record<number, Network> = {
   },
   42220: {
     chainId: 42220,
-    name: 'Celo Mainnet',
-    rpcUrl: 'https://forno.celo.org',
-    explorerUrl: 'https://explorer.celo.org',
-    nativeCurrencySymbol: 'CELO',
+    name: "Celo Mainnet",
+    rpcUrl: process.env.EXPO_PUBLIC_CELO_RPC_URL || "https://forno.celo.org",
+    explorerUrl: "https://explorer.celo.org",
+    nativeCurrencySymbol: "CELO",
     nativeCurrencyDecimals: 18,
-    nativeCurrencyName: 'Celo',
-    iconUrl: 'https://assets.coingecko.com/coins/images/11090/small/icon-celo-CELO-color-500.png',
+    nativeCurrencyName: "Celo",
+    iconUrl:
+      "https://assets.coingecko.com/coins/images/11090/small/icon-celo-CELO-color-500.png",
     isDefault: true,
     isRecommended: true,
     createdAt: new Date().toISOString(),
@@ -38,13 +42,14 @@ export const NETWORK_CONFIGS: Record<number, Network> = {
   },
   100: {
     chainId: 100,
-    name: 'Gnosis Chain',
-    rpcUrl: 'https://rpc.gnosischain.com',
-    explorerUrl: 'https://gnosisscan.io',
-    nativeCurrencySymbol: 'xDAI',
+    name: "Gnosis Chain",
+    rpcUrl:
+      process.env.EXPO_PUBLIC_GNOSIS_RPC_URL || "https://rpc.gnosischain.com",
+    explorerUrl: "https://gnosisscan.io",
+    nativeCurrencySymbol: "xDAI",
     nativeCurrencyDecimals: 18,
-    nativeCurrencyName: 'xDAI',
-    iconUrl: 'https://assets.coingecko.com/coins/images/11062/small/xdai.png',
+    nativeCurrencyName: "xDAI",
+    iconUrl: "https://assets.coingecko.com/coins/images/11062/small/xdai.png",
     isDefault: true,
     isRecommended: true,
     createdAt: new Date().toISOString(),
@@ -64,21 +69,23 @@ class EthersService {
     if (!this.providers.has(chainId)) {
       let config = NETWORK_CONFIGS[chainId];
       let url = rpcUrl || config?.rpcUrl;
-      
+
       // If no hardcoded config, check the networkStore for custom networks
       if (!url) {
         try {
           const networkState = useNetworkStore.getState();
-          const customNetwork = networkState.networks.find(n => n.chainId === chainId);
+          const customNetwork = networkState.networks.find(
+            (n) => n.chainId === chainId,
+          );
           if (customNetwork) {
             config = customNetwork;
             url = customNetwork.rpcUrl;
           }
         } catch (error) {
-          console.error('Failed to get network from store:', error);
+          console.error("Failed to get network from store:", error);
         }
       }
-      
+
       if (!url) {
         throw new Error(`No RPC URL configured for chain ${chainId}`);
       }
@@ -101,12 +108,12 @@ class EthersService {
     try {
       const provider = this.getProvider(chainId);
       const network = await provider.getNetwork();
-      
+
       if (Number(network.chainId) === chainId) {
         this.currentChainId = chainId;
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error(`Failed to switch to network ${chainId}:`, error);
@@ -128,27 +135,27 @@ class EthersService {
     try {
       const targetChainId = chainId || this.currentChainId;
       const provider = this.getProvider(targetChainId);
-      
+
       // Test provider connection first
       try {
         const network = await provider.getNetwork();
         // console.log(`✅ Connected to ${network.name} (${network.chainId})`);
       } catch (networkError) {
-        console.error('❌ Network connection failed:', networkError);
-        throw new Error('Unable to connect to network');
+        console.error("❌ Network connection failed:", networkError);
+        throw new Error("Unable to connect to network");
       }
-      
+
       const balance = await provider.getBalance(address);
       const formattedBalance = ethers.formatEther(balance);
-      
+
       return formattedBalance;
     } catch (error) {
-      console.error('❌ Failed to get balance:', {
+      console.error("❌ Failed to get balance:", {
         error: error instanceof Error ? error.message : error,
         address,
-        chainId: chainId || this.currentChainId
+        chainId: chainId || this.currentChainId,
       });
-      return '0';
+      return "0";
     }
   }
 
@@ -158,66 +165,77 @@ class EthersService {
   async getTokenBalance(
     tokenAddress: string,
     walletAddress: string,
-    chainId?: number
+    chainId?: number,
   ): Promise<string> {
     try {
-      const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
-      
+      const provider = chainId
+        ? this.getProvider(chainId)
+        : this.getCurrentProvider();
+
       // ERC-20 ABI for balanceOf function
       const erc20Abi = [
-        'function balanceOf(address owner) view returns (uint256)',
-        'function decimals() view returns (uint8)',
+        "function balanceOf(address owner) view returns (uint256)",
+        "function decimals() view returns (uint8)",
       ];
-      
-      const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, provider);
+
+      const tokenContract = new ethers.Contract(
+        tokenAddress,
+        erc20Abi,
+        provider,
+      );
       const [balance, decimals] = await Promise.all([
         tokenContract.balanceOf(walletAddress),
         tokenContract.decimals(),
       ]);
-      
+
       return ethers.formatUnits(balance, decimals);
     } catch (error) {
-      console.error('Failed to get token balance:', error);
-      return '0';
+      console.error("Failed to get token balance:", error);
+      return "0";
     }
   }
 
   /**
    * Estimate gas for a transaction
    */
-  async estimateGas(transaction: {
-    to: string;
-    value?: string;
-    data?: string;
-    from?: string;
-  }, chainId?: number): Promise<{
+  async estimateGas(
+    transaction: {
+      to: string;
+      value?: string;
+      data?: string;
+      from?: string;
+    },
+    chainId?: number,
+  ): Promise<{
     gasLimit: string;
     gasPrice: string;
     maxFeePerGas?: string;
     maxPriorityFeePerGas?: string;
   }> {
     try {
-      const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
-      
+      const provider = chainId
+        ? this.getProvider(chainId)
+        : this.getCurrentProvider();
+
       // Get current gas price
       const feeData = await provider.getFeeData();
-      
+
       // Estimate gas limit
       const gasLimit = await provider.estimateGas({
         to: transaction.to,
         value: transaction.value ? ethers.parseEther(transaction.value) : 0,
-        data: transaction.data || '0x',
+        data: transaction.data || "0x",
         from: transaction.from,
       });
 
       return {
         gasLimit: gasLimit.toString(),
-        gasPrice: feeData.gasPrice?.toString() || '0',
+        gasPrice: feeData.gasPrice?.toString() || "0",
         maxFeePerGas: feeData.maxFeePerGas?.toString(),
         maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString(),
       };
     } catch (error) {
-      console.error('Failed to estimate gas:', error);
+      console.error("Failed to estimate gas:", error);
       throw error;
     }
   }
@@ -235,22 +253,30 @@ class EthersService {
       gasPrice?: string;
       maxFeePerGas?: string;
       maxPriorityFeePerGas?: string;
-    }
+    },
   ): Promise<ethers.TransactionResponse> {
     try {
       const tx = await signer.sendTransaction({
         to: transaction.to,
         value: transaction.value ? ethers.parseEther(transaction.value) : 0,
-        data: transaction.data || '0x',
-        gasLimit: transaction.gasLimit ? BigInt(transaction.gasLimit) : undefined,
-        gasPrice: transaction.gasPrice ? BigInt(transaction.gasPrice) : undefined,
-        maxFeePerGas: transaction.maxFeePerGas ? BigInt(transaction.maxFeePerGas) : undefined,
-        maxPriorityFeePerGas: transaction.maxPriorityFeePerGas ? BigInt(transaction.maxPriorityFeePerGas) : undefined,
+        data: transaction.data || "0x",
+        gasLimit: transaction.gasLimit
+          ? BigInt(transaction.gasLimit)
+          : undefined,
+        gasPrice: transaction.gasPrice
+          ? BigInt(transaction.gasPrice)
+          : undefined,
+        maxFeePerGas: transaction.maxFeePerGas
+          ? BigInt(transaction.maxFeePerGas)
+          : undefined,
+        maxPriorityFeePerGas: transaction.maxPriorityFeePerGas
+          ? BigInt(transaction.maxPriorityFeePerGas)
+          : undefined,
       });
 
       return tx;
     } catch (error) {
-      console.error('Failed to send transaction:', error);
+      console.error("Failed to send transaction:", error);
       throw error;
     }
   }
@@ -261,13 +287,15 @@ class EthersService {
   async waitForTransaction(
     txHash: string,
     confirmations: number = 1,
-    chainId?: number
+    chainId?: number,
   ): Promise<ethers.TransactionReceipt | null> {
     try {
-      const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
+      const provider = chainId
+        ? this.getProvider(chainId)
+        : this.getCurrentProvider();
       return await provider.waitForTransaction(txHash, confirmations);
     } catch (error) {
-      console.error('Failed to wait for transaction:', error);
+      console.error("Failed to wait for transaction:", error);
       return null;
     }
   }
@@ -278,28 +306,33 @@ class EthersService {
   async getTransactionHistory(
     address: string,
     fromBlock: number = 0,
-    toBlock: number | string = 'latest',
-    chainId?: number
+    toBlock: number | string = "latest",
+    chainId?: number,
   ): Promise<ethers.TransactionResponse[]> {
     try {
-      const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
-      
+      const provider = chainId
+        ? this.getProvider(chainId)
+        : this.getCurrentProvider();
+
       // This is a basic implementation - in production you'd want to use
       // indexing services like The Graph or Alchemy for better performance
       const currentBlock = await provider.getBlockNumber();
       const startBlock = Math.max(fromBlock, currentBlock - 20); // Limit to last 20 blocks for performance
-      
+
       const transactions: ethers.TransactionResponse[] = [];
-      
+
       for (let i = startBlock; i <= currentBlock; i++) {
         try {
           const block = await provider.getBlock(i, true);
           if (block && block.transactions) {
             for (const tx of block.transactions) {
               // Type guard to ensure tx is a TransactionResponse object
-              if (tx && typeof tx === 'object' && 'from' in tx && 'to' in tx) {
+              if (tx && typeof tx === "object" && "from" in tx && "to" in tx) {
                 const transaction = tx as ethers.TransactionResponse;
-                if (transaction.from === address || transaction.to === address) {
+                if (
+                  transaction.from === address ||
+                  transaction.to === address
+                ) {
                   transactions.push(transaction);
                 }
               }
@@ -311,10 +344,10 @@ class EthersService {
           continue;
         }
       }
-      
+
       return transactions.reverse(); // Most recent first
     } catch (error) {
-      console.error('Failed to get transaction history:', error);
+      console.error("Failed to get transaction history:", error);
       return [];
     }
   }
@@ -322,21 +355,24 @@ class EthersService {
   /**
    * Create a wallet from mnemonic
    */
-  createWalletFromMnemonic(mnemonic: string, path: string = "m/44'/60'/0'/0/0"): ethers.HDNodeWallet {
+  createWalletFromMnemonic(
+    mnemonic: string,
+    path: string = "m/44'/60'/0'/0/0",
+  ): ethers.HDNodeWallet {
     try {
       // Clean and normalize mnemonic
-      const cleanMnemonic = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
-      
+      const cleanMnemonic = mnemonic.trim().toLowerCase().replace(/\s+/g, " ");
+
       // Create mnemonic object first to validate
       const mnemonicObj = ethers.Mnemonic.fromPhrase(cleanMnemonic);
-      
+
       // Create HD wallet from mnemonic
       const hdWallet = ethers.HDNodeWallet.fromMnemonic(mnemonicObj, path);
-      
+
       return hdWallet;
     } catch (error) {
-      console.error('Failed to create wallet from mnemonic:', error);
-      throw new Error('Invalid mnemonic phrase');
+      console.error("Failed to create wallet from mnemonic:", error);
+      throw new Error("Invalid mnemonic phrase");
     }
   }
 
@@ -354,15 +390,15 @@ class EthersService {
     try {
       // Generate secure random bytes using expo-crypto (16 bytes = 128 bits for mnemonic)
       const randomBytes = Crypto.getRandomBytes(16);
-      
+
       // Create HD wallet with mnemonic from entropy
       const mnemonic = ethers.Mnemonic.fromEntropy(randomBytes);
       const hdNode = ethers.HDNodeWallet.fromMnemonic(mnemonic);
-      
+
       return hdNode;
     } catch (error) {
-      console.error('Failed to generate random wallet:', error);
-      throw new Error('Failed to generate secure wallet');
+      console.error("Failed to generate random wallet:", error);
+      throw new Error("Failed to generate secure wallet");
     }
   }
 
@@ -370,7 +406,9 @@ class EthersService {
    * Connect wallet to a provider
    */
   connectWallet(wallet: ethers.Wallet, chainId?: number): ethers.Wallet {
-    const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
+    const provider = chainId
+      ? this.getProvider(chainId)
+      : this.getCurrentProvider();
     return wallet.connect(provider);
   }
 
@@ -385,7 +423,9 @@ class EthersService {
    * Get network information
    */
   async getNetworkInfo(chainId?: number): Promise<ethers.Network> {
-    const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
+    const provider = chainId
+      ? this.getProvider(chainId)
+      : this.getCurrentProvider();
     return await provider.getNetwork();
   }
 
@@ -420,17 +460,21 @@ class EthersService {
     functionName: string,
     args: any[] = [],
     value?: string,
-    signer?: ethers.Signer
+    signer?: ethers.Signer,
   ): Promise<ethers.TransactionResponse> {
     try {
       const provider = this.getProvider(chainId);
-      const contract = new ethers.Contract(contractAddress, abi, signer || provider);
-      
+      const contract = new ethers.Contract(
+        contractAddress,
+        abi,
+        signer || provider,
+      );
+
       const options: any = {};
       if (value) {
         options.value = ethers.parseEther(value);
       }
-      
+
       return await contract[functionName](...args, options);
     } catch (error) {
       console.error(`Failed to call contract function ${functionName}:`, error);
@@ -447,16 +491,16 @@ class EthersService {
     abi: any[],
     functionName: string,
     args: any[] = [],
-    blockTag?: string | number
+    blockTag?: string | number,
   ): Promise<any> {
     try {
       const provider = this.getProvider(chainId);
       const contract = new ethers.Contract(contractAddress, abi, provider);
-      
+
       if (blockTag) {
         return await contract[functionName](...args, { blockTag });
       }
-      
+
       return await contract[functionName](...args);
     } catch (error) {
       console.error(`Failed to read contract function ${functionName}:`, error);
@@ -469,7 +513,7 @@ class EthersService {
    */
   async getTokenInfo(
     tokenAddress: string,
-    chainId?: number
+    chainId?: number,
   ): Promise<{
     name: string;
     symbol: string;
@@ -477,24 +521,26 @@ class EthersService {
     totalSupply: string;
   }> {
     try {
-      const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
-      
+      const provider = chainId
+        ? this.getProvider(chainId)
+        : this.getCurrentProvider();
+
       const erc20Abi = [
-        'function name() view returns (string)',
-        'function symbol() view returns (string)',
-        'function decimals() view returns (uint8)',
-        'function totalSupply() view returns (uint256)',
+        "function name() view returns (string)",
+        "function symbol() view returns (string)",
+        "function decimals() view returns (uint8)",
+        "function totalSupply() view returns (uint256)",
       ];
-      
+
       const contract = new ethers.Contract(tokenAddress, erc20Abi, provider);
-      
+
       const [name, symbol, decimals, totalSupply] = await Promise.all([
         contract.name(),
         contract.symbol(),
         contract.decimals(),
         contract.totalSupply(),
       ]);
-      
+
       return {
         name,
         symbol,
@@ -502,7 +548,7 @@ class EthersService {
         totalSupply: ethers.formatUnits(totalSupply, decimals),
       };
     } catch (error) {
-      console.error('Failed to get token info:', error);
+      console.error("Failed to get token info:", error);
       throw error;
     }
   }
@@ -512,13 +558,15 @@ class EthersService {
    */
   async sendRawTransaction(
     signedTransaction: string,
-    chainId?: number
+    chainId?: number,
   ): Promise<ethers.TransactionResponse> {
     try {
-      const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
+      const provider = chainId
+        ? this.getProvider(chainId)
+        : this.getCurrentProvider();
       return await provider.broadcastTransaction(signedTransaction);
     } catch (error) {
-      console.error('Failed to send raw transaction:', error);
+      console.error("Failed to send raw transaction:", error);
       throw error;
     }
   }
@@ -530,10 +578,16 @@ class EthersService {
     contractAddress: string,
     abi: any[],
     signerOrProvider?: ethers.Signer | ethers.Provider,
-    chainId?: number
+    chainId?: number,
   ): ethers.Contract {
-    const provider = chainId ? this.getProvider(chainId) : this.getCurrentProvider();
-    return new ethers.Contract(contractAddress, abi, signerOrProvider || provider);
+    const provider = chainId
+      ? this.getProvider(chainId)
+      : this.getCurrentProvider();
+    return new ethers.Contract(
+      contractAddress,
+      abi,
+      signerOrProvider || provider,
+    );
   }
 
   /**
@@ -541,11 +595,11 @@ class EthersService {
    */
   parseTransactionLogs(
     receipt: ethers.TransactionReceipt,
-    contractInterface: ethers.Interface
+    contractInterface: ethers.Interface,
   ): ethers.LogDescription[] {
     try {
       return receipt.logs
-        .map(log => {
+        .map((log) => {
           try {
             return contractInterface.parseLog(log);
           } catch {
@@ -554,7 +608,7 @@ class EthersService {
         })
         .filter((log): log is ethers.LogDescription => log !== null);
     } catch (error) {
-      console.error('Failed to parse transaction logs:', error);
+      console.error("Failed to parse transaction logs:", error);
       return [];
     }
   }
@@ -577,18 +631,18 @@ class EthersService {
   } {
     try {
       const parsedTx = ethers.Transaction.from(signedTx);
-      
+
       return {
-        hash: parsedTx.hash || '',
+        hash: parsedTx.hash || "",
         signature: {
-          r: parsedTx.signature?.r || '0x0',
-          s: parsedTx.signature?.s || '0x0',
+          r: parsedTx.signature?.r || "0x0",
+          s: parsedTx.signature?.s || "0x0",
           v: parsedTx.signature?.v || 27,
         },
-        to: parsedTx.to || '',
-        value: parsedTx.value?.toString() || '0',
-        data: parsedTx.data || '0x',
-        gasLimit: parsedTx.gasLimit?.toString() || '0',
+        to: parsedTx.to || "",
+        value: parsedTx.value?.toString() || "0",
+        data: parsedTx.data || "0x",
+        gasLimit: parsedTx.gasLimit?.toString() || "0",
         gasPrice: parsedTx.gasPrice?.toString(),
         maxFeePerGas: parsedTx.maxFeePerGas?.toString(),
         maxPriorityFeePerGas: parsedTx.maxPriorityFeePerGas?.toString(),
@@ -596,7 +650,7 @@ class EthersService {
         chainId: Number(parsedTx.chainId) || 1,
       };
     } catch (error) {
-      console.error('Failed to parse signed transaction:', error);
+      console.error("Failed to parse signed transaction:", error);
       throw error;
     }
   }
