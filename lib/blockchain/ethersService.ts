@@ -7,8 +7,6 @@ import * as Crypto from "expo-crypto";
 const INFURA_API_KEY =
   process.env.EXPO_PUBLIC_INFURA_API_KEY || "demo_key_replace_with_real_key";
 
-console.log("INFURA_API_KEY", INFURA_API_KEY);
-
 // Network configuration for different chains with fallback RPC endpoints
 export const NETWORK_CONFIGS: Record<number, Network> = {
   1: {
