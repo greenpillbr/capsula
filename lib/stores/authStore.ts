@@ -1,8 +1,8 @@
-import { MMKV } from 'react-native-mmkv';
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { createMMKV } from "react-native-mmkv";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
-const storage = new MMKV();
+const storage = createMMKV();
 
 const zustandStorage = {
   setItem: (name: string, value: string) => {
@@ -13,7 +13,7 @@ const zustandStorage = {
     return value ?? null;
   },
   removeItem: (name: string) => {
-    return storage.delete(name);
+    return storage.remove(name);
   },
 };
 
@@ -22,13 +22,13 @@ interface AuthState {
   isAuthenticated: boolean;
   sessionExpiry: number | null;
   biometricAuthTime: number | null;
-  
+
   // Settings state (persisted)
   isOnboardingComplete: boolean;
   passkeyEnabled: boolean;
   pinEnabled: boolean;
   activeWalletId: string | null;
-  
+
   // Actions
   setAuthenticated: (authenticated: boolean) => void;
   setOnboardingComplete: (complete: boolean) => void;
@@ -39,7 +39,7 @@ interface AuthState {
   setBiometricAuthTime: (time: number) => void;
   logout: () => void;
   invalidateAuth: () => void;
-  
+
   // Computed getters
   isSessionValid: () => boolean;
   requiresReauth: () => boolean;
@@ -56,43 +56,43 @@ export const useAuthStore = create<AuthState>()(
       activeWalletId: null,
       sessionExpiry: null,
       biometricAuthTime: null,
-      
+
       // Actions
       setAuthenticated: (authenticated: boolean) => {
         set({ isAuthenticated: authenticated });
         if (authenticated) {
           // Set session expiry to 30 minutes from now
-          const expiry = Date.now() + (30 * 60 * 1000);
+          const expiry = Date.now() + 30 * 60 * 1000;
           set({ sessionExpiry: expiry });
         } else {
           set({ sessionExpiry: null, biometricAuthTime: null });
         }
       },
-      
+
       setOnboardingComplete: (complete: boolean) => {
         set({ isOnboardingComplete: complete });
       },
-      
+
       setPasskeyEnabled: (enabled: boolean) => {
         set({ passkeyEnabled: enabled });
       },
-      
+
       setPinEnabled: (enabled: boolean) => {
         set({ pinEnabled: enabled });
       },
-      
+
       setActiveWallet: (walletId: string | null) => {
         set({ activeWalletId: walletId });
       },
-      
+
       updateSessionExpiry: (expiry: number) => {
         set({ sessionExpiry: expiry });
       },
-      
+
       setBiometricAuthTime: (time: number) => {
         set({ biometricAuthTime: time });
       },
-      
+
       logout: () => {
         set({
           isAuthenticated: false,
@@ -100,7 +100,7 @@ export const useAuthStore = create<AuthState>()(
           biometricAuthTime: null,
         });
       },
-      
+
       invalidateAuth: () => {
         set({
           isAuthenticated: false,
@@ -108,23 +108,23 @@ export const useAuthStore = create<AuthState>()(
           biometricAuthTime: null,
         });
       },
-      
+
       // Computed getters
       isSessionValid: () => {
         const { sessionExpiry } = get();
         if (!sessionExpiry) return false;
         return Date.now() < sessionExpiry;
       },
-      
+
       requiresReauth: () => {
         const { biometricAuthTime } = get();
         if (!biometricAuthTime) return true;
         // Require re-auth after 5 minutes of inactivity
-        return Date.now() - biometricAuthTime > (5 * 60 * 1000);
+        return Date.now() - biometricAuthTime > 5 * 60 * 1000;
       },
     }),
     {
-      name: 'capsula-auth',
+      name: "capsula-auth",
       storage: createJSONStorage(() => zustandStorage),
       // Only persist settings, NEVER authentication state
       partialize: (state) => ({
@@ -134,6 +134,6 @@ export const useAuthStore = create<AuthState>()(
         activeWalletId: state.activeWalletId,
         // Authentication fields are intentionally excluded from persistence
       }),
-    }
-  )
+    },
+  ),
 );

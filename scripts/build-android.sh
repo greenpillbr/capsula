@@ -43,7 +43,7 @@ bun run format
 
 # Check Expo dependencies
 echo "🔍 Checking Expo dependencies..."
-bun run expo-check
+bun run check
 
 # Build for development
 echo "🛠️ Building development APK..."
