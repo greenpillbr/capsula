@@ -58,8 +58,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // },
   extra: {
     eas: {
-      projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID,
+      projectId: "d7882645-b7aa-4e33-8d4b-638493145fd9",
     },
   },
-  owner: "greenpillbr",
+  owner: "raduke",
 });
