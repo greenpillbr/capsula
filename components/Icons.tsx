@@ -32,7 +32,6 @@ import {
   Ear,
   Fan,
   GalleryHorizontal,
-  Github,
   Info,
   Italic,
   Lamp,

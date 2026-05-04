@@ -70,7 +70,7 @@
     "expo-system-ui": "~6.0.9",
     "expo-web-browser": "~15.0.11",
     "gh-pages": "^6.3.0",
-    "lucide-react-native": "^0.514.0 ",
+    "lucide-react-native": "^1.14.0",
     "nativewind": "^4.1.23 ",
     "next-themes": "^0.4.6",
     "react": "19.1.0",
