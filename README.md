@@ -44,7 +44,7 @@ Architected for a future of **limitless, user-installed functionality** through 
 
 ### Prerequisites
 
-- **Node.js** 18+
+- **Node.js** 22+
 - **Bun** package manager (`curl -fsSL https://bun.sh/install | bash`)
 - **Git**
 
@@ -59,20 +59,20 @@ git clone https://github.com/greenpillbr/capsula.git
 cd capsula
 ```
 
-2. **Install dependencies:**
+1. **Install dependencies:**
 
 ```bash
 bun install
 ```
 
-3. **Configure environment:**
+1. **Configure environment:**
 
 ```bash
 cp .env.example .env
 # Edit .env with your Infura API key
 ```
 
-4. **Generate database schema:**
+1. **Generate database schema:**
 
 ```bash
 bun run db:generate
@@ -93,7 +93,7 @@ bun run ios
 
 ## 📱 Running on Your Device
 
-This project targets **[Expo SDK 54](https://docs.expo.dev/versions/v54.0.0/)** and uses `react-native-mmkv@3.x`, which requires the [**New Architecture**](https://docs.expo.dev/guides/new-architecture/) (TurboModules). The New Architecture is already enabled in [`app.config.ts`](app.config.ts) (`newArchEnabled: true`), but it means you need an **Expo Go build that matches the SDK version** or, if that fails, a **custom development build**.
+This project targets **[Expo SDK 54](https://docs.expo.dev/versions/v54.0.0/)** and uses `react-native-mmkv@3.x`, which requires the **[New Architecture](https://docs.expo.dev/guides/new-architecture/)** (TurboModules). The New Architecture is already enabled in `[app.config.ts](app.config.ts)` (`newArchEnabled: true`), but it means you need an **Expo Go build that matches the SDK version** or, if that fails, a **custom development build**.
 
 > If you're new to Expo, the official [Expo Tutorial](https://docs.expo.dev/tutorial/overview/) and [EAS Tutorial](https://docs.expo.dev/tutorial/eas/introduction/) are the best place to start. Expo also publishes a complete [environment setup guide](https://docs.expo.dev/get-started/set-up-your-environment/) covering Android Studio, JDK, and emulator installation per OS.
 
@@ -132,15 +132,13 @@ You can now choose between two run modes:
 [Expo Go](https://docs.expo.dev/get-started/set-up-your-environment/?mode=expo-go) is a sandbox client that runs your JavaScript without rebuilding native code.
 
 1. Install **Expo Go** on the phone.
-   - The Play Store version is sometimes behind the latest SDK. If you see an SDK mismatch error, download the matching APK directly from Expo (see [Expo Go for older SDKs](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/#expo-go)):  
-     [`https://expo.dev/go?sdkVersion=54&platform=android&device=true`](https://expo.dev/go?sdkVersion=54&platform=android&device=true)
+  - The Play Store version is sometimes behind the latest SDK. If you see an SDK mismatch error, download the matching APK directly from Expo (see [Expo Go for older SDKs](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/#expo-go)):  
+   `[https://expo.dev/go?sdkVersion=54&platform=android&device=true](https://expo.dev/go?sdkVersion=54&platform=android&device=true)`
 2. Start the dev server (powered by [Expo CLI](https://docs.expo.dev/more/expo-cli/)):
-
-   ```bash
+  ```bash
    bun run dev
-   ```
-
-3. In the Metro terminal, press **`s`** to switch the target from "development build" to **Expo Go**, then scan the QR code with the Expo Go app.
+  ```
+3. In the Metro terminal, press `**s**` to switch the target from "development build" to **Expo Go**, then scan the QR code with the Expo Go app.
 
 > ⚠️ **MMKV / New Architecture:** if you see `react-native-mmkv 3.x.x requires TurboModules, but the new architecture is not enabled!`, your Expo Go binary is outdated or doesn't have the [New Architecture](https://docs.expo.dev/guides/new-architecture/) enabled. Reinstall Expo Go from the link above, or fall back to a Development Build (Option B).
 
@@ -149,47 +147,35 @@ You can now choose between two run modes:
 A [development build](https://docs.expo.dev/develop/development-builds/introduction/) is a custom version of Expo Go that includes this project's exact native modules — required when third-party libraries (like `react-native-mmkv` 3.x) need TurboModules or aren't bundled in stock Expo Go. See Expo's tutorials on [creating](https://docs.expo.dev/tutorial/eas/configure-development-build/) and [installing](https://docs.expo.dev/tutorial/eas/android-development-build/) Android development builds.
 
 1. **Install the [EAS CLI](https://docs.expo.dev/eas/)** globally:
-
-   ```bash
+  ```bash
    npm install -g eas-cli
-   ```
-
+  ```
 2. **Log in** with your Expo account:
-
-   ```bash
+  ```bash
    eas login
-   ```
-
-3. **Create an Expo project** on the [Expo dashboard](https://expo.dev/accounts/[account]/projects) and copy its `projectId` into your `.env` as `EXPO_PUBLIC_EAS_PROJECT_ID` (consumed by [`app.config.ts`](app.config.ts)). See [Using EAS with an existing project](https://docs.expo.dev/build/setup/).
-
-4. **Configure EAS** (only needed once per repo — generates [`eas.json`](https://docs.expo.dev/build/eas-json/)):
-
-   ```bash
+  ```
+3. **Create an Expo project** on the [Expo dashboard](https://expo.dev/accounts/[account]/projects) and copy its `projectId` into your `.env` as `EXPO_PUBLIC_EAS_PROJECT_ID` (consumed by `[app.config.ts](app.config.ts)`). See [Using EAS with an existing project](https://docs.expo.dev/build/setup/).
+4. **Configure EAS** (only needed once per repo — generates `[eas.json](https://docs.expo.dev/build/eas-json/)`):
+  ```bash
    eas build:configure
-   ```
-
-5. **Build a development APK** (cloud build — see [`eas build`](https://docs.expo.dev/build/introduction/)):
-
-   ```bash
+  ```
+5. **Build a development APK** (cloud build — see `[eas build](https://docs.expo.dev/build/introduction/)`):
+  ```bash
    bun run build:android
    # equivalent to: eas build --platform android --profile development
-   ```
-
+  ```
    When the build finishes, install it on your device using one of:
-
-   - The **Install** QR code from the EAS dashboard.
-   - [Expo Orbit](https://expo.dev/orbit) — a desktop helper that installs builds on a connected device or emulator with one click.
-   - `adb install path/to/capsula.apk`.
-
+  - The **Install** QR code from the EAS dashboard.
+  - [Expo Orbit](https://expo.dev/orbit) — a desktop helper that installs builds on a connected device or emulator with one click.
+  - `adb install path/to/capsula.apk`.
 6. **Run the dev server** and open the installed development build on the device:
-
-   ```bash
+  ```bash
    bun run dev
-   ```
+  ```
 
 #### Generating Native Projects Locally (advanced)
 
-If you need to inspect or modify the native Android/iOS projects directly (e.g. for native debugging), you can generate them with [`expo prebuild`](https://docs.expo.dev/workflow/prebuild/):
+If you need to inspect or modify the native Android/iOS projects directly (e.g. for native debugging), you can generate them with `[expo prebuild](https://docs.expo.dev/workflow/prebuild/)`:
 
 ```bash
 bunx expo prebuild
@@ -209,12 +195,12 @@ This is **not** required for the Expo Go or EAS development build flows above.
 
 ### Technology Stack
 
-- [**React Native**](https://reactnative.dev/) + **TypeScript** + [**Expo**](https://docs.expo.dev/) for cross-platform development
+- **[React Native](https://reactnative.dev/)** + **TypeScript** + **[Expo](https://docs.expo.dev/)** for cross-platform development
 - **Zustand** for state management with MMKV persistence
 - **Ethers.js** for blockchain interactions
-- **Drizzle ORM** with [**Expo SQLite**](https://docs.expo.dev/versions/latest/sdk/sqlite/) for local-first data storage
-- [**Expo SecureStore**](https://docs.expo.dev/versions/latest/sdk/securestore/) for cryptographic key management
-- [**Expo Router**](https://docs.expo.dev/router/introduction/) for file-based navigation
+- **Drizzle ORM** with **[Expo SQLite](https://docs.expo.dev/versions/latest/sdk/sqlite/)** for local-first data storage
+- **[Expo SecureStore](https://docs.expo.dev/versions/latest/sdk/securestore/)** for cryptographic key management
+- **[Expo Router](https://docs.expo.dev/router/introduction/)** for file-based navigation
 
 ### Mini-App System Architecture
 
