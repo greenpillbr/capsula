@@ -84,6 +84,26 @@ const BUILT_IN_MINI_APPS: MiniApp[] = [
     }),
     lastUpdated: new Date().toISOString(),
   },
+  {
+    id: "attendance-module",
+    title: "Attendance",
+    description: "Track and verify attendance records (coming soon)",
+    iconUrl: "", // Resolved locally to bundled attendance asset
+    version: "1.0.0",
+    categories: '["Community", "Tools"]',
+    supportedNetworks: "[1, 42220, 100]", // Ethereum, CELO, Gnosis
+    recommendedByCommunities: '["greenpill-br"]',
+    isInstalled: true,
+    isBuiltIn: true,
+    installationOrder: 4,
+    manifestData: JSON.stringify({
+      type: "built-in",
+      module: "attendance",
+      entryPoint: "AttendanceModule",
+      permissions: [],
+    }),
+    lastUpdated: new Date().toISOString(),
+  },
 ];
 
 // Mini-app manifest interface for type safety
