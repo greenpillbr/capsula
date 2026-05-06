@@ -42,29 +42,6 @@ const BUILT_IN_MINI_APPS: MiniApp[] = [
     lastUpdated: new Date().toISOString(),
   },
   {
-    id: "example-module",
-    title: "Example",
-    description:
-      "Demonstrates mini-app SDK capabilities and smart contract interaction",
-    iconUrl: "", // Will use default icon
-    version: "1.0.0",
-    categories: '["Developer", "Tools"]',
-    supportedNetworks: "[1, 42220, 100]", // Ethereum, CELO, Gnosis
-    recommendedByCommunities: '["developers"]',
-    isInstalled: true,
-    isBuiltIn: true,
-    installationOrder: 2,
-    manifestData: JSON.stringify({
-      type: "built-in",
-      module: "example",
-      entryPoint: "ExampleModule",
-      permissions: ["wallet.read", "network.read", "transaction.sign"],
-      contractInteractions: ["ERC20"],
-      abi: [], // Will contain example contract ABI
-    }),
-    lastUpdated: new Date().toISOString(),
-  },
-  {
     id: "gardens-module",
     title: "Gardens",
     description: "Cultivate regenerative communities (coming soon)",
@@ -75,7 +52,7 @@ const BUILT_IN_MINI_APPS: MiniApp[] = [
     recommendedByCommunities: '["greenpill-br"]',
     isInstalled: true,
     isBuiltIn: true,
-    installationOrder: 3,
+    installationOrder: 2,
     manifestData: JSON.stringify({
       type: "built-in",
       module: "gardens",
@@ -95,7 +72,7 @@ const BUILT_IN_MINI_APPS: MiniApp[] = [
     recommendedByCommunities: '["greenpill-br"]',
     isInstalled: true,
     isBuiltIn: true,
-    installationOrder: 4,
+    installationOrder: 3,
     manifestData: JSON.stringify({
       type: "built-in",
       module: "attendance",

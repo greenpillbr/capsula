@@ -29,7 +29,8 @@ Architected for a future of **limitless, user-installed functionality** through 
 - **Modular Architecture**: Extensible system for adding new functionality
 - **Built-in Mini-Apps**:
   - **Tokens Module**: ERC-20 token management and custom token addition
-  - **Example Module**: SDK demonstration for developers
+  - **Gardens**: Regenerative communities module (coming soon)
+  - **Attendance**: Attendance tracking module (coming soon)
 - **Network-Based Filtering**: Mini-apps automatically show/hide based on current network
 - **Secure Integration**: All mini-app transactions require Passkey authentication
 
@@ -209,7 +210,7 @@ This is **not** required for the Expo Go or EAS development build flows above.
 │   Core Wallet   │    │  Mini-App SDK   │    │  Built-in Apps  │
 │                 │    │                 │    │                 │
 │ • Authentication│◄──►│ • Wallet API    │◄──►│ • Tokens        │
-│ • Network Mgmt  │    │ • Network API   │    │ • Example       │
+│ • Network Mgmt  │    │ • Network API   │    │ • Gardens       │
 │ • Transactions  │    │ • Storage API   │    │ • [Future Apps] │
 │ • Key Mgmt      │    │ • UI API        │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
@@ -288,6 +289,7 @@ This is **not** required for the Expo Go or EAS development build flows above.
 
 - **[Development Workflow](docs/development-workflow.md)** - Setup and contribution guide
 - **[Mini-App System Architecture](docs/mini-app-system-mvp-architecture.md)** - Technical architecture
+- **[Mini-App SDK Examples](docs/mini-app-sdk-examples.md)** - Practical SDK snippets previously shown in the Example mini-app
 - **[Complete Specification](docs/capsula_all_documentation.md)** - Full project requirements
 
 ### Expo & React Native references
@@ -337,7 +339,7 @@ GitHub Actions automatically builds APKs on push to main branch — see Expo's [
 - Multi-network support (Ethereum, CELO, Gnosis)
 - Complete mini-app system infrastructure
 - Tokens module for ERC-20 token management
-- Example module for developer guidance
+- Mini-app SDK examples documentation for developer guidance
 - Android build pipeline
 
 ### 🔮 Future Phases
@@ -355,7 +357,7 @@ We welcome contributions from the Greenpill BR community and crypto developers w
 ### For Developers
 
 1. Read the [development workflow](docs/development-workflow.md)
-2. Study the [Example module](lib/mini-apps/modules/example/ExampleModule.tsx)
+2. Study the [Mini-App SDK examples](docs/mini-app-sdk-examples.md)
 3. Follow the mini-app development guide above
 
 ### For Community
