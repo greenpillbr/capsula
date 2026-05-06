@@ -64,6 +64,26 @@ const BUILT_IN_MINI_APPS: MiniApp[] = [
     }),
     lastUpdated: new Date().toISOString(),
   },
+  {
+    id: "gardens-module",
+    title: "Gardens",
+    description: "Cultivate regenerative communities (coming soon)",
+    iconUrl: "", // Resolved locally to bundled gardens-logo asset
+    version: "1.0.0",
+    categories: '["Community", "Sustainability"]',
+    supportedNetworks: "[1, 42220, 100]", // Ethereum, CELO, Gnosis
+    recommendedByCommunities: '["greenpill-br"]',
+    isInstalled: true,
+    isBuiltIn: true,
+    installationOrder: 3,
+    manifestData: JSON.stringify({
+      type: "built-in",
+      module: "gardens",
+      entryPoint: "GardensModule",
+      permissions: [],
+    }),
+    lastUpdated: new Date().toISOString(),
+  },
 ];
 
 // Mini-app manifest interface for type safety
@@ -276,15 +296,37 @@ export const useMiniAppStore = create<MiniAppState>()(
       },
 
       initializeBuiltInMiniApps: () => {
-        const { miniApps } = get();
+        const { miniApps, installedMiniApps } = get();
 
-        // Only initialize if no mini-apps exist
+        // First-time init: nothing persisted yet
         if (miniApps.length === 0) {
           set({
             miniApps: BUILT_IN_MINI_APPS,
             installedMiniApps: BUILT_IN_MINI_APPS,
           });
           console.log("Initialized built-in mini-apps");
+          return;
+        }
+
+        // Existing users: merge in any newly added built-ins so app updates
+        // that ship new built-in modules still surface them.
+        const existingIds = new Set(miniApps.map((app) => app.id));
+        const missingBuiltIns = BUILT_IN_MINI_APPS.filter(
+          (app) => !existingIds.has(app.id),
+        );
+
+        if (missingBuiltIns.length > 0) {
+          set({
+            miniApps: [...miniApps, ...missingBuiltIns],
+            installedMiniApps: [
+              ...installedMiniApps,
+              ...missingBuiltIns.filter((app) => app.isInstalled),
+            ],
+          });
+          console.log(
+            `Added ${missingBuiltIns.length} new built-in mini-app(s):`,
+            missingBuiltIns.map((app) => app.id).join(", "),
+          );
         }
       },
 

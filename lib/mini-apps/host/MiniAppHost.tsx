@@ -8,11 +8,13 @@ import type { MiniAppProps } from '../sdk/types';
 
 // Import built-in mini-app modules statically
 import ExampleModule from '../modules/example/ExampleModule';
+import GardensModule from '../modules/gardens/GardensModule';
 import TokensModule from '../modules/tokens/TokensModule';
 
 const BUILT_IN_MODULES: Record<string, { default: React.ComponentType<MiniAppProps> }> = {
   'tokens-module': { default: TokensModule },
   'example-module': { default: ExampleModule },
+  'gardens-module': { default: GardensModule },
 };
 
 interface MiniAppHostProps {

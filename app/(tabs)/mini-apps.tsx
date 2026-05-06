@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MiniAppIcon } from '@/components/mini-apps/MiniAppIcon';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { Globe } from '@/lib/icons';
@@ -204,11 +205,13 @@ export default function MiniAppsScreen() {
       <View className="p-4">
         <View className="flex-row items-start justify-between mb-3">
           <View className="flex-row items-center flex-1">
-            <View className="w-12 h-12 bg-primary/10 rounded-lg items-center justify-center mr-3">
-              <Text className="text-primary text-lg font-bold">
-                {app.title[0]}
-              </Text>
-            </View>
+            <MiniAppIcon
+              miniAppId={app.id}
+              miniAppTitle={app.title}
+              containerClassName="w-12 h-12 bg-primary/10 rounded-lg items-center justify-center mr-3 overflow-hidden"
+              imageClassName="w-12 h-12"
+              fallbackTextClassName="text-primary text-lg font-bold"
+            />
             
             <View className="flex-1">
               <Text className="text-foreground font-semibold text-lg">{app.title}</Text>
