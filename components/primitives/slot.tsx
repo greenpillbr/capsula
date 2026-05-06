@@ -1,33 +1,33 @@
 import * as React from "react";
 import {
+  StyleSheet,
+  type PressableStateCallbackType,
   type Image as RNImage,
   type ImageProps as RNImageProps,
   type ImageStyle as RNImageStyle,
   type Pressable as RNPressable,
   type PressableProps as RNPressableProps,
-  type PressableStateCallbackType,
-  type StyleProp,
-  StyleSheet,
   type Text as RNText,
   type TextProps as RNTextProps,
   type View as RNView,
   type ViewProps as RNViewProps,
+  type StyleProp,
 } from "react-native";
 
 const Pressable = React.forwardRef<
-  React.ElementRef<typeof RNPressable>,
+  React.ComponentRef<typeof RNPressable>,
   RNPressableProps
 >((props, forwardedRef) => {
-  const {children, ...pressableSlotProps} = props;
+  const { children, ...pressableSlotProps } = props;
 
-  if (!React.isValidElement(children)) {
+  if (!React.isValidElement<AnyProps>(children)) {
     console.log("Slot.Pressable - Invalid asChild element", children);
     return null;
   }
 
   return React.cloneElement<
     React.ComponentPropsWithoutRef<typeof RNPressable>,
-    React.ElementRef<typeof RNPressable>
+    React.ComponentRef<typeof RNPressable>
   >(isTextChildren(children) ? <></> : children, {
     ...mergeProps(pressableSlotProps, children.props),
     ref: forwardedRef
@@ -38,18 +38,18 @@ const Pressable = React.forwardRef<
 
 Pressable.displayName = "SlotPressable";
 
-const View = React.forwardRef<React.ElementRef<typeof RNView>, RNViewProps>(
+const View = React.forwardRef<React.ComponentRef<typeof RNView>, RNViewProps>(
   (props, forwardedRef) => {
-    const {children, ...viewSlotProps} = props;
+    const { children, ...viewSlotProps } = props;
 
-    if (!React.isValidElement(children)) {
+    if (!React.isValidElement<AnyProps>(children)) {
       console.log("Slot.View - Invalid asChild element", children);
       return null;
     }
 
     return React.cloneElement<
       React.ComponentPropsWithoutRef<typeof RNView>,
-      React.ElementRef<typeof RNView>
+      React.ComponentRef<typeof RNView>
     >(isTextChildren(children) ? <></> : children, {
       ...mergeProps(viewSlotProps, children.props),
       ref: forwardedRef
@@ -61,18 +61,18 @@ const View = React.forwardRef<React.ElementRef<typeof RNView>, RNViewProps>(
 
 View.displayName = "SlotView";
 
-const Text = React.forwardRef<React.ElementRef<typeof RNText>, RNTextProps>(
+const Text = React.forwardRef<React.ComponentRef<typeof RNText>, RNTextProps>(
   (props, forwardedRef) => {
-    const {children, ...textSlotProps} = props;
+    const { children, ...textSlotProps } = props;
 
-    if (!React.isValidElement(children)) {
+    if (!React.isValidElement<AnyProps>(children)) {
       console.log("Slot.Text - Invalid asChild element", children);
       return null;
     }
 
     return React.cloneElement<
       React.ComponentPropsWithoutRef<typeof RNText>,
-      React.ElementRef<typeof RNText>
+      React.ComponentRef<typeof RNText>
     >(isTextChildren(children) ? <></> : children, {
       ...mergeProps(textSlotProps, children.props),
       ref: forwardedRef
@@ -89,19 +89,19 @@ type ImageSlotProps = RNImageProps & {
 };
 
 const Image = React.forwardRef<
-  React.ElementRef<typeof RNImage>,
+  React.ComponentRef<typeof RNImage>,
   ImageSlotProps
 >((props, forwardedRef) => {
-  const {children, ...imageSlotProps} = props;
+  const { children, ...imageSlotProps } = props;
 
-  if (!React.isValidElement(children)) {
+  if (!React.isValidElement<AnyProps>(children)) {
     console.log("Slot.Image - Invalid asChild element", children);
     return null;
   }
 
   return React.cloneElement<
     React.ComponentPropsWithoutRef<typeof RNImage>,
-    React.ElementRef<typeof RNImage>
+    React.ComponentRef<typeof RNImage>
   >(isTextChildren(children) ? <></> : children, {
     ...mergeProps(imageSlotProps, children.props),
     ref: forwardedRef
@@ -112,7 +112,7 @@ const Image = React.forwardRef<
 
 Image.displayName = "SlotImage";
 
-export {Image, Pressable, Text, View};
+export { Image, Pressable, Text, View };
 
 // This project uses code from WorkOS/Radix Primitives.
 // The code is licensed under the MIT License.
@@ -133,7 +133,7 @@ type AnyProps = Record<string, any>;
 
 function mergeProps(slotProps: AnyProps, childProps: AnyProps) {
   // all child props should override
-  const overrideProps = {...childProps};
+  const overrideProps = { ...childProps };
 
   for (const propName in childProps) {
     const slotPropValue = slotProps[propName];
@@ -163,7 +163,7 @@ function mergeProps(slotProps: AnyProps, childProps: AnyProps) {
     }
   }
 
-  return {...slotProps, ...overrideProps};
+  return { ...slotProps, ...overrideProps };
 }
 
 type PressableStyle = RNPressableProps["style"];

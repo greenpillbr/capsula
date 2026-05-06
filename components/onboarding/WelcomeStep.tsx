@@ -20,8 +20,6 @@ export function WelcomeStep({
   const [isLoading, setIsLoading] = useState(false);
   const { wallets } = useWalletStore();
 
-  console.log("biometricType", biometricType);
-
   const handleImportWallet = () => {
     router.push("/import-wallet");
   };
