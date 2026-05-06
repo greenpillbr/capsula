@@ -25,6 +25,15 @@ export {
   ErrorBoundary
 } from "expo-router";
 
+const isDebugMode = process.env.DEBUG_MODE === "true";
+const originalConsoleLog = console.log;
+
+if (!isDebugMode) {
+  console.log = () => {};
+} else {
+  console.log = originalConsoleLog;
+}
+
 // Prevent the splash screen from auto-hiding before getting the color scheme.
 SplashScreen.preventAutoHideAsync();
 

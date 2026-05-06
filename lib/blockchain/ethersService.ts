@@ -59,6 +59,56 @@ export const NETWORK_CONFIGS: Record<number, Network> = {
 class EthersService {
   private providers: Map<number, ethers.JsonRpcProvider> = new Map();
   private currentChainId: number = 1; // Default to Ethereum
+  private instrumentedProviders = new WeakSet<ethers.JsonRpcProvider>();
+
+  private instrumentProvider(
+    provider: ethers.JsonRpcProvider,
+    chainId: number,
+    url: string,
+  ) {
+    if (this.instrumentedProviders.has(provider)) {
+      return;
+    }
+
+    const originalSend = provider.send.bind(provider);
+    provider.send = async (method: string, params: any[]) => {
+      const startedAt = Date.now();
+      console.log("[RPC Request]", {
+        chainId,
+        method,
+        paramsCount: Array.isArray(params) ? params.length : 0,
+        rpcUrl: url,
+        timestamp: new Date(startedAt).toISOString(),
+      });
+
+      try {
+        const result = await originalSend(method, params);
+        console.log("[RPC Response]", {
+          chainId,
+          method,
+          rpcUrl: url,
+          durationMs: Date.now() - startedAt,
+          success: true,
+        });
+        return result;
+      } catch (error) {
+        console.log("[RPC Response]", {
+          chainId,
+          method,
+          rpcUrl: url,
+          durationMs: Date.now() - startedAt,
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unknown RPC error",
+        });
+        throw error;
+      }
+    };
+
+    this.instrumentedProviders.add(provider);
+  }
 
   /**
    * Get or create a provider for a specific chain with better error handling
@@ -92,6 +142,7 @@ class EthersService {
         chainId,
         name: config?.name || `Chain ${chainId}`,
       });
+      this.instrumentProvider(provider, chainId, url);
 
       this.providers.set(chainId, provider);
     }

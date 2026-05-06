@@ -71,7 +71,12 @@ bun install
 ```bash
 cp .env.example .env
 # Edit .env with your Infura API key
+# Optional: keep DEBUG_MODE=true to show console.log output
 ```
+
+`DEBUG_MODE` controls `console.log` visibility in the app:
+- `DEBUG_MODE=true` shows app logs.
+- `DEBUG_MODE=false` hides `console.log` output.
 
 1. **Generate database schema:**
 
