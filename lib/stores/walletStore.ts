@@ -27,6 +27,14 @@ export const setForceBalanceUpdateCallback = (
   forceBalanceUpdateCallback = callback;
 };
 
+let pendingTransactionsChangeCallback: (() => void) | null = null;
+
+export const setPendingTransactionsChangeCallback = (
+  callback: () => void,
+) => {
+  pendingTransactionsChangeCallback = callback;
+};
+
 const storage = createMMKV();
 
 const zustandStorage = {
@@ -289,6 +297,7 @@ export const useWalletStore = create<WalletState>()(
         set((state) => ({
           pendingTransactions: [...state.pendingTransactions, transaction],
         }));
+        pendingTransactionsChangeCallback?.();
       },
 
       removePendingTransaction: (transactionId: string) => {
@@ -297,6 +306,7 @@ export const useWalletStore = create<WalletState>()(
             (tx) => tx.id !== transactionId,
           ),
         }));
+        pendingTransactionsChangeCallback?.();
       },
 
       // Loading State Actions

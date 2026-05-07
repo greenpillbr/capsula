@@ -9,7 +9,11 @@ import { useAuthStore } from "@/lib/stores/authStore";
 import { useNetworkStore } from "@/lib/stores/networkStore";
 import { useWalletStore } from "@/lib/stores/walletStore";
 import { useColorScheme } from "@/lib/useColorScheme";
-import { Inter_400Regular, Inter_600SemiBold, useFonts } from '@expo-google-fonts/inter';
+import {
+  Inter_400Regular,
+  Inter_600SemiBold,
+  useFonts,
+} from "@expo-google-fonts/inter";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { ThemeProvider } from "@react-navigation/native";
 import { SplashScreen, Stack } from "expo-router";
@@ -25,7 +29,7 @@ export {
   ErrorBoundary
 } from "expo-router";
 
-const isDebugMode = process.env.DEBUG_MODE === "true";
+const isDebugMode = process.env.EXPO_PUBLIC_DEBUG_MODE === "true";
 const originalConsoleLog = console.log;
 
 if (!isDebugMode) {
@@ -93,7 +97,12 @@ export default function RootLayout() {
   // Handle app state changes for monitoring
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active' && isAuthenticated && activeWallet && activeNetwork) {
+      if (
+        nextAppState === "active" &&
+        isAuthenticated &&
+        activeWallet &&
+        activeNetwork
+      ) {
         // Restart monitoring when app becomes active
         if (!balanceMonitorService.isMonitoringActive()) {
           balanceMonitorService.startMonitoring();
@@ -101,7 +110,10 @@ export default function RootLayout() {
       }
     };
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange,
+    );
     return () => subscription?.remove();
   }, [isAuthenticated, activeWallet, activeNetwork]);
 
@@ -117,13 +129,28 @@ export default function RootLayout() {
           <BottomSheetModalProvider>
             <Stack>
               <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ title: "Capsula", headerShown: false }} />
-              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="(tabs)"
+                options={{ title: "Capsula", headerShown: false }}
+              />
+              <Stack.Screen
+                name="onboarding"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen name="send" options={{ headerShown: false }} />
               <Stack.Screen name="receive" options={{ headerShown: false }} />
-              <Stack.Screen name="import-wallet" options={{ headerShown: false }} />
-              <Stack.Screen name="network-manager" options={{ headerShown: false }} />
-              <Stack.Screen name="mini-app/[id]" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="import-wallet"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="network-manager"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="mini-app/[id]"
+                options={{ headerShown: false }}
+              />
             </Stack>
           </BottomSheetModalProvider>
         </GestureHandlerRootView>

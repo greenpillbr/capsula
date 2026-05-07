@@ -6,6 +6,7 @@ import {
 import {
   setForceBalanceUpdateCallback,
   setGetNetworkStateCallback,
+  setPendingTransactionsChangeCallback,
   setWalletChangeCallback,
   useWalletStore
 } from '@/lib/stores/walletStore';
@@ -24,12 +25,13 @@ interface TransactionEvent {
 
 class BalanceMonitorService {
   private intervals: Map<string, NodeJS.Timeout> = new Map();
-  private listeners: Map<string, () => void> = new Map();
   private appStateSubscription: any = null;
   private isMonitoring = false;
-  private pendingTransactions: Map<string, ethers.TransactionResponse> = new Map();
   private lastBalanceUpdate: Map<string, number> = new Map(); // Track last update times
   private isUpdatingBalance = false; // Prevent concurrent balance updates
+  /** Block listener only while confirming pending txs (reduces idle eth_blockNumber traffic). */
+  private pendingTxBlockListenerKey: string | null = null;
+  private removePendingTxBlockListener: (() => void) | null = null;
 
   constructor() {
     // Register callbacks to avoid circular dependencies
@@ -47,6 +49,10 @@ class BalanceMonitorService {
     
     setForceBalanceUpdateCallback(() => {
       return this.forceBalanceUpdate();
+    });
+
+    setPendingTransactionsChangeCallback(() => {
+      this.syncBlockListenerWithPendingState();
     });
   }
 
@@ -70,14 +76,13 @@ class BalanceMonitorService {
     // Set up balance polling
     await this.setupBalancePolling(activeWallet.address, activeNetwork.chainId);
 
-    // Set up transaction event listeners
-    await this.setupTransactionListeners(activeWallet.address, activeNetwork.chainId);
-
     // Set up pending transaction monitoring
     await this.setupPendingTransactionMonitoring();
 
     // Set up app state monitoring
     this.setupAppStateMonitoring();
+
+    this.syncBlockListenerWithPendingState();
 
     // Initial balance fetch (forced to bypass throttling)
     await this.updateBalance(activeWallet.address, activeNetwork.chainId, true);
@@ -93,9 +98,7 @@ class BalanceMonitorService {
     this.intervals.forEach((interval) => clearInterval(interval));
     this.intervals.clear();
 
-    // Remove all event listeners
-    this.listeners.forEach((removeListener) => removeListener());
-    this.listeners.clear();
+    this.teardownPendingTransactionBlockListener();
 
     // Remove app state subscription
     if (this.appStateSubscription) {
@@ -103,8 +106,7 @@ class BalanceMonitorService {
       this.appStateSubscription = null;
     }
 
-    // Clear pending transactions and throttling maps
-    this.pendingTransactions.clear();
+    // Clear throttling maps
     this.lastBalanceUpdate.clear();
     this.isUpdatingBalance = false;
   }
@@ -130,23 +132,42 @@ class BalanceMonitorService {
     this.intervals.set(intervalKey, interval);
   }
 
-  /**
-   * Set up real-time transaction event listeners
-   */
-  private async setupTransactionListeners(address: string, chainId: number): Promise<void> {
+  private syncBlockListenerWithPendingState(): void {
+    const { activeWallet, pendingTransactions } = useWalletStore.getState();
+    const { activeNetwork } = useNetworkStore.getState();
+
+    if (!this.isMonitoring || !activeWallet || !activeNetwork) {
+      this.teardownPendingTransactionBlockListener();
+      return;
+    }
+
+    if (pendingTransactions.length === 0) {
+      this.teardownPendingTransactionBlockListener();
+      return;
+    }
+
+    this.ensurePendingTransactionBlockListener(
+      activeWallet.address,
+      activeNetwork.chainId,
+    );
+  }
+
+  private ensurePendingTransactionBlockListener(
+    address: string,
+    chainId: number,
+  ): void {
+    const key = `${address}_${chainId}`;
+    if (this.pendingTxBlockListenerKey === key && this.removePendingTxBlockListener) {
+      return;
+    }
+
+    this.teardownPendingTransactionBlockListener();
+
     try {
       const provider = ethersService.getProvider(chainId);
-      const listenerKey = `transactions_${address}_${chainId}`;
-
-      // Remove existing listener
-      if (this.listeners.has(listenerKey)) {
-        this.listeners.get(listenerKey)!();
-      }
-
-      // Listen for new blocks to catch transactions
       const onBlock = async (blockNumber: number) => {
         if (!this.isMonitoring) return;
-        
+
         try {
           await this.checkBlockForTransactions(address, blockNumber, chainId);
         } catch (error) {
@@ -155,15 +176,21 @@ class BalanceMonitorService {
       };
 
       provider.on('block', onBlock);
-
-      // Store cleanup function
-      const removeListener = () => {
+      this.pendingTxBlockListenerKey = key;
+      this.removePendingTxBlockListener = () => {
         provider.off('block', onBlock);
       };
-      this.listeners.set(listenerKey, removeListener);
     } catch (error) {
-      console.error('Failed to setup transaction listeners:', error);
+      console.error('Failed to setup pending-tx block listener:', error);
     }
+  }
+
+  private teardownPendingTransactionBlockListener(): void {
+    if (this.removePendingTxBlockListener) {
+      this.removePendingTxBlockListener();
+    }
+    this.removePendingTxBlockListener = null;
+    this.pendingTxBlockListenerKey = null;
   }
 
   /**
@@ -360,93 +387,104 @@ class BalanceMonitorService {
     const { activeNetwork } = useNetworkStore.getState();
     const { pendingTransactions, updateTransaction, removePendingTransaction, addTransaction } = useWalletStore.getState();
     
-    if (!activeNetwork || pendingTransactions.length === 0) return;
+    if (!activeNetwork || pendingTransactions.length === 0) {
+      this.syncBlockListenerWithPendingState();
+      return;
+    }
 
-    // Monitor each pending transaction
-    for (const pendingTx of pendingTransactions) {
-      try {
-        // Use provider.waitForTransaction to check for at least 1 confirmation
-        const receipt = await ethersService.waitForTransaction(pendingTx.hash, 1, activeNetwork.chainId);
-        
-        if (receipt) {
-          // Update transaction status to "Confirmed" with receipt details
-          updateTransaction(pendingTx.id, {
-            status: 'Confirmed',
-            gasUsed: receipt.gasUsed.toString(),
-            blockNumber: receipt.blockNumber,
-            timestamp: new Date().toISOString(), // Update with confirmation time
-          });
-          
-          // Also add to recent transactions if not already there
-          const confirmedTransaction = {
-            ...pendingTx,
-            status: 'Confirmed' as const,
-            gasUsed: receipt.gasUsed.toString(),
-            blockNumber: receipt.blockNumber,
-            timestamp: new Date().toISOString(),
-          };
-          
-          addTransaction(confirmedTransaction);
-          
-          // Remove from pending transactions
-          removePendingTransaction(pendingTx.id);
-          
-          // Update balance after confirmation
-          const { activeWallet } = useWalletStore.getState();
-          if (activeWallet) {
-            await this.updateBalance(activeWallet.address, activeNetwork.chainId, true);
-          }
-          
-          // Trigger notification about confirmation
-          this.triggerTransactionNotification({
-            hash: pendingTx.hash,
-            from: pendingTx.fromAddress,
-            to: pendingTx.toAddress,
-            value: pendingTx.value,
-            blockNumber: receipt.blockNumber,
-            timestamp: Date.now(),
-            isIncoming: !pendingTx.isOutgoing,
-          });
-        }
-      } catch (error) {
-        console.error(`Error monitoring transaction ${pendingTx.hash}:`, error);
-        
-        // Check if transaction failed
+    try {
+      for (const pendingTx of pendingTransactions) {
         try {
-          const provider = ethersService.getProvider(activeNetwork.chainId);
-          const tx = await provider.getTransaction(pendingTx.hash);
-          
-          if (tx && tx.blockNumber) {
-            // Transaction is included in a block, get receipt to check if it failed
-            const receipt = await provider.getTransactionReceipt(pendingTx.hash);
-            if (receipt && receipt.status === 0) {
-              console.log(`❌ Transaction failed: ${pendingTx.hash}`);
-              
-              // Mark as failed
-              updateTransaction(pendingTx.id, {
-                status: 'Failed',
-                blockNumber: receipt.blockNumber,
-                timestamp: new Date().toISOString(),
-              });
-              
-              // Add to recent transactions as failed
-              const failedTransaction = {
-                ...pendingTx,
-                status: 'Failed' as const,
-                blockNumber: receipt.blockNumber,
-                timestamp: new Date().toISOString(),
-              };
-              
-              addTransaction(failedTransaction);
-              
-              // Remove from pending
-              removePendingTransaction(pendingTx.id);
+          // Use provider.waitForTransaction to check for at least 1 confirmation
+          const receipt = await ethersService.waitForTransaction(
+            pendingTx.hash,
+            1,
+            activeNetwork.chainId,
+          );
+
+          if (receipt) {
+            updateTransaction(pendingTx.id, {
+              status: 'Confirmed',
+              gasUsed: receipt.gasUsed.toString(),
+              blockNumber: receipt.blockNumber,
+              timestamp: new Date().toISOString(),
+            });
+
+            const confirmedTransaction = {
+              ...pendingTx,
+              status: 'Confirmed' as const,
+              gasUsed: receipt.gasUsed.toString(),
+              blockNumber: receipt.blockNumber,
+              timestamp: new Date().toISOString(),
+            };
+
+            addTransaction(confirmedTransaction);
+            removePendingTransaction(pendingTx.id);
+
+            const { activeWallet } = useWalletStore.getState();
+            if (activeWallet) {
+              await this.updateBalance(
+                activeWallet.address,
+                activeNetwork.chainId,
+                true,
+              );
             }
+
+            this.triggerTransactionNotification({
+              hash: pendingTx.hash,
+              from: pendingTx.fromAddress,
+              to: pendingTx.toAddress,
+              value: pendingTx.value,
+              blockNumber: receipt.blockNumber,
+              timestamp: Date.now(),
+              isIncoming: !pendingTx.isOutgoing,
+            });
           }
-        } catch (failureCheckError) {
-          console.error(`Error checking transaction failure for ${pendingTx.hash}:`, failureCheckError);
+        } catch (error) {
+          console.error(
+            `Error monitoring transaction ${pendingTx.hash}:`,
+            error,
+          );
+
+          // Check if transaction was included but failed on-chain
+          try {
+            const provider = ethersService.getProvider(activeNetwork.chainId);
+            const tx = await provider.getTransaction(pendingTx.hash);
+
+            if (tx && tx.blockNumber) {
+              const receipt = await provider.getTransactionReceipt(
+                pendingTx.hash,
+              );
+              if (receipt && receipt.status === 0) {
+                console.log(`❌ Transaction failed: ${pendingTx.hash}`);
+
+                updateTransaction(pendingTx.id, {
+                  status: 'Failed',
+                  blockNumber: receipt.blockNumber,
+                  timestamp: new Date().toISOString(),
+                });
+
+                const failedTransaction = {
+                  ...pendingTx,
+                  status: 'Failed' as const,
+                  blockNumber: receipt.blockNumber,
+                  timestamp: new Date().toISOString(),
+                };
+
+                addTransaction(failedTransaction);
+                removePendingTransaction(pendingTx.id);
+              }
+            }
+          } catch (failureCheckError) {
+            console.error(
+              `Error checking transaction failure for ${pendingTx.hash}:`,
+              failureCheckError,
+            );
+          }
         }
       }
+    } finally {
+      this.syncBlockListenerWithPendingState();
     }
   }
 
@@ -504,19 +542,6 @@ class BalanceMonitorService {
     
     // TODO: Integrate with actual notification system
     // This would trigger the bell icon update and push notifications
-  }
-
-  /**
-   * Add pending transaction to monitor
-   */
-  addPendingTransaction(txResponse: ethers.TransactionResponse): void {
-    this.pendingTransactions.set(txResponse.hash, txResponse);
-    console.log(`⏳ Added pending transaction to monitor: ${txResponse.hash}`);
-    
-    // Start monitoring this specific transaction
-    setTimeout(() => {
-      this.monitorPendingTransactions();
-    }, 1000);
   }
 
   /**

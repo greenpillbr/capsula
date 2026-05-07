@@ -6,14 +6,13 @@ import { Bell } from "@/lib/icons/Bell";
 import { Copy } from "@/lib/icons/Copy";
 import { Globe } from "@/lib/icons/Globe";
 import { Send } from "@/lib/icons/Send";
-import { balanceMonitorService } from "@/lib/services/balanceMonitorService";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useMiniAppStore } from "@/lib/stores/miniAppStore";
 import { useNetworkStore } from "@/lib/stores/networkStore";
 import { useWalletStore } from "@/lib/stores/walletStore";
 import * as Clipboard from "expo-clipboard";
-import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -62,40 +61,13 @@ export default function WalletHomeScreen() {
     initializeBuiltInMiniApps();
   }, []);
 
-  // Handle wallet and network changes with automatic monitoring
+  // Handle wallet and network changes (balance monitoring is owned by root layout)
   useEffect(() => {
     if (activeWallet && activeNetwork) {
       loadWalletData();
       refreshAvailableMiniApps(activeNetwork.chainId);
-
-      // Start automatic balance monitoring
-      balanceMonitorService.startMonitoring();
     }
-
-    return () => {
-      // Cleanup monitoring when component unmounts or dependencies change
-      balanceMonitorService.stopMonitoring();
-    };
   }, [activeWallet, activeNetwork]);
-
-  // Focus effect to restart monitoring when screen becomes active
-  useFocusEffect(
-    useCallback(() => {
-      if (activeWallet && activeNetwork) {
-        // Force immediate balance update when screen becomes focused
-        balanceMonitorService.forceBalanceUpdate();
-
-        // Restart monitoring if it's not active
-        if (!balanceMonitorService.isMonitoringActive()) {
-          balanceMonitorService.startMonitoring();
-        }
-      }
-
-      return () => {
-        // Don't stop monitoring when screen loses focus, keep it running
-      };
-    }, [activeWallet, activeNetwork]),
-  );
 
   const loadWalletData = async () => {
     if (!activeWallet || !activeNetwork) return;
@@ -111,10 +83,8 @@ export default function WalletHomeScreen() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      // Force balance refresh on manual refresh
+      // refreshBalances(true) already triggers forceBalanceUpdate via wallet store
       await refreshBalances(true);
-      // Force immediate balance update from monitoring service
-      await balanceMonitorService.forceBalanceUpdate();
     } catch (error) {
       console.error("Failed to refresh:", error);
     } finally {

@@ -55,14 +55,38 @@ export const NETWORK_CONFIGS: Record<number, Network> = {
   },
 };
 
+/** Slower HTTP polling when WebSocket is not used (block events / network sync). */
+const JSON_RPC_POLLING_INTERVAL_MS = 12_000;
+
 // Provider management
 class EthersService {
-  private providers: Map<number, ethers.JsonRpcProvider> = new Map();
+  private providers: Map<
+    number,
+    ethers.JsonRpcProvider | ethers.WebSocketProvider
+  > = new Map();
   private currentChainId: number = 1; // Default to Ethereum
-  private instrumentedProviders = new WeakSet<ethers.JsonRpcProvider>();
+  private instrumentedProviders = new WeakSet<
+    ethers.JsonRpcProvider | ethers.WebSocketProvider
+  >();
+
+  private resolveWsUrl(chainId: number): string | undefined {
+    if (chainId === 42220) {
+      const explicit = process.env.EXPO_PUBLIC_CELO_WS_URL;
+      return explicit?.trim() || undefined;
+    }
+    if (chainId === 1) {
+      const wss = process.env.EXPO_PUBLIC_ETHEREUM_WS_URL?.trim();
+      return wss || undefined;
+    }
+    if (chainId === 100) {
+      const wss = process.env.EXPO_PUBLIC_GNOSIS_WS_URL?.trim();
+      return wss || undefined;
+    }
+    return undefined;
+  }
 
   private instrumentProvider(
-    provider: ethers.JsonRpcProvider,
+    provider: ethers.JsonRpcProvider | ethers.WebSocketProvider,
     chainId: number,
     url: string,
   ) {
@@ -113,7 +137,10 @@ class EthersService {
   /**
    * Get or create a provider for a specific chain with better error handling
    */
-  getProvider(chainId: number, rpcUrl?: string): ethers.JsonRpcProvider {
+  getProvider(
+    chainId: number,
+    rpcUrl?: string,
+  ): ethers.JsonRpcProvider | ethers.WebSocketProvider {
     if (!this.providers.has(chainId)) {
       let config = NETWORK_CONFIGS[chainId];
       let url = rpcUrl || config?.rpcUrl;
@@ -138,11 +165,37 @@ class EthersService {
         throw new Error(`No RPC URL configured for chain ${chainId}`);
       }
 
-      const provider = new ethers.JsonRpcProvider(url, {
+      const network = {
         chainId,
         name: config?.name || `Chain ${chainId}`,
-      });
-      this.instrumentProvider(provider, chainId, url);
+      };
+
+      const wsUrl = config ? this.resolveWsUrl(chainId) : undefined;
+      let provider: ethers.JsonRpcProvider | ethers.WebSocketProvider;
+
+      if (wsUrl) {
+        // Pass a WebSocket factory so we can attach a `close` listener that
+        // evicts the cached provider, forcing a fresh socket on the next use.
+        const wsFactory = () => {
+          const ws = new WebSocket(wsUrl);
+          const evict = () => {
+            if (this.providers.get(chainId) === provider) {
+              this.providers.delete(chainId);
+            }
+          };
+          if (typeof (ws as any).addEventListener === "function") {
+            (ws as any).addEventListener("close", evict);
+            (ws as any).addEventListener("error", evict);
+          }
+          return ws as unknown as ethers.WebSocketLike;
+        };
+        provider = new ethers.WebSocketProvider(wsFactory, network);
+        this.instrumentProvider(provider, chainId, wsUrl);
+      } else {
+        provider = new ethers.JsonRpcProvider(url, network);
+        provider.pollingInterval = JSON_RPC_POLLING_INTERVAL_MS;
+        this.instrumentProvider(provider, chainId, url);
+      }
 
       this.providers.set(chainId, provider);
     }
@@ -173,7 +226,7 @@ class EthersService {
   /**
    * Get current active provider
    */
-  getCurrentProvider(): ethers.JsonRpcProvider {
+  getCurrentProvider(): ethers.JsonRpcProvider | ethers.WebSocketProvider {
     return this.getProvider(this.currentChainId);
   }
 
@@ -184,15 +237,6 @@ class EthersService {
     try {
       const targetChainId = chainId || this.currentChainId;
       const provider = this.getProvider(targetChainId);
-
-      // Test provider connection first
-      try {
-        const network = await provider.getNetwork();
-        // console.log(`✅ Connected to ${network.name} (${network.chainId})`);
-      } catch (networkError) {
-        console.error("❌ Network connection failed:", networkError);
-        throw new Error("Unable to connect to network");
-      }
 
       const balance = await provider.getBalance(address);
       const formattedBalance = ethers.formatEther(balance);
