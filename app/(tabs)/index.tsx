@@ -138,24 +138,6 @@ export default function WalletHomeScreen() {
     .getState()
     .getTransactionsForActiveWallet();
 
-  // Calculate display balance from tokens
-  const getNativeTokenBalance = () => {
-    if (!activeWallet || !activeNetwork) return "0.0";
-
-    const nativeToken = walletTokens.find(
-      (t) => t.chainId === activeNetwork.chainId && t.type === "Native",
-    );
-
-    if (nativeToken && balances[nativeToken.id]) {
-      return balances[nativeToken.id];
-    }
-
-    return "0.0";
-  };
-
-  const balance = getNativeTokenBalance();
-  const balanceUSD = `$${(parseFloat(balance) * 2500).toFixed(2)}`; // ETH price placeholder
-
   return (
     <ScrollView
       className="flex-1 bg-background"
@@ -173,11 +155,12 @@ export default function WalletHomeScreen() {
       />
 
       <WalletBalanceSection
-        balance={balance}
         isLoadingBalance={isLoadingBalance}
         activeNetwork={activeNetwork}
-        balanceUSD={balanceUSD}
         lastBalanceUpdate={lastBalanceUpdate}
+        activeWallet={activeWallet}
+        walletTokens={walletTokens}
+        balances={balances}
       />
 
       <WalletActionButtons
@@ -201,7 +184,9 @@ export default function WalletHomeScreen() {
         onPressViewAll={() => router.push("/(tabs)/activity")}
       />
 
-      {!activeWallet && <WalletEmptyState onPressCreateWallet={handleCreateWallet} />}
+      {!activeWallet && (
+        <WalletEmptyState onPressCreateWallet={handleCreateWallet} />
+      )}
     </ScrollView>
   );
 }

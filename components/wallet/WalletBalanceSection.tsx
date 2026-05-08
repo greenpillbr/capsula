@@ -1,22 +1,42 @@
 import { Text } from "@/components/ui/text";
-import type { Network } from "@/db/schema";
+import type { Network, Token, Wallet } from "@/db/schema";
 import { View } from "react-native";
 
 interface WalletBalanceSectionProps {
-  balance: string;
   isLoadingBalance: boolean;
   activeNetwork: Network | null;
-  balanceUSD: string;
   lastBalanceUpdate: number | null;
+  activeWallet: Wallet | null;
+  walletTokens: Token[];
+  balances: Record<string, string>;
 }
 
 export function WalletBalanceSection({
-  balance,
   isLoadingBalance,
   activeNetwork,
-  balanceUSD,
   lastBalanceUpdate,
+  activeWallet,
+  walletTokens,
+  balances,
 }: WalletBalanceSectionProps) {
+  // Calculate display balance from tokens
+  const getNativeTokenBalance = () => {
+    if (!activeWallet || !activeNetwork) return "0.0";
+
+    const nativeToken = walletTokens.find(
+      (t) => t.chainId === activeNetwork.chainId && t.type === "Native",
+    );
+
+    if (nativeToken && balances[nativeToken.id]) {
+      return balances[nativeToken.id];
+    }
+
+    return "0.0";
+  };
+
+  const balance = getNativeTokenBalance();
+  const balanceUSD = `$${(parseFloat(balance) * 2500).toFixed(2)}`; // ETH price placeholder
+
   return (
     <View className="px-4 mb-8">
       <Text className="text-4xl font-bold text-primary mb-2">
