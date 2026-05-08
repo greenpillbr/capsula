@@ -1,18 +1,65 @@
 import type { Network } from "@/db/schema";
 import { useNetworkStore } from "@/lib/stores/networkStore";
-import { ethers } from "ethers";
+import { ethers, isError } from "ethers";
 import * as Crypto from "expo-crypto";
 
 // Get Infura API key from environment variables (must use EXPO_PUBLIC_ prefix for runtime access)
 const INFURA_API_KEY =
   process.env.EXPO_PUBLIC_INFURA_API_KEY || "demo_key_replace_with_real_key";
 
+const INFURA_ETHEREUM_HTTP_RPC = `https://mainnet.infura.io/v3/${INFURA_API_KEY}`;
+const INFURA_CELO_HTTP_RPC = `https://celo-mainnet.infura.io/v3/${INFURA_API_KEY}`;
+
+function normalizeRpcUrl(url: string): string {
+  return url.trim().replace(/\/+$/, "");
+}
+
+function infuraHttpFallbackUrl(chainId: number): string | undefined {
+  if (chainId === 1) {
+    return INFURA_ETHEREUM_HTTP_RPC;
+  }
+  if (chainId === 42220) {
+    return INFURA_CELO_HTTP_RPC;
+  }
+  return undefined;
+}
+
+/** True when the primary RPC hit limits or transient infra errors — retry via Infura HTTP. */
+function isRetryableRpcError(error: unknown): boolean {
+  if (isError(error, "CALL_EXCEPTION") || isError(error, "INVALID_ARGUMENT")) {
+    return false;
+  }
+  if (
+    isError(error, "SERVER_ERROR") ||
+    isError(error, "TIMEOUT") ||
+    isError(error, "NETWORK_ERROR")
+  ) {
+    return true;
+  }
+  const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return (
+    msg.includes("429") ||
+    msg.includes("too many requests") ||
+    msg.includes("rate limit") ||
+    msg.includes("503") ||
+    msg.includes("502") ||
+    msg.includes("504") ||
+    msg.includes("timeout") ||
+    msg.includes("econnreset") ||
+    msg.includes("fetch failed") ||
+    msg.includes("-32005") ||
+    msg.includes("-32016")
+  );
+}
+
 // Network configuration for different chains with fallback RPC endpoints
 export const NETWORK_CONFIGS: Record<number, Network> = {
   1: {
     chainId: 1,
     name: "Ethereum Mainnet",
-    rpcUrl: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
+    rpcUrl:
+      process.env.EXPO_PUBLIC_ETHEREUM_RPC_URL?.trim() ||
+      INFURA_ETHEREUM_HTTP_RPC,
     explorerUrl: "https://etherscan.io",
     nativeCurrencySymbol: "ETH",
     nativeCurrencyDecimals: 18,
@@ -26,7 +73,8 @@ export const NETWORK_CONFIGS: Record<number, Network> = {
   42220: {
     chainId: 42220,
     name: "Celo Mainnet",
-    rpcUrl: process.env.EXPO_PUBLIC_CELO_RPC_URL || "https://forno.celo.org",
+    rpcUrl:
+      process.env.EXPO_PUBLIC_CELO_RPC_URL?.trim() || "https://forno.celo.org",
     explorerUrl: "https://explorer.celo.org",
     nativeCurrencySymbol: "CELO",
     nativeCurrencyDecimals: 18,
@@ -134,6 +182,36 @@ class EthersService {
     this.instrumentedProviders.add(provider);
   }
 
+  /** Retry the same JSON-RPC call over Infura HTTP after rate limits / transient errors. */
+  private attachInfuraHttpFallback(
+    primary: ethers.JsonRpcProvider,
+    fallbackUrl: string,
+    chainId: number,
+    primaryUrl: string,
+    network: { chainId: number; name: string },
+  ) {
+    const fallbackProvider = new ethers.JsonRpcProvider(fallbackUrl, network);
+    fallbackProvider.pollingInterval = JSON_RPC_POLLING_INTERVAL_MS;
+    const primarySend = primary.send.bind(primary);
+    primary.send = async (method: string, params: any[]) => {
+      try {
+        return await primarySend(method, params);
+      } catch (error) {
+        if (!isRetryableRpcError(error)) {
+          throw error;
+        }
+        console.warn("[RPC] Primary endpoint failed; retrying via Infura HTTP", {
+          chainId,
+          method,
+          primaryUrl,
+          fallbackUrl,
+          error: error instanceof Error ? error.message : error,
+        });
+        return await fallbackProvider.send(method, params);
+      }
+    };
+  }
+
   /**
    * Get or create a provider for a specific chain with better error handling
    */
@@ -194,6 +272,22 @@ class EthersService {
       } else {
         provider = new ethers.JsonRpcProvider(url, network);
         provider.pollingInterval = JSON_RPC_POLLING_INTERVAL_MS;
+
+        const infuraFallback = infuraHttpFallbackUrl(chainId);
+        if (
+          rpcUrl === undefined &&
+          infuraFallback &&
+          normalizeRpcUrl(url) !== normalizeRpcUrl(infuraFallback)
+        ) {
+          this.attachInfuraHttpFallback(
+            provider,
+            infuraFallback,
+            chainId,
+            url,
+            network,
+          );
+        }
+
         this.instrumentProvider(provider, chainId, url);
       }
 
