@@ -8,7 +8,10 @@ interface WalletTokenListProps {
   balances: Record<string, string>;
 }
 
-export function WalletTokenList({ walletTokens, balances }: WalletTokenListProps) {
+export function WalletTokenList({
+  walletTokens,
+  balances,
+}: WalletTokenListProps) {
   if (walletTokens.length === 0) {
     return null;
   }
@@ -23,16 +26,20 @@ export function WalletTokenList({ walletTokens, balances }: WalletTokenListProps
           <Card key={token.id} className="p-4 mb-3">
             <View className="flex-row justify-between items-center">
               <View className="flex-1">
-                <Text className="text-foreground font-medium">{token.symbol}</Text>
-                <Text className="text-muted-foreground text-sm">{token.name}</Text>
+                <Text className="text-foreground font-medium">
+                  {token.symbol}
+                </Text>
+                <Text className="text-muted-foreground text-sm">
+                  {token.name}
+                </Text>
               </View>
               <View className="items-end">
                 <Text className="text-foreground font-medium">
                   {parseFloat(currentBalance).toFixed(6)} {token.symbol}
                 </Text>
-                <Text className="text-muted-foreground text-sm">
+                {/* <Text className="text-muted-foreground text-sm">
                   ${(parseFloat(currentBalance) * 100).toFixed(2)}
-                </Text>
+                </Text> */}
               </View>
             </View>
           </Card>

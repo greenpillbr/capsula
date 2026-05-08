@@ -44,7 +44,7 @@ export function WalletBalanceSection({
           ? "..."
           : `${parseFloat(balance).toFixed(6)} ${activeNetwork?.nativeCurrencySymbol || "ETH"}`}
       </Text>
-      <Text className="text-lg text-muted-foreground">{balanceUSD}</Text>
+      {/* <Text className="text-lg text-muted-foreground">{balanceUSD}</Text> */}
       {lastBalanceUpdate && (
         <Text className="text-xs text-muted-foreground">
           Updated {new Date(lastBalanceUpdate).toLocaleTimeString()}
