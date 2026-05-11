@@ -1,16 +1,15 @@
-import { AboutMiniAppsSection } from '@/components/mini-apps/AboutMiniAppsSection';
-import { AvailableMiniAppsSection } from '@/components/mini-apps/AvailableMiniAppsSection';
-import { InstalledMiniAppsSection } from '@/components/mini-apps/InstalledMiniAppsSection';
-import { MiniAppsHeader } from '@/components/mini-apps/MiniAppsHeader';
-import { useMiniAppStore } from '@/lib/stores/miniAppStore';
-import { useNetworkStore } from '@/lib/stores/networkStore';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { AboutMiniAppsSection } from "@/components/mini-apps/AboutMiniAppsSection";
+import { InstalledMiniAppsSection } from "@/components/mini-apps/InstalledMiniAppsSection";
+import { MiniAppsHeader } from "@/components/mini-apps/MiniAppsHeader";
+import { useMiniAppStore } from "@/lib/stores/miniAppStore";
+import { useNetworkStore } from "@/lib/stores/networkStore";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Alert, ScrollView, View } from "react-native";
 
 export default function MiniAppsScreen() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const {
     getMiniAppsForNetwork,
@@ -27,7 +26,8 @@ export default function MiniAppsScreen() {
   }, []);
 
   const currentNetworkId = activeNetwork?.chainId || 1;
-  const currentNetwork = networks.find(n => n.chainId === currentNetworkId) || activeNetwork;
+  const currentNetwork =
+    networks.find((n) => n.chainId === currentNetworkId) || activeNetwork;
 
   // Get installed mini-apps for current network
   const installedAppsForNetwork = getMiniAppsForNetwork(currentNetworkId);
@@ -38,55 +38,58 @@ export default function MiniAppsScreen() {
       if (success) {
         router.push(`/mini-app/${miniAppId}` as any);
       } else {
-        Alert.alert('Error', 'Failed to launch mini-app');
+        Alert.alert("Error", "Failed to launch mini-app");
       }
     } catch (error) {
-      console.error('Error launching mini-app:', error);
-      Alert.alert('Error', 'Failed to launch mini-app');
+      console.error("Error launching mini-app:", error);
+      Alert.alert("Error", "Failed to launch mini-app");
     }
   };
 
   const handleInstallMiniApp = async (_appId: string, appTitle: string) => {
     try {
       // For demo purposes, just show success message
-      Alert.alert('Coming Soon', `${appTitle} installation will be available in the next update.`);
+      Alert.alert(
+        "Coming Soon",
+        `${appTitle} installation will be available in the next update.`,
+      );
     } catch (error) {
-      Alert.alert('Error', 'Failed to install mini-app');
+      Alert.alert("Error", "Failed to install mini-app");
     }
   };
 
   const handleUninstallMiniApp = async (appId: string, appTitle: string) => {
-    if (installedAppsForNetwork.find(app => app.id === appId)?.isBuiltIn) {
-      Alert.alert('Cannot Uninstall', 'Built-in mini-apps cannot be removed.');
+    if (installedAppsForNetwork.find((app) => app.id === appId)?.isBuiltIn) {
+      Alert.alert("Cannot Uninstall", "Built-in mini-apps cannot be removed.");
       return;
     }
 
     Alert.alert(
-      'Uninstall Mini-App',
+      "Uninstall Mini-App",
       `Are you sure you want to remove ${appTitle}?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Uninstall',
-          style: 'destructive',
+          text: "Uninstall",
+          style: "destructive",
           onPress: async () => {
             try {
               await uninstallMiniApp(appId);
-              Alert.alert('Success', `${appTitle} has been removed.`);
+              Alert.alert("Success", `${appTitle} has been removed.`);
             } catch (error) {
-              Alert.alert('Error', 'Failed to uninstall mini-app');
+              Alert.alert("Error", "Failed to uninstall mini-app");
             }
           },
         },
-      ]
+      ],
     );
   };
 
   return (
     <View className="flex-1 bg-background">
       <MiniAppsHeader
-        currentNetworkName={currentNetwork?.name || 'Select Network'}
-        onPressNetwork={() => router.push('/network-manager' as any)}
+        currentNetworkName={currentNetwork?.name || "Select Network"}
+        onPressNetwork={() => router.push("/network-manager" as any)}
       />
 
       <ScrollView className="flex-1">
@@ -98,7 +101,7 @@ export default function MiniAppsScreen() {
           onUninstallMiniApp={handleUninstallMiniApp}
         />
 
-        <AvailableMiniAppsSection
+        {/* <AvailableMiniAppsSection
           installedApps={installedAppsForNetwork}
           currentNetworkId={currentNetworkId}
           searchQuery={searchQuery}
@@ -106,7 +109,7 @@ export default function MiniAppsScreen() {
           onExploreCommunities={() =>
             Alert.alert('Coming Soon', 'Community features will be available in the next update.')
           }
-        />
+        /> */}
 
         <AboutMiniAppsSection />
       </ScrollView>
