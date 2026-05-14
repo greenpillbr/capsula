@@ -8,7 +8,9 @@
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
     "dev:android": "expo start -c --android",
     "android": "expo run:android",
-    "build:android": "eas build --platform android --profile development",
+    "build:android": "NODE_ENV=development eas build --platform android --profile development",
+    "build:production": "NODE_ENV=production eas build --platform android --profile production",
+    "build:local": "NODE_ENV=development eas build --platform android --profile development --local",
     "ios": "expo run:ios",
     "build:web": "expo export --platform web",
     "format": "biome check --no-errors-on-unmatched --apply .",
@@ -105,13 +107,5 @@
     "tailwindcss",
     "nativewind"
   ],
-  "overrides": {
-    "@react-navigation/native": "7.2.2",
-    "@react-navigation/core": "7.17.2"
-  },
-  "resolutions": {
-    "@react-navigation/native": "7.2.2",
-    "@react-navigation/core": "7.17.2"
-  },
   "private": true
 }
