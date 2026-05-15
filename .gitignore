@@ -1,0 +1,6 @@
+.env
+.env.*
+*.key
+*.pem
+broadcast/
+cache/

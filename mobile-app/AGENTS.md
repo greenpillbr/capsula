@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to agents when working with code in mobile-app directory.
 
 ## Common Development Commands
 
@@ -38,7 +38,8 @@ Capsula is a React Native crypto wallet built with Expo, focusing on a modular m
   - `lib/mini-apps/` - Mini-app system architecture
   - `lib/crypto/` - Wallet and key management
   - `lib/blockchain/` - Ethereum service integration
-- `components/` - Reusable UI components
+- `components/` - App components
+  - `components/ui` - Reusable UI components
 - `db/` - Drizzle ORM schema and database configuration
 
 ### State Management Architecture
