@@ -28,3 +28,33 @@ This file provides guidance to agents when working with code in smart-contracts 
 ## Addresses
     - Admin and contract owner, deployer: 0xa9FDeb97d2ACad58eC48d0406Ed2Eb6bB96CfDB5
     - General User: 0xb558a17bB4C39BC92296a20BA538D11B8201db95
+
+## Commands
+
+### Local fork (anvil, Celo)
+```bash
+anvil --fork-url https://forno.celo.org --chain-id 42220
+```
+
+### Tests
+```bash
+bunx hardhat test                            # all unit + solidity tests
+bunx hardhat test nodejs test/Attendance.ts  # Attendance unit tests
+GPBR_WHALE=0x... bunx hardhat test nodejs test/Attendance.live.ts   # live fork tests
+```
+
+### Deploy (Ignition)
+```bash
+bunx hardhat ignition deploy ignition/modules/Attendance.ts --network localFork
+bunx hardhat ignition deploy ignition/modules/Attendance.ts --network celo
+```
+
+### Scripts (require ATTENDANCE_ADDRESS, default NETWORK=localFork)
+```bash
+AMOUNT=3000000 bun scripts/fund-attendance.ts
+AMOUNT=1000000 PERIOD=5400 bun scripts/set-config.ts
+bun scripts/create-distribution.ts
+DISTRIBUTION_ID=0 USER_INDEX=1 bun scripts/claim.ts
+AMOUNT=2000000 bun scripts/withdraw.ts
+bun scripts/read-state.ts
+```
