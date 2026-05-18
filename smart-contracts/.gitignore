@@ -29,3 +29,7 @@
 
 # Snapshot cheatcodes output
 /snapshots
+
+# Ephemeral Ignition deployments (local / CI only)
+/ignition/deployments/chain-31337/
+/ignition/deployments/local-*/
