@@ -7,7 +7,7 @@ const { viem, publicClient, networkName } = await connect();
 const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
 const attendance = await viem.getContractAt("Attendance", attendanceAddress);
 
-const gpbrAddress = (await attendance.read.gpbr()) as `0x${string}`;
+const gpbrAddress = (await attendance.read.rewardToken()) as `0x${string}`;
 const ownerAddress = (await attendance.read.owner()) as `0x${string}`;
 const amount = await attendance.read.amount();
 const period = await attendance.read.period();
@@ -15,7 +15,7 @@ const count = await attendance.read.distributionsCount();
 const poolBalance = await publicClient.readContract({
   address: gpbrAddress,
   abi: erc20Abi,
-  functionName: "balanceOf",
+  functionName: "balanceOf",  
   args: [attendanceAddress],
 });
 

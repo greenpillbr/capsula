@@ -19,7 +19,7 @@ if (user === undefined) {
 const attendance = await viem.getContractAt("Attendance", attendanceAddress, {
   client: { wallet: user },
 });
-const gpbrAddress = (await attendance.read.gpbr()) as `0x${string}`;
+const gpbrAddress = (await attendance.read.rewardToken()) as `0x${string}`;
 
 console.log(`[${networkName}] claimer: ${user.account.address}`);
 console.log(`[${networkName}] claim(${distributionId}) -> ${attendanceAddress}`);

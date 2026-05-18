@@ -8,7 +8,7 @@ const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
 const amount = BigInt(requireEnv("AMOUNT"));
 
 const attendance = await viem.getContractAt("Attendance", attendanceAddress);
-const gpbrAddress = (await attendance.read.gpbr()) as `0x${string}`;
+const gpbrAddress = (await attendance.read.rewardToken()) as `0x${string}`;
 
 console.log(`[${networkName}] sender: ${defaultWallet.account.address}`);
 console.log(`[${networkName}] gpbr:   ${gpbrAddress}`);
