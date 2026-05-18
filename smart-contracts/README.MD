@@ -43,11 +43,7 @@ bunx hardhat test nodejs test/Attendance.live.ts
 
 The live suite auto-skips when anvil is unreachable or `GPBR_WHALE` is unset.
 
-
-
-## Attendance contract
-
-### Local fork
+## Local fork
 
 Start a local anvil node forked from Celo (Foundry must be installed):
 
@@ -57,7 +53,17 @@ anvil --fork-url https://forno.celo.org --chain-id 42220
 
 The `localFork` network in `hardhat.config.ts` points at `http://127.0.0.1:8545` and uses the default anvil signing keys. Override with the `LOCAL_PRIVATE_KEY` and `LOCAL_USER_PRIVATE_KEY` env vars when targeting a non-default anvil instance.
 
-### Deploy with Ignition
+## Deploy with Ignition
+
+### Set private keys on keystore
+
+```shell
+bunx hardhat keystore set CELO_RPC_URL
+bunx hardhat keystore set CELO_OWNER_PRIVATE_KEY
+bunx hardhat keystore set CELO_USER_PRIVATE_KEY
+```
+
+### Execute deployment script
 
 ```shell
 bunx hardhat ignition deploy ignition/modules/Attendance.ts --network localFork
@@ -84,7 +90,7 @@ bunx hardhat ignition deploy ignition/modules/Attendance.ts \
 }
 ```
 
-### Scripts
+## Scripts
 
 All scripts read the deployed contract address from `ATTENDANCE_ADDRESS` and connect to `localFork` by default (override with `NETWORK=<name>`):
 
@@ -98,13 +104,22 @@ AMOUNT=2000000 bun scripts/withdraw.ts
 USER_ADDRESS=0x70997970C51812dc3A010C7d01b50e0d17dc79C8 bun scripts/read-state.ts
 ```
 
-### Live tests
+## Live tests
 
 The unit suite (`test/Attendance.ts`) runs against the in-process simulator and a `MockGPBR`. The live suite (`test/Attendance.live.ts`) targets the running anvil fork and uses the real GPBR token:
 
+To run live tests you should first start a local fork of the Celo network:
+
+Then deploy the contract to the local fork:
+
+refer to sections "Deploy with Ignition" and "Local fork" above for more details.
+
 ```shell
-GPBR_WHALE=0xacd59e854adf632d2322404198624f757c868c97 \
   bunx hardhat test nodejs test/Attendance.live.ts
 ```
 
 The live tests skip themselves automatically when anvil is unreachable
+
+### Reference
+
+CELO PUBLIC RPC URL: https://forno.celo.org
