@@ -31,7 +31,7 @@ describe("Attendance", async function () {
       const { mock, attendance } = await deployFixture();
 
       assert.equal(
-        (await attendance.read.gpbr()).toLowerCase(),
+        (await attendance.read.rewardToken()).toLowerCase(),
         mock.address.toLowerCase(),
       );
       assert.equal(

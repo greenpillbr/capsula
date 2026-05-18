@@ -11,10 +11,10 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 contract Attendance is Ownable {
     using SafeERC20 for IERC20;
 
-    IERC20 public immutable gpbr;
+    IERC20 public immutable rewardToken;
 
-    uint256 public amount = 1_000_000;
-    uint256 public period = 5_400;
+    uint256 public amount = 1_000_000; // 1 GPBR (6 decimals)
+    uint256 public period = 5_400; // 90 minutes (5400 blocks, 1 block = 1 second)
 
     struct Distribution {
         uint256 amount;
@@ -36,9 +36,9 @@ contract Attendance is Ownable {
     error AlreadyClaimed();
     error InsufficientPool();
 
-    constructor(address gpbrToken, address initialOwner) Ownable(initialOwner) {
-        if (gpbrToken == address(0)) revert InvalidConfig();
-        gpbr = IERC20(gpbrToken);
+    constructor(address _rewardToken, address initialOwner) Ownable(initialOwner) {
+        if (_rewardToken == address(0)) revert InvalidConfig();
+        rewardToken = IERC20(_rewardToken);
     }
 
     function setConfig(uint256 _amount, uint256 _period) external onlyOwner {
@@ -64,16 +64,16 @@ contract Attendance is Ownable {
         Distribution memory dist = _distributions[id];
         if (block.number < dist.startBlock || block.number > dist.endBlock) revert NotActive();
         if (claimed[id][msg.sender]) revert AlreadyClaimed();
-        if (gpbr.balanceOf(address(this)) < dist.amount) revert InsufficientPool();
+        if (rewardToken.balanceOf(address(this)) < dist.amount) revert InsufficientPool();
 
         claimed[id][msg.sender] = true;
-        gpbr.safeTransfer(msg.sender, dist.amount);
+        rewardToken.safeTransfer(msg.sender, dist.amount);
 
         emit Claim(id, msg.sender, dist.amount);
     }
 
     function withdraw(uint256 value) external onlyOwner {
-        gpbr.safeTransfer(owner(), value);
+        rewardToken.safeTransfer(owner(), value);
         emit Withdrawn(owner(), value);
     }
 

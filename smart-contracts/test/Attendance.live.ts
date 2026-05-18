@@ -14,7 +14,7 @@ import {
 /**
  * Live tests executed against a local anvil node forked from Celo.
  *
- * Required runtime setup (see HARDHAT-README.md):
+ * Required runtime setup (see LIVE_TESTS.md):
  *   anvil --fork-url https://forno.celo.org --chain-id 42220
  *
  * Configure via env vars:
@@ -29,7 +29,8 @@ const GPBR_ADDRESS = "0xd832B2F117db51021Ad0387c17182796DBEB69df" as const;
 const CLAIM_AMOUNT = 1_000_000n;
 const POOL_AMOUNT = parseUnits("10", 6);
 
-const whale = process.env.GPBR_WHALE as `0x${string}` | undefined;
+//const whale = process.env.GPBR_WHALE as `0x${string}` | undefined;
+const whale = "0xAcD59e854adf632d2322404198624F757C868C97" as `0x${string}`; //groweco.eth address
 
 async function tryConnect() {
   try {
