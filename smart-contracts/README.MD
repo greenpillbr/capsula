@@ -96,12 +96,12 @@ All scripts read the deployed contract address from `ATTENDANCE_ADDRESS` and con
 
 ```shell
 export ATTENDANCE_ADDRESS=0x...
-AMOUNT=3000000 bun scripts/fund-attendance.ts
-AMOUNT=1000000 PERIOD=5400 bun scripts/set-config.ts
-bun scripts/create-distribution.ts
-DISTRIBUTION_ID=0 USER_INDEX=1 bun scripts/claim.ts
-AMOUNT=2000000 bun scripts/withdraw.ts
-USER_ADDRESS=0x70997970C51812dc3A010C7d01b50e0d17dc79C8 bun scripts/read-state.ts
+NETWORK=celo AMOUNT=1000000 bun scripts/fund-attendance.ts
+NETWORK=celo AMOUNT=1000000 PERIOD=5400 bun scripts/set-config.ts
+NETWORK=celo bun scripts/create-distribution.ts
+NETWORK=celo DISTRIBUTION_ID=0 USER_INDEX=1 bun scripts/claim.ts
+NETWORK=celo AMOUNT=2000000 bun scripts/withdraw.ts
+NETWORK=celo USER_ADDRESS=0xb558a17bB4C39BC92296a20BA538D11B8201db95 bun scripts/read-state.ts
 ```
 
 ## Live tests
