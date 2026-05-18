@@ -38,7 +38,7 @@ anvil --fork-url https://forno.celo.org --chain-id 42220
 Then, in a second shell:
 
 ```bash
-GPBR_WHALE=0x... bunx hardhat test nodejs test/Attendance.live.ts
+bunx hardhat test nodejs test/Attendance.live.ts
 ```
 
 The live suite auto-skips when anvil is unreachable or `GPBR_WHALE` is unset.
@@ -107,4 +107,4 @@ GPBR_WHALE=0xacd59e854adf632d2322404198624f757c868c97 \
   bunx hardhat test nodejs test/Attendance.live.ts
 ```
 
-The live tests skip themselves automatically when anvil is unreachable or when `GPBR_WHALE` is not provided.
+The live tests skip themselves automatically when anvil is unreachable
