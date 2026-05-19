@@ -51,7 +51,7 @@ export default defineConfig({
       type: "http",
       chainType: "l1",
       url: configVariable("CELO_RPC_URL"),
-      accounts: [configVariable("CELO_OWNER_PRIVATE_KEY"), configVariable("CELO_USER_PRIVATE_KEY")],
+      accounts: [configVariable("CELO_OWNER_PRIVATE_KEY"), configVariable("CELO_USER_PRIVATE_KEY"), configVariable("CELO_DEPLOYER_PRIVATE_KEY")],
     },
   },
 });

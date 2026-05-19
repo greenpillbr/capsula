@@ -74,8 +74,9 @@ Parameter overrides (e.g. owner / GPBR address) are passed via a JSON file:
 
 ```shell
 bunx hardhat ignition deploy ignition/modules/Attendance.ts \
-  --network localFork \
-  --default-sender 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 \
+  --network celo \
+  --default-sender 0x22682c3d3848294fF9bCBf3F0DDF48A605446B56 \
+  --reset \
   --parameters params.json
 ```
 
