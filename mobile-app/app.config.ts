@@ -37,7 +37,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: "./assets/images/favicon.png",
   },
   plugins: [
-    "expo-router",
+    [
+      "expo-router",
+      {
+        headers: {
+          "Cross-Origin-Embedder-Policy": "credentialless",
+          "Cross-Origin-Opener-Policy": "same-origin",
+        },
+      },
+    ],
     "expo-sqlite",
     "expo-font",
     "expo-web-browser",
