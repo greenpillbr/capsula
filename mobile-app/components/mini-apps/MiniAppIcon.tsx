@@ -4,7 +4,7 @@ import { Image, View } from "react-native";
 
 const BUILT_IN_MINI_APP_ICONS: Record<string, number> = {
   "attendance-module": require("@/assets/images/attendance.png"),
-  "gardens-module": require("@/assets/images/gardens-logo.avif"),
+  "gardens-module": require("@/assets/images/gardens-logo.png"),
 };
 
 type MiniAppIconProps = {

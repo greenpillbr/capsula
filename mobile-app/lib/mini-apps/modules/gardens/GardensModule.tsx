@@ -4,7 +4,7 @@ import React from "react";
 import { Image, View } from "react-native";
 import type { MiniAppProps } from "../../sdk/types";
 
-export const GARDENS_LOGO = require("../../../../assets/images/gardens-logo.avif");
+export const GARDENS_LOGO = require("../../../../assets/images/gardens-logo.png");
 
 export default function GardensModule({ onClose }: MiniAppProps) {
   return (

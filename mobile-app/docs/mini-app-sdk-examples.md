@@ -86,7 +86,7 @@ If you want a custom icon in Home and Mini-Apps lists, map the mini-app id to a 
 
 ```ts
 const BUILT_IN_MINI_APP_ICONS: Record<string, number> = {
-  "gardens-module": require("@/assets/images/gardens-logo.avif"),
+  "gardens-module": require("@/assets/images/gardens-logo.png"),
   "attendance-module": require("@/assets/images/attendance.png"),
   "my-feature-module": require("@/assets/images/my-feature.png"),
 };

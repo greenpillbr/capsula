@@ -9,11 +9,6 @@ config.resolver.sourceExts.push("sql");
 // Add wasm asset support
 config.resolver.assetExts.push("wasm");
 
-// AVIF is not part of Metro's default asset list, so register it for require()
-if (!config.resolver.assetExts.includes("avif")) {
-  config.resolver.assetExts.push("avif");
-}
-
 config.resolver.unstable_conditionNames = [
   "browser",
   "require",
