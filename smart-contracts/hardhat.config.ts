@@ -1,5 +1,6 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
+import hardhatVerify from "@nomicfoundation/hardhat-verify";
 
 const DEFAULT_ANVIL_KEYS = [
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
@@ -9,7 +10,20 @@ const localPrivateKey = (process.env.LOCAL_PRIVATE_KEY ?? DEFAULT_ANVIL_KEYS[0])
 const localUserKey = (process.env.LOCAL_USER_PRIVATE_KEY ?? DEFAULT_ANVIL_KEYS[1]) as `0x${string}`;
 
 export default defineConfig({
-  plugins: [hardhatToolboxViemPlugin],
+  plugins: [hardhatToolboxViemPlugin, hardhatVerify],
+  chainDescriptors: {
+    42220: {
+      name: "Celo",
+      chainType: "l1",
+      blockExplorers: {
+        etherscan: {
+          name: "Celoscan",
+          url: "https://celoscan.io",
+          apiUrl: "https://api.etherscan.io/v2/api",
+        },
+      },
+    },
+  },
   solidity: {
     profiles: {
       default: {
@@ -50,8 +64,25 @@ export default defineConfig({
     celo: {
       type: "http",
       chainType: "l1",
+      chainId: 42220,
       url: configVariable("CELO_RPC_URL"),
-      accounts: [configVariable("CELO_OWNER_PRIVATE_KEY"), configVariable("CELO_USER_PRIVATE_KEY"), configVariable("CELO_DEPLOYER_PRIVATE_KEY")],
+      accounts: [
+        configVariable("CELO_OWNER_PRIVATE_KEY"),
+        configVariable("CELO_USER_PRIVATE_KEY"),
+        configVariable("CELO_DEPLOYER_PRIVATE_KEY"),
+      ],
+    },
+  },
+  verify: {
+    etherscan: {
+      // Celoscan is on Etherscan API v2; keys from https://celoscan.io or https://etherscan.io work.
+      apiKey: configVariable("CELOSCAN_API_KEY"),
+    },
+    blockscout: {
+      enabled: false,
+    },
+    sourcify: {
+      enabled: false,
     },
   },
 });
