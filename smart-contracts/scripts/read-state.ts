@@ -5,7 +5,7 @@ import { connect, requireAddressEnv } from "./_shared.js";
 const { viem, publicClient, networkName } = await connect();
 
 //const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
-const attendanceAddress = "0xb6c34871AFB61Fd07B850d14E9FC573600c4B08C";
+const attendanceAddress = "0x12bf6eB348566f2aE2c90DD919025520856236bC";
 const attendance = await viem.getContractAt("Attendance", attendanceAddress);
 
 const gpbrAddress = (await attendance.read.rewardToken()) as `0x${string}`;

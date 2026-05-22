@@ -4,7 +4,7 @@ import { connect, requireAddressEnv, requireEnv } from "./_shared.js";
 
 const { viem, publicClient, defaultWallet, networkName } = await connect();
 
-const attendanceAddress = "0xb6c34871AFB61Fd07B850d14E9FC573600c4B08C";
+const attendanceAddress = "0x12bf6eB348566f2aE2c90DD919025520856236bC";
 const amount = BigInt(requireEnv("AMOUNT"));
 
 const attendance = await viem.getContractAt("Attendance", attendanceAddress);
