@@ -23,9 +23,21 @@ export default function CreateDistributionPage() {
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
   const [fundAmount, setFundAmount] = useState("");
+  const [maxClaimers, setMaxClaimers] = useState("0");
   const [fundError, setFundError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
 
-  const authorized = isAdminAddress(address);
+  const staticAuthorized = isAdminAddress(address);
+
+  const { data: isCreator } = useReadContract({
+    address: ATTENDANCE_ADDRESS,
+    abi: attendanceAbi,
+    functionName: "isCreator",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  });
+
+  const authorized = staticAuthorized || isCreator === true;
 
   const { data: poolBalance, refetch: refetchPool } = useReadContract({
     address: GPBR_ADDRESS,
@@ -109,11 +121,17 @@ export default function CreateDistributionPage() {
   }
 
   function handleCreate() {
+    setCreateError(null);
     resetCreate();
+    if (!/^\d+$/.test(maxClaimers)) {
+      setCreateError("Enter a valid non-negative integer (0 = unlimited)");
+      return;
+    }
     writeCreate({
       address: ATTENDANCE_ADDRESS,
       abi: attendanceAbi,
       functionName: "createDistribution",
+      args: [BigInt(maxClaimers)],
     });
   }
 
@@ -131,7 +149,7 @@ export default function CreateDistributionPage() {
     return (
       <Panel title="Create Distribution">
         <p className="text-gray-600">
-          Your wallet is not authorized to use this page.
+          Your wallet is not on the contract creator allowlist.
         </p>
         <p className="mt-2 break-all text-xs text-gray-400">{address}</p>
       </Panel>
@@ -203,8 +221,29 @@ export default function CreateDistributionPage() {
       <Panel title="Create distribution">
         <p className="mb-4 text-sm text-gray-600">
           Opens a new claim window using the contract&apos;s configured reward
-          amount and period. Only the contract owner can succeed on-chain.
+          amount and period. Only allowlisted creators can succeed on-chain.
         </p>
+        <label
+          className="mb-2 block text-sm font-medium"
+          htmlFor="max-claimers"
+        >
+          Max claimers (0 = unlimited)
+        </label>
+        <input
+          id="max-claimers"
+          type="text"
+          inputMode="numeric"
+          placeholder="0"
+          value={maxClaimers}
+          onChange={(e) => {
+            setMaxClaimers(e.target.value);
+            setCreateError(null);
+          }}
+          className="mb-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+        />
+        {createError && (
+          <p className="mb-2 text-sm text-red-600">{createError}</p>
+        )}
         <TxButton
           label="Create distribution"
           pendingLabel="Creating…"

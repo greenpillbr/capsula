@@ -30,5 +30,5 @@ bun dev
 
 ## Contracts (Celo mainnet)
 
-- Attendance: `0xb6c34871AFB61Fd07B850d14E9FC573600c4B08C`
+- Attendance: `0x12bf6eB348566f2aE2c90DD919025520856236bC`
 - GPBR (6 decimals): `0xd832B2F117db51021Ad0387c17182796DBEB69df`

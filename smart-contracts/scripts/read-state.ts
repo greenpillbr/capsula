@@ -5,7 +5,7 @@ import { connect, requireAddressEnv } from "./_shared.js";
 const { viem, publicClient, networkName } = await connect();
 
 //const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
-const attendanceAddress = "0xb6c34871AFB61Fd07B850d14E9FC573600c4B08C";
+const attendanceAddress = "0x12bf6eB348566f2aE2c90DD919025520856236bC";
 const attendance = await viem.getContractAt("Attendance", attendanceAddress);
 
 const gpbrAddress = (await attendance.read.rewardToken()) as `0x${string}`;
@@ -35,7 +35,9 @@ const userAddr =
 for (let i = 0n; i < count; i++) {
   const d = await attendance.read.distributions([i]);
   const active = await attendance.read.isActive([i]);
-  console.log(`  [#${i}] amount=${d.amount} start=${d.startBlock} end=${d.endBlock} active=${active}`);
+  console.log(
+    `  [#${i}] amount=${d.amount} start=${d.startBlock} end=${d.endBlock} maxClaimers=${d.maxClaimers} claims=${d.claimsCount} cancelled=${d.cancelled} active=${active}`,
+  );
   if (userAddr !== undefined) {
     const claimed = await attendance.read.hasClaimed([i, userAddr]);
     console.log(`        claimed(${userAddr}): ${claimed}`);
