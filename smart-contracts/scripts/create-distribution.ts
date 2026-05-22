@@ -4,13 +4,16 @@ import { connect, requireAddressEnv } from "./_shared.js";
 
 const { viem, publicClient, defaultWallet, networkName } = await connect();
 
-const attendanceAddress = "0xcF217Ab65c052a090B77F7f35B906d8F0Aa6561b";
+const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
+const maxClaimers = BigInt(process.env.MAX_CLAIMERS ?? "0");
+
 const attendance = await viem.getContractAt("Attendance", attendanceAddress);
 
 console.log(`[${networkName}] caller: ${defaultWallet.account.address}`);
 console.log(`[${networkName}] creating distribution at ${attendanceAddress}`);
+console.log(`[${networkName}] maxClaimers: ${maxClaimers} (0 = unlimited)`);
 
-const hash = await attendance.write.createDistribution();
+const hash = await attendance.write.createDistribution([maxClaimers]);
 const receipt = await publicClient.waitForTransactionReceipt({ hash });
 console.log(`tx mined in block ${receipt.blockNumber}: ${hash}`);
 
@@ -23,15 +26,17 @@ for (const log of receipt.logs) {
       topics: log.topics,
     });
     if (decoded.eventName === "DistributionCreated") {
-      const { id, endBlock, amount } = decoded.args as {
+      const { id, endBlock, amount, maxClaimers: max } = decoded.args as {
         id: bigint;
         endBlock: bigint;
         amount: bigint;
+        maxClaimers: bigint;
       };
       console.log(`DistributionCreated:`);
-      console.log(`  id:        ${id}`);
-      console.log(`  amount:    ${amount}`);
-      console.log(`  endBlock:  ${endBlock}`);
+      console.log(`  id:           ${id}`);
+      console.log(`  amount:       ${amount}`);
+      console.log(`  endBlock:     ${endBlock}`);
+      console.log(`  maxClaimers:  ${max}`);
     }
   } catch {
     // ignore non-matching logs

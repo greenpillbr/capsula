@@ -35,7 +35,9 @@ const userAddr =
 for (let i = 0n; i < count; i++) {
   const d = await attendance.read.distributions([i]);
   const active = await attendance.read.isActive([i]);
-  console.log(`  [#${i}] amount=${d.amount} start=${d.startBlock} end=${d.endBlock} active=${active}`);
+  console.log(
+    `  [#${i}] amount=${d.amount} start=${d.startBlock} end=${d.endBlock} maxClaimers=${d.maxClaimers} claims=${d.claimsCount} cancelled=${d.cancelled} active=${active}`,
+  );
   if (userAddr !== undefined) {
     const claimed = await attendance.read.hasClaimed([i, userAddr]);
     console.log(`        claimed(${userAddr}): ${claimed}`);

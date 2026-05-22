@@ -6,8 +6,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navLinks = [
+  { href: "/", label: "Home" },
   { href: "/create-distribution", label: "Create Distribution" },
   { href: "/claim", label: "Claim" },
+  { href: "/configure", label: "Configure" },
 ];
 
 export function Header() {
@@ -16,7 +18,7 @@ export function Header() {
   return (
     <header className="border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-        <Link href="/claim" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <Image
             src="/logo-capsule.png"
             alt="Capsule"

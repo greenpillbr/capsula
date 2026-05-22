@@ -150,7 +150,7 @@ describe("Attendance (live, forked Celo)", async function () {
       POOL_AMOUNT,
     );
 
-    await attendance.write.createDistribution();
+    await attendance.write.createDistribution([0n]);
     assert.equal(await attendance.read.distributionsCount(), 1n);
     assert.equal(await attendance.read.isActive([0n]), true);
 
@@ -215,7 +215,7 @@ describe("Attendance (live, forked Celo)", async function () {
       owner.account.address,
     ]);
     await attendance.write.setConfig([CLAIM_AMOUNT, 5n]);
-    await attendance.write.createDistribution();
+    await attendance.write.createDistribution([0n]);
 
     await testClient.mine({ blocks: 6 });
 

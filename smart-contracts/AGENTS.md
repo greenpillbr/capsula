@@ -53,7 +53,11 @@ bunx hardhat ignition deploy ignition/modules/Attendance.ts --network celo
 ```bash
 AMOUNT=3000000 bun scripts/fund-attendance.ts
 AMOUNT=1000000 PERIOD=5400 bun scripts/set-config.ts
-bun scripts/create-distribution.ts
+MAX_CLAIMERS=0 bun scripts/create-distribution.ts
+MAX_CLAIMERS=50 bun scripts/create-distribution.ts
+DISTRIBUTION_ID=0 bun scripts/cancel-distribution.ts
+ACTION=add ACCOUNT=0x... bun scripts/manage-allowlist.ts
+ACTION=remove ACCOUNT=0x... bun scripts/manage-allowlist.ts
 DISTRIBUTION_ID=0 USER_INDEX=1 bun scripts/claim.ts
 AMOUNT=2000000 bun scripts/withdraw.ts
 bun scripts/read-state.ts
