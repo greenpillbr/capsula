@@ -61,6 +61,7 @@ The `localFork` network in `hardhat.config.ts` points at `http://127.0.0.1:8545`
 bunx hardhat keystore set CELO_RPC_URL
 bunx hardhat keystore set CELO_OWNER_PRIVATE_KEY
 bunx hardhat keystore set CELO_USER_PRIVATE_KEY
+bunx hardhat keystore set CELO_DEPLOYER_PRIVATE_KEY
 ```
 
 ### Execute deployment script
@@ -89,6 +90,12 @@ bunx hardhat ignition deploy ignition/modules/Attendance.ts \
     "initialOwner": "0xa9FDeb97d2ACad58eC48d0406Ed2Eb6bB96CfDB5"
   }
 }
+```
+
+## Verification
+
+```shell
+bunx hardhat verify etherscan --network celo <DEPLOYED_ADDRESS> <CONSTRUCTOR_ARGUMENTS>
 ```
 
 ## Scripts
