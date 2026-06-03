@@ -1,7 +1,7 @@
 import type { Translations } from "./types";
 
 export const en: Translations = {
-  "meta.title": "Capsule Admin",
+  "meta.title": "Capsula",
   "meta.description":
     "Admin UI for Capsula Attendance distributions on Celo",
   "nav.home": "Home",

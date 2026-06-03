@@ -1,4 +1,4 @@
-# Capsule Web App
+# Capsula Web App
 
 Next.js web UI for the Capsula Attendance contract on Celo.
 

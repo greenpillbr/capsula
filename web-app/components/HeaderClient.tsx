@@ -23,7 +23,7 @@ export function HeaderClient({ navLabels }: { navLabels: NavLabel[] }) {
         <Link href="/" className="flex items-center gap-3">
           <Image
             src="/logo-capsule.png"
-            alt="Capsule"
+            alt="Capsula"
             width={120}
             height={40}
             className="h-10 w-auto"

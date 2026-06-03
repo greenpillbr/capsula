@@ -73,7 +73,7 @@ Use **`useTranslation()`** from `lib/i18n/LanguageProvider` only in client compo
 
 Keep these as-is (product/brand, not locale copy):
 
-- Logo alt text: `"Capsule"`
+- Logo alt text: `"Capsula"`
 - RainbowKit / wagmi app name in `lib/wagmi.ts`: `"Capsule Admin"`
 - ABI / contract function names in `lib/contracts.ts`
 
