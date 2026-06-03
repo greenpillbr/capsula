@@ -27,7 +27,6 @@ export function Header() {
             className="h-10 w-auto"
             priority
           />
-          <span className="text-sm font-semibold text-[#00122E]">Admin</span>
         </Link>
         <nav className="flex flex-wrap items-center gap-4">
           {navLinks.map(({ href, label }) => (
