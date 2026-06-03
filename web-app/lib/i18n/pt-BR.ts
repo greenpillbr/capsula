@@ -19,12 +19,11 @@ export const ptBR: Translations = {
     "Essa é a capsula, camada de abstração da comunidade GreenPillBR.",
   "claim.title": "Resgatar",
   "claim.description":
-    "Informe o ID da distribuição para resgatar sua recompensa GPBR durante a janela ativa.",
-  "claim.distributionId": "ID da distribuição",
+    "Resgate sua recompensa GPBR da distribuição criada mais recentemente, durante a janela ativa.",
+  "claim.latestDistribution": "Última distribuição",
   "claim.activeNow": "Ativa agora",
   "claim.youClaimed": "Você resgatou",
-  "claim.errorInvalidId":
-    "Informe um ID de distribuição válido (inteiro não negativo)",
+  "claim.errorNoDistribution": "Nenhuma distribuição foi criada ainda.",
   "claim.errorConnectWallet": "Conecte sua carteira para resgatar",
   "claim.connectWalletNotice":
     "Conecte sua carteira para enviar um resgate.",

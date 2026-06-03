@@ -19,12 +19,11 @@ export const en: Translations = {
     "This is Capsula, the abstraction layer for the GreenPillBR community.",
   "claim.title": "Claim",
   "claim.description":
-    "Enter a distribution ID to claim your GPBR reward during the active window.",
-  "claim.distributionId": "Distribution ID",
+    "Claim your GPBR reward from the most recently created distribution during its active window.",
+  "claim.latestDistribution": "Latest distribution",
   "claim.activeNow": "Active now",
   "claim.youClaimed": "You claimed",
-  "claim.errorInvalidId":
-    "Enter a valid distribution ID (non-negative integer)",
+  "claim.errorNoDistribution": "No distribution has been created yet.",
   "claim.errorConnectWallet": "Connect your wallet to claim",
   "claim.connectWalletNotice": "Connect your wallet to submit a claim.",
   "claim.buttonLabel": "Claim distribution",

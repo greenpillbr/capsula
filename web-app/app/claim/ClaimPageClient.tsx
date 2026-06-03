@@ -17,20 +17,25 @@ export function ClaimPageClient() {
   const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
-  const [distributionId, setDistributionId] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
 
-  const parsedId =
-    distributionId !== "" && /^\d+$/.test(distributionId)
-      ? BigInt(distributionId)
+  const { data: distributionsCount } = useReadContract({
+    address: ATTENDANCE_ADDRESS,
+    abi: attendanceAbi,
+    functionName: "distributionsCount",
+  });
+
+  const latestDistributionId =
+    distributionsCount !== undefined && distributionsCount > BigInt(0)
+      ? distributionsCount - BigInt(1)
       : undefined;
 
   const { data: isActive } = useReadContract({
     address: ATTENDANCE_ADDRESS,
     abi: attendanceAbi,
     functionName: "isActive",
-    args: parsedId !== undefined ? [parsedId] : undefined,
-    query: { enabled: parsedId !== undefined },
+    args: latestDistributionId !== undefined ? [latestDistributionId] : undefined,
+    query: { enabled: latestDistributionId !== undefined },
   });
 
   const { data: hasClaimed, refetch: refetchClaimed } = useReadContract({
@@ -38,10 +43,10 @@ export function ClaimPageClient() {
     abi: attendanceAbi,
     functionName: "hasClaimed",
     args:
-      parsedId !== undefined && address
-        ? [parsedId, address]
+      latestDistributionId !== undefined && address
+        ? [latestDistributionId, address]
         : undefined,
-    query: { enabled: parsedId !== undefined && !!address },
+    query: { enabled: latestDistributionId !== undefined && !!address },
   });
 
   const {
@@ -72,8 +77,8 @@ export function ClaimPageClient() {
   function handleClaim() {
     setInputError(null);
     resetClaim();
-    if (parsedId === undefined) {
-      setInputError(t("claim.errorInvalidId"));
+    if (latestDistributionId === undefined) {
+      setInputError(t("claim.errorNoDistribution"));
       return;
     }
     if (!isConnected) {
@@ -84,33 +89,22 @@ export function ClaimPageClient() {
       address: ATTENDANCE_ADDRESS,
       abi: attendanceAbi,
       functionName: "claim",
-      args: [parsedId],
+      args: [latestDistributionId],
     });
   }
 
   return (
     <>
-      <label
-        className="mb-2 block text-sm font-medium"
-        htmlFor="distribution-id"
-      >
-        {t("claim.distributionId")}
-      </label>
-      <input
-        id="distribution-id"
-        type="text"
-        inputMode="numeric"
-        placeholder="0"
-        value={distributionId}
-        onChange={(e) => {
-          setDistributionId(e.target.value);
-          setInputError(null);
-        }}
-        className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
-      />
-
-      {parsedId !== undefined && (
+      {distributionsCount === undefined ? (
+        <p className="mb-4 text-sm text-gray-600">{t("common.loading")}</p>
+      ) : latestDistributionId === undefined ? (
+        <p className="mb-4 text-sm text-amber-700">{t("claim.errorNoDistribution")}</p>
+      ) : (
         <dl className="mb-4 space-y-2 rounded-lg bg-gray-50 p-3 text-sm">
+          <div className="flex justify-between">
+            <dt className="text-gray-600">{t("claim.latestDistribution")}</dt>
+            <dd className="font-medium">{String(latestDistributionId)}</dd>
+          </div>
           <div className="flex justify-between">
             <dt className="text-gray-600">{t("claim.activeNow")}</dt>
             <dd className="font-medium">
@@ -152,7 +146,7 @@ export function ClaimPageClient() {
         successLabel={t("claim.buttonSuccess")}
         errorLabel={t("common.tryAgain")}
         onClick={handleClaim}
-        disabled={!distributionId || !isConnected}
+        disabled={latestDistributionId === undefined || !isConnected}
         isPending={claimPending}
         isSuccess={claimSuccess}
         isError={claimTxError}
