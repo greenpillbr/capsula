@@ -67,11 +67,23 @@ export function ClaimPageClient() {
   const claimSuccess = isClaimConfirmed;
   const claimTxError = isClaimWriteError || isClaimConfirmError;
 
+  const youClaimed =
+    hasClaimed === true || isClaimConfirmed
+      ? true
+      : hasClaimed === false
+        ? false
+        : undefined;
+
   useEffect(() => {
-    if (isClaimConfirmed) {
-      void refetchClaimed();
-      void queryClient.invalidateQueries();
-    }
+    resetClaim();
+  }, [address, latestDistributionId, resetClaim]);
+
+  useEffect(() => {
+    if (!isClaimConfirmed) return;
+    void (async () => {
+      await refetchClaimed();
+      await queryClient.invalidateQueries({ queryKey: ["readContract"] });
+    })();
   }, [isClaimConfirmed, refetchClaimed, queryClient]);
 
   function handleClaim() {
@@ -119,9 +131,9 @@ export function ClaimPageClient() {
             <div className="flex justify-between">
               <dt className="text-gray-600">{t("claim.youClaimed")}</dt>
               <dd className="font-medium">
-                {hasClaimed === undefined
+                {youClaimed === undefined
                   ? t("common.loading")
-                  : hasClaimed
+                  : youClaimed
                     ? t("common.yes")
                     : t("common.no")}
               </dd>
