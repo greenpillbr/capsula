@@ -1,50 +1,20 @@
-"use client";
+import { HeaderClient } from "@/components/HeaderClient";
+import { getServerTranslations } from "@/lib/i18n/server";
+import type { TranslationKey } from "@/lib/i18n/types";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/create-distribution", label: "Create Distribution" },
-  { href: "/claim", label: "Claim" },
-  { href: "/configure", label: "Configure" },
+const navLinks: { href: string; labelKey: TranslationKey }[] = [
+  { href: "/", labelKey: "nav.home" },
+  { href: "/create-distribution", labelKey: "nav.createDistribution" },
+  { href: "/claim", labelKey: "nav.claim" },
+  { href: "/configure", labelKey: "nav.configure" },
 ];
 
-export function Header() {
-  const pathname = usePathname();
+export async function Header() {
+  const { t } = await getServerTranslations();
+  const navLabels = navLinks.map(({ href, labelKey }) => ({
+    href,
+    label: t(labelKey),
+  }));
 
-  return (
-    <header className="border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-        <Link href="/" className="flex items-center gap-3">
-          <Image
-            src="/logo-capsule.png"
-            alt="Capsule"
-            width={120}
-            height={40}
-            className="h-10 w-auto"
-            priority
-          />
-        </Link>
-        <nav className="flex flex-wrap items-center gap-4">
-          {navLinks.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`text-sm font-medium transition-colors ${
-                pathname === href
-                  ? "text-green-600"
-                  : "text-gray-600 hover:text-green-600"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
-          <ConnectButton chainStatus="icon" showBalance={false} />
-        </nav>
-      </div>
-    </header>
-  );
+  return <HeaderClient navLabels={navLabels} />;
 }

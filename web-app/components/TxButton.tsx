@@ -4,6 +4,7 @@ type TxButtonProps = {
   label: string;
   pendingLabel?: string;
   successLabel?: string;
+  errorLabel?: string;
   onClick: () => void;
   disabled?: boolean;
   isPending?: boolean;
@@ -14,8 +15,9 @@ type TxButtonProps = {
 
 export function TxButton({
   label,
-  pendingLabel = "Confirm in wallet…",
-  successLabel = "Success",
+  pendingLabel = label,
+  successLabel = label,
+  errorLabel = label,
   onClick,
   disabled,
   isPending,
@@ -26,7 +28,7 @@ export function TxButton({
   let text = label;
   if (isPending) text = pendingLabel;
   else if (isSuccess) text = successLabel;
-  else if (isError) text = "Try again";
+  else if (isError) text = errorLabel;
 
   return (
     <button
