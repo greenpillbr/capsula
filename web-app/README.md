@@ -1,6 +1,6 @@
-# Capsule Admin
+# Capsule Web App
 
-Next.js admin UI for the Capsula Attendance contract on Celo.
+Next.js web UI for the Capsula Attendance contract on Celo.
 
 ## Pages
 
@@ -24,7 +24,7 @@ bun dev
 
 ## Deploy (Vercel)
 
-1. Import the repo and set **Root Directory** to `admin-app`.
+1. Import the repo and set **Root Directory** to `web-app`.
 2. Add `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` in Vercel environment variables.
 3. Deploy.
 

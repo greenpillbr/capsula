@@ -17,13 +17,15 @@ import {
   attendanceAbi,
   isAdminAddress,
 } from "@/lib/contracts";
+import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
-export default function ConfigurePage() {
+export function ConfigurePageClient() {
+  const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
 
-  const [amountInput, setAmountInput] = useState("");
-  const [periodInput, setPeriodInput] = useState("");
+  const [amountInput, setAmountInput] = useState<string | null>(null);
+  const [periodInput, setPeriodInput] = useState<string | null>(null);
   const [creatorAddress, setCreatorAddress] = useState("");
   const [configError, setConfigError] = useState<string | null>(null);
   const [allowlistError, setAllowlistError] = useState<string | null>(null);
@@ -55,6 +57,16 @@ export default function ConfigurePage() {
     functionName: "period",
   });
 
+  const resolvedAmountInput =
+    amountInput ??
+    (currentAmount !== undefined
+      ? formatUnits(currentAmount, GPBR_DECIMALS)
+      : "");
+
+  const resolvedPeriodInput =
+    periodInput ??
+    (currentPeriod !== undefined ? String(currentPeriod) : "");
+
   const lookupAddress =
     creatorAddress && isAddress(creatorAddress) ? creatorAddress : undefined;
 
@@ -65,18 +77,6 @@ export default function ConfigurePage() {
     args: lookupAddress ? [lookupAddress] : undefined,
     query: { enabled: !!lookupAddress },
   });
-
-  useEffect(() => {
-    if (currentAmount !== undefined) {
-      setAmountInput(formatUnits(currentAmount, GPBR_DECIMALS));
-    }
-  }, [currentAmount]);
-
-  useEffect(() => {
-    if (currentPeriod !== undefined) {
-      setPeriodInput(String(currentPeriod));
-    }
-  }, [currentPeriod]);
 
   const {
     writeContract: writeConfig,
@@ -123,19 +123,19 @@ export default function ConfigurePage() {
   function handleSetConfig() {
     setConfigError(null);
     resetConfig();
-    if (!amountInput || Number.isNaN(Number(amountInput))) {
-      setConfigError("Enter a valid GPBR amount");
+    if (!resolvedAmountInput || Number.isNaN(Number(resolvedAmountInput))) {
+      setConfigError(t("configure.errorInvalidAmount"));
       return;
     }
-    if (!periodInput || !/^\d+$/.test(periodInput)) {
-      setConfigError("Enter a valid period in blocks");
+    if (!resolvedPeriodInput || !/^\d+$/.test(resolvedPeriodInput)) {
+      setConfigError(t("configure.errorInvalidPeriod"));
       return;
     }
     try {
-      const amountUnits = parseUnits(amountInput, GPBR_DECIMALS);
-      const periodBlocks = BigInt(periodInput);
+      const amountUnits = parseUnits(resolvedAmountInput, GPBR_DECIMALS);
+      const periodBlocks = BigInt(resolvedPeriodInput);
       if (amountUnits <= BigInt(0) || periodBlocks <= BigInt(0)) {
-        setConfigError("Amount and period must be greater than zero");
+        setConfigError(t("configure.errorAmountPeriodZero"));
         return;
       }
       writeConfig({
@@ -145,7 +145,7 @@ export default function ConfigurePage() {
         args: [amountUnits, periodBlocks],
       });
     } catch {
-      setConfigError("Invalid amount or period");
+      setConfigError(t("configure.errorInvalidAmountOrPeriod"));
     }
   }
 
@@ -153,7 +153,7 @@ export default function ConfigurePage() {
     setAllowlistError(null);
     resetAllowlist();
     if (!creatorAddress || !isAddress(creatorAddress)) {
-      setAllowlistError("Enter a valid address");
+      setAllowlistError(t("configure.errorInvalidAddress"));
       return;
     }
     writeAllowlist({
@@ -166,46 +166,40 @@ export default function ConfigurePage() {
 
   if (!isConnected) {
     return (
-      <Panel title="Configure">
-        <p className="text-gray-600">Connect your wallet to access this page.</p>
-      </Panel>
+      <MessagePanel>
+        <p className="text-gray-600">{t("configure.connectWallet")}</p>
+      </MessagePanel>
     );
   }
 
   if (!authorized) {
     return (
-      <Panel title="Configure">
-        <p className="text-gray-600">
-          Your wallet is not authorized to configure this contract.
-        </p>
+      <MessagePanel>
+        <p className="text-gray-600">{t("configure.notAuthorized")}</p>
         <p className="mt-2 break-all text-xs text-gray-400">{address}</p>
-      </Panel>
+      </MessagePanel>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-[#00122E]">Configure</h1>
-
-      <Panel title="Contract config">
+      <Panel title={t("configure.contractConfig")}>
         <p className="mb-4 text-sm text-gray-600">
-          Set the default reward amount and claim window length (in blocks) for
-          new distributions. Only the contract owner can submit this on-chain.
+          {t("configure.configDescription")}
         </p>
         {!isOwner && (
           <p className="mb-4 text-sm text-amber-700">
-            Your wallet is not the contract owner. Config updates will fail
-            on-chain.
+            {t("configure.notOwnerConfig")}
           </p>
         )}
         <label className="mb-2 block text-sm font-medium" htmlFor="cfg-amount">
-          Amount (GPBR)
+          {t("configure.amountGpbr")}
         </label>
         <input
           id="cfg-amount"
           type="text"
           inputMode="decimal"
-          value={amountInput}
+          value={resolvedAmountInput}
           onChange={(e) => {
             setAmountInput(e.target.value);
             setConfigError(null);
@@ -213,13 +207,13 @@ export default function ConfigurePage() {
           className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
         />
         <label className="mb-2 block text-sm font-medium" htmlFor="cfg-period">
-          Period (blocks)
+          {t("configure.periodBlocks")}
         </label>
         <input
           id="cfg-period"
           type="text"
           inputMode="numeric"
-          value={periodInput}
+          value={resolvedPeriodInput}
           onChange={(e) => {
             setPeriodInput(e.target.value);
             setConfigError(null);
@@ -230,9 +224,10 @@ export default function ConfigurePage() {
           <p className="mb-2 text-sm text-red-600">{configError}</p>
         )}
         <TxButton
-          label="Save config"
-          pendingLabel="Saving…"
-          successLabel="Config saved"
+          label={t("configure.saveConfig")}
+          pendingLabel={t("configure.saveConfigPending")}
+          successLabel={t("configure.saveConfigSuccess")}
+          errorLabel={t("common.tryAgain")}
           onClick={handleSetConfig}
           disabled={!isOwner}
           isPending={configPending}
@@ -241,22 +236,20 @@ export default function ConfigurePage() {
         />
       </Panel>
 
-      <Panel title="Creator allowlist">
+      <Panel title={t("configure.creatorAllowlist")}>
         <p className="mb-4 text-sm text-gray-600">
-          Manage which addresses can create and cancel distributions. Only the
-          contract owner can modify the allowlist on-chain.
+          {t("configure.allowlistDescription")}
         </p>
         {!isOwner && (
           <p className="mb-4 text-sm text-amber-700">
-            Your wallet is not the contract owner. Allowlist changes will fail
-            on-chain.
+            {t("configure.notOwnerAllowlist")}
           </p>
         )}
         <label
           className="mb-2 block text-sm font-medium"
           htmlFor="creator-address"
         >
-          Address
+          {t("configure.address")}
         </label>
         <input
           id="creator-address"
@@ -271,13 +264,13 @@ export default function ConfigurePage() {
         />
         {lookupAddress && (
           <p className="mb-4 text-sm text-gray-600">
-            isCreator:{" "}
+            {t("configure.isCreator")}{" "}
             <span className="font-medium">
               {isCreatorLookup === undefined
-                ? "…"
+                ? t("common.loading")
                 : isCreatorLookup
-                  ? "Yes"
-                  : "No"}
+                  ? t("common.yes")
+                  : t("common.no")}
             </span>
           </p>
         )}
@@ -286,9 +279,10 @@ export default function ConfigurePage() {
         )}
         <div className="flex gap-3">
           <TxButton
-            label="Add creator"
-            pendingLabel="Adding…"
-            successLabel="Creator added"
+            label={t("configure.addCreator")}
+            pendingLabel={t("configure.addCreatorPending")}
+            successLabel={t("configure.addCreatorSuccess")}
+            errorLabel={t("common.tryAgain")}
             onClick={() => handleAllowlist("add")}
             disabled={!isOwner || !creatorAddress}
             isPending={allowlistPending}
@@ -297,9 +291,10 @@ export default function ConfigurePage() {
             className="flex-1"
           />
           <TxButton
-            label="Remove creator"
-            pendingLabel="Removing…"
-            successLabel="Creator removed"
+            label={t("configure.removeCreator")}
+            pendingLabel={t("configure.removeCreatorPending")}
+            successLabel={t("configure.removeCreatorSuccess")}
+            errorLabel={t("common.tryAgain")}
             onClick={() => handleAllowlist("remove")}
             disabled={!isOwner || !creatorAddress}
             isPending={allowlistPending}
@@ -310,6 +305,14 @@ export default function ConfigurePage() {
         </div>
       </Panel>
     </div>
+  );
+}
+
+function MessagePanel({ children }: { children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      {children}
+    </section>
   );
 }
 

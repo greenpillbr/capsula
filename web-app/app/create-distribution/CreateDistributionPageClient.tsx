@@ -18,8 +18,10 @@ import {
   attendanceAbi,
   isAdminAddress,
 } from "@/lib/contracts";
+import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
-export default function CreateDistributionPage() {
+export function CreateDistributionPageClient() {
+  const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
   const [fundAmount, setFundAmount] = useState("");
@@ -100,13 +102,13 @@ export default function CreateDistributionPage() {
     setFundError(null);
     resetFund();
     if (!fundAmount || Number.isNaN(Number(fundAmount))) {
-      setFundError("Enter a valid GPBR amount");
+      setFundError(t("createDistribution.errorInvalidAmount"));
       return;
     }
     try {
       const units = parseUnits(fundAmount, GPBR_DECIMALS);
       if (units <= BigInt(0)) {
-        setFundError("Amount must be greater than zero");
+        setFundError(t("createDistribution.errorAmountZero"));
         return;
       }
       writeFund({
@@ -116,7 +118,7 @@ export default function CreateDistributionPage() {
         args: [ATTENDANCE_ADDRESS, units],
       });
     } catch {
-      setFundError("Invalid amount");
+      setFundError(t("createDistribution.errorInvalidAmountGeneric"));
     }
   }
 
@@ -124,7 +126,7 @@ export default function CreateDistributionPage() {
     setCreateError(null);
     resetCreate();
     if (!/^\d+$/.test(maxClaimers)) {
-      setCreateError("Enter a valid non-negative integer (0 = unlimited)");
+      setCreateError(t("createDistribution.errorInvalidMaxClaimers"));
       return;
     }
     writeCreate({
@@ -137,59 +139,52 @@ export default function CreateDistributionPage() {
 
   if (!isConnected) {
     return (
-      <Panel title="Create Distribution">
-        <p className="text-gray-600">
-          Connect your wallet to access this page.
-        </p>
-      </Panel>
+      <MessagePanel>
+        <p className="text-gray-600">{t("createDistribution.connectWallet")}</p>
+      </MessagePanel>
     );
   }
 
   if (!authorized) {
     return (
-      <Panel title="Create Distribution">
-        <p className="text-gray-600">
-          Your wallet is not on the contract creator allowlist.
-        </p>
+      <MessagePanel>
+        <p className="text-gray-600">{t("createDistribution.notAllowlisted")}</p>
         <p className="mt-2 break-all text-xs text-gray-400">{address}</p>
-      </Panel>
+      </MessagePanel>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-[#00122E]">
-        Create Distribution
-      </h1>
-
-      <Panel title="Contract pool">
+      <Panel title={t("createDistribution.contractPool")}>
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <dt className="text-gray-600">GPBR in contract</dt>
+            <dt className="text-gray-600">{t("createDistribution.gpbrInContract")}</dt>
             <dd className="font-medium">
               {poolBalance !== undefined
                 ? `${formatUnits(poolBalance, GPBR_DECIMALS)} GPBR`
-                : "—"}
+                : t("common.dash")}
             </dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-gray-600">Distributions created</dt>
+            <dt className="text-gray-600">
+              {t("createDistribution.distributionsCreated")}
+            </dt>
             <dd className="font-medium">
               {distributionsCount !== undefined
                 ? String(distributionsCount)
-                : "—"}
+                : t("common.dash")}
             </dd>
           </div>
         </dl>
       </Panel>
 
-      <Panel title="Fund contract">
+      <Panel title={t("createDistribution.fundContract")}>
         <p className="mb-4 text-sm text-gray-600">
-          Transfer GPBR tokens to the Attendance contract. Amount uses 6
-          decimals (e.g. 1 = 1 GPBR).
+          {t("createDistribution.fundDescription")}
         </p>
         <label className="mb-2 block text-sm font-medium" htmlFor="fund-amount">
-          Amount (GPBR)
+          {t("createDistribution.amountGpbr")}
         </label>
         <input
           id="fund-amount"
@@ -207,9 +202,10 @@ export default function CreateDistributionPage() {
           <p className="mb-2 text-sm text-red-600">{fundError}</p>
         )}
         <TxButton
-          label="Fund contract"
-          pendingLabel="Funding…"
-          successLabel="Funded"
+          label={t("createDistribution.fundButton")}
+          pendingLabel={t("createDistribution.fundButtonPending")}
+          successLabel={t("createDistribution.fundButtonSuccess")}
+          errorLabel={t("common.tryAgain")}
           onClick={handleFund}
           disabled={!fundAmount}
           isPending={fundPending}
@@ -218,16 +214,15 @@ export default function CreateDistributionPage() {
         />
       </Panel>
 
-      <Panel title="Create distribution">
+      <Panel title={t("createDistribution.createDistribution")}>
         <p className="mb-4 text-sm text-gray-600">
-          Opens a new claim window using the contract&apos;s configured reward
-          amount and period. Only allowlisted creators can succeed on-chain.
+          {t("createDistribution.createDescription")}
         </p>
         <label
           className="mb-2 block text-sm font-medium"
           htmlFor="max-claimers"
         >
-          Max claimers (0 = unlimited)
+          {t("createDistribution.maxClaimers")}
         </label>
         <input
           id="max-claimers"
@@ -245,9 +240,10 @@ export default function CreateDistributionPage() {
           <p className="mb-2 text-sm text-red-600">{createError}</p>
         )}
         <TxButton
-          label="Create distribution"
-          pendingLabel="Creating…"
-          successLabel="Distribution created"
+          label={t("createDistribution.createButton")}
+          pendingLabel={t("createDistribution.createButtonPending")}
+          successLabel={t("createDistribution.createButtonSuccess")}
+          errorLabel={t("common.tryAgain")}
           onClick={handleCreate}
           isPending={createPending}
           isSuccess={createSuccess}
@@ -255,6 +251,14 @@ export default function CreateDistributionPage() {
         />
       </Panel>
     </div>
+  );
+}
+
+function MessagePanel({ children }: { children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      {children}
+    </section>
   );
 }
 

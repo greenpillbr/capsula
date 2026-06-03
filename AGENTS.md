@@ -22,9 +22,9 @@ Smart contracts are located in `smart-contracts` directory.
 
 This is the system that will be used to interact with the blockchain.
 
-### Admin
+### Web App
 
-Located in `admin` directory.
+Located in `web-app` directory.
 
 Used for: creating distributions, claiming rewards, withdrawing rewards, etc.
 
