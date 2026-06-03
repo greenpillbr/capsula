@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "admin-app",
+      "name": "web-app",
       "dependencies": {
         "@rainbow-me/rainbowkit": "^2.2.11",
         "@tanstack/react-query": "^5.100.11",
