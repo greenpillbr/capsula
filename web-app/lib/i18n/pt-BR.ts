@@ -8,6 +8,7 @@ export const ptBR: Translations = {
   "nav.createDistribution": "Criar distribuição",
   "nav.claim": "Resgatar",
   "nav.configure": "Configurar",
+  "nav.settingsMenu": "Menu de configurações",
   "common.yes": "Sim",
   "common.no": "Não",
   "common.loading": "…",

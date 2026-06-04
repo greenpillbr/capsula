@@ -8,6 +8,33 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **Always read `AGENTS.md` and `README.md` at the start of a task** that touches structure, naming, pages, or setup. When you rename files, add pages, or change conventions, **update both files** so they stay accurate.
 
+## UI libraries
+
+### shadcn/ui
+
+UI primitives live under `components/ui/`. Configuration is in `components.json` (style: **base-nova**, RSC enabled, CSS variables in `app/globals.css`).
+
+- **Add a component:** `bunx shadcn@latest add <name>` (e.g. `dropdown-menu`, `button`).
+- **Prefer the CLI** over hand-copying registry files so versions and Base UI APIs stay aligned.
+- **Imports:** `@/components/ui/<component>`; merge class names with `cn()` from `@/lib/utils`.
+- **Primitives:** shadcn components here use [**Base UI**](https://base-ui.com) (`@base-ui/react`), not Radix. Triggers/items often support a `render` prop to compose with other elements (e.g. shadcn `Button` as `DropdownMenuTrigger`).
+
+`app/globals.css` imports `shadcn/tailwind.css` and `tw-animate-css`; theme tokens (`--primary`, `--border`, etc.) are defined on `:root`. Page-level Tailwind (e.g. `text-green-600` in the header) can coexist with shadcn tokens.
+
+**Currently installed:** `button`, `dropdown-menu`.
+
+### Icons
+
+| Library | Use |
+|---------|-----|
+| **react-icons** | App chrome and custom UI (e.g. `HiOutlineCog6Tooth` from `react-icons/hi2` in `Header`). Import from the package subpath for the set you need. |
+| **lucide-react** | Icons inside shadcn-generated `components/ui/*` (default in `components.json` `iconLibrary`). Do not replace those with react-icons unless you are intentionally customizing a shadcn file. |
+
+### Supporting utilities
+
+- **`class-variance-authority`**, **`clsx`**, **`tailwind-merge`** — variants and `cn()` helper.
+- **`shadcn`** (dev dependency) — CLI only; not imported in app code.
+
 ## Internationalization (i18n)
 
 The web-app supports **Brazilian Portuguese (`pt-BR`)** and **English (`en`)**. There is no third-party i18n library — translations live in typed string files under `lib/i18n/`.
@@ -69,8 +96,8 @@ Use **`useTranslation()`** from `lib/i18n/LanguageProvider` only in client compo
 
 ### Components
 
-- **`HeaderWrapper`:** server component; resolves nav labels with `getServerTranslations()` and renders `Header`.
-- **`Header`:** client; pathname highlighting, PT/EN toggle, RainbowKit connect button.
+- **`HeaderWrapper`:** server component; resolves main nav and settings menu labels with `getServerTranslations()` and renders `Header`.
+- **`Header`:** client; Claim link, settings **gear dropdown** (Create Distribution, Configure via shadcn `DropdownMenu` + react-icons), logo links home, pathname highlighting, PT/EN toggle, RainbowKit connect button. Uses `useTranslation()` for locale toggle and `nav.settingsMenu` aria-label.
 - **`TxButton`:** client; receives all label strings as props (`label`, `pendingLabel`, `successLabel`, `errorLabel`) — no i18n hook inside.
 
 ### Untranslated strings

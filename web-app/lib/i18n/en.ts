@@ -8,6 +8,7 @@ export const en: Translations = {
   "nav.createDistribution": "Create Distribution",
   "nav.claim": "Claim",
   "nav.configure": "Configure",
+  "nav.settingsMenu": "Settings menu",
   "common.yes": "Yes",
   "common.no": "No",
   "common.loading": "…",

@@ -13,6 +13,7 @@ export type TranslationKey =
   | "nav.createDistribution"
   | "nav.claim"
   | "nav.configure"
+  | "nav.settingsMenu"
   | "common.yes"
   | "common.no"
   | "common.loading"
