@@ -40,7 +40,7 @@ export const en: Translations = {
   "createDistribution.distributionsCreated": "Distributions created",
   "createDistribution.fundContract": "Fund contract",
   "createDistribution.fundDescription":
-    "Transfer GPBR tokens to the Attendance contract. Amount uses 6 decimals (e.g. 1 = 1 GPBR).",
+    "Transfer GPBR tokens to the Attendance contract.",
   "createDistribution.amountGpbr": "Amount (GPBR)",
   "createDistribution.errorInvalidAmount": "Enter a valid GPBR amount",
   "createDistribution.errorAmountZero": "Amount must be greater than zero",
