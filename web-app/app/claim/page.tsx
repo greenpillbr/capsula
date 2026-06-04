@@ -1,4 +1,4 @@
-import { ClaimPageClient } from "@/app/claim/ClaimPageClient";
+import { Claim } from "@/app/claim/Claim";
 import { getServerTranslations } from "@/lib/i18n/server";
 
 export default async function ClaimPage() {
@@ -10,7 +10,7 @@ export default async function ClaimPage() {
 
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <p className="mb-4 text-sm text-gray-600">{t("claim.description")}</p>
-        <ClaimPageClient />
+        <Claim />
       </section>
     </div>
   );

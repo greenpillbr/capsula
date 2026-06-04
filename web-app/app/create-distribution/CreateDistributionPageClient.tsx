@@ -145,15 +145,6 @@ export function CreateDistributionPageClient() {
     );
   }
 
-  if (!authorized) {
-    return (
-      <MessagePanel>
-        <p className="text-gray-600">{t("createDistribution.notAllowlisted")}</p>
-        <p className="mt-2 break-all text-xs text-gray-400">{address}</p>
-      </MessagePanel>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <Panel title={t("createDistribution.contractPool")}>
@@ -245,6 +236,10 @@ export function CreateDistributionPageClient() {
           successLabel={t("createDistribution.createButtonSuccess")}
           errorLabel={t("common.tryAgain")}
           onClick={handleCreate}
+          disabled={!authorized}
+          disabledTooltip={
+            !authorized ? t("createDistribution.notAllowlisted") : undefined
+          }
           isPending={createPending}
           isSuccess={createSuccess}
           isError={createTxError}

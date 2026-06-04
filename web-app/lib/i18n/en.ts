@@ -1,13 +1,14 @@
 import type { Translations } from "./types";
 
 export const en: Translations = {
-  "meta.title": "Capsule Admin",
+  "meta.title": "Capsula",
   "meta.description":
     "Admin UI for Capsula Attendance distributions on Celo",
   "nav.home": "Home",
   "nav.createDistribution": "Create Distribution",
   "nav.claim": "Claim",
   "nav.configure": "Configure",
+  "nav.settingsMenu": "Settings menu",
   "common.yes": "Yes",
   "common.no": "No",
   "common.loading": "…",
@@ -39,7 +40,7 @@ export const en: Translations = {
   "createDistribution.distributionsCreated": "Distributions created",
   "createDistribution.fundContract": "Fund contract",
   "createDistribution.fundDescription":
-    "Transfer GPBR tokens to the Attendance contract. Amount uses 6 decimals (e.g. 1 = 1 GPBR).",
+    "Transfer GPBR tokens to the Attendance contract.",
   "createDistribution.amountGpbr": "Amount (GPBR)",
   "createDistribution.errorInvalidAmount": "Enter a valid GPBR amount",
   "createDistribution.errorAmountZero": "Amount must be greater than zero",

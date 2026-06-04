@@ -19,7 +19,7 @@ import {
 } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
-export function ConfigurePageClient() {
+export function Configure() {
   const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
@@ -172,14 +172,9 @@ export function ConfigurePageClient() {
     );
   }
 
-  if (!authorized) {
-    return (
-      <MessagePanel>
-        <p className="text-gray-600">{t("configure.notAuthorized")}</p>
-        <p className="mt-2 break-all text-xs text-gray-400">{address}</p>
-      </MessagePanel>
-    );
-  }
+  const notAuthorizedTooltip = !authorized
+    ? t("configure.notAuthorized")
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -187,7 +182,7 @@ export function ConfigurePageClient() {
         <p className="mb-4 text-sm text-gray-600">
           {t("configure.configDescription")}
         </p>
-        {!isOwner && (
+        {authorized && !isOwner && (
           <p className="mb-4 text-sm text-amber-700">
             {t("configure.notOwnerConfig")}
           </p>
@@ -229,7 +224,8 @@ export function ConfigurePageClient() {
           successLabel={t("configure.saveConfigSuccess")}
           errorLabel={t("common.tryAgain")}
           onClick={handleSetConfig}
-          disabled={!isOwner}
+          disabled={!authorized || !isOwner}
+          disabledTooltip={notAuthorizedTooltip}
           isPending={configPending}
           isSuccess={configSuccess}
           isError={configTxError}
@@ -240,7 +236,7 @@ export function ConfigurePageClient() {
         <p className="mb-4 text-sm text-gray-600">
           {t("configure.allowlistDescription")}
         </p>
-        {!isOwner && (
+        {authorized && !isOwner && (
           <p className="mb-4 text-sm text-amber-700">
             {t("configure.notOwnerAllowlist")}
           </p>
@@ -284,7 +280,8 @@ export function ConfigurePageClient() {
             successLabel={t("configure.addCreatorSuccess")}
             errorLabel={t("common.tryAgain")}
             onClick={() => handleAllowlist("add")}
-            disabled={!isOwner || !creatorAddress}
+            disabled={!authorized || !isOwner || !creatorAddress}
+            disabledTooltip={notAuthorizedTooltip}
             isPending={allowlistPending}
             isSuccess={allowlistSuccess}
             isError={allowlistTxError}
@@ -296,7 +293,8 @@ export function ConfigurePageClient() {
             successLabel={t("configure.removeCreatorSuccess")}
             errorLabel={t("common.tryAgain")}
             onClick={() => handleAllowlist("remove")}
-            disabled={!isOwner || !creatorAddress}
+            disabled={!authorized || !isOwner || !creatorAddress}
+            disabledTooltip={notAuthorizedTooltip}
             isPending={allowlistPending}
             isSuccess={allowlistSuccess}
             isError={allowlistTxError}

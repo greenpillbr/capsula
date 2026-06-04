@@ -1,20 +1,124 @@
-import { HeaderClient } from "@/components/HeaderClient";
-import { getServerTranslations } from "@/lib/i18n/server";
-import type { TranslationKey } from "@/lib/i18n/types";
+"use client";
 
-const navLinks: { href: string; labelKey: TranslationKey }[] = [
-  { href: "/", labelKey: "nav.home" },
-  { href: "/create-distribution", labelKey: "nav.createDistribution" },
-  { href: "/claim", labelKey: "nav.claim" },
-  { href: "/configure", labelKey: "nav.configure" },
-];
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { BR, US } from "country-flag-icons/react/3x2";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { HiOutlineCog6Tooth } from "react-icons/hi2";
 
-export async function Header() {
-  const { t } = await getServerTranslations();
-  const navLabels = navLinks.map(({ href, labelKey }) => ({
-    href,
-    label: t(labelKey),
-  }));
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTranslation } from "@/lib/i18n/LanguageProvider";
+import type { Locale } from "@/lib/i18n/types";
 
-  return <HeaderClient navLabels={navLabels} />;
+type NavLabel = {
+  href: string;
+  label: string;
+};
+
+const navLinkClass = (active: boolean) =>
+  `text-base font-semibold transition-colors ${
+    active ? "text-green-600" : "text-gray-600 hover:text-green-600"
+  }`;
+
+export function Header({
+  navLabels,
+  settingsLabels,
+}: {
+  navLabels: NavLabel[];
+  settingsLabels: NavLabel[];
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { locale, setLocale, t } = useTranslation();
+  const isSettingsActive = settingsLabels.some(({ href }) => pathname === href);
+
+  return (
+    <header className="border-b border-gray-200 bg-white">
+      <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <Link href="/" className="flex items-center gap-3" aria-label={t("nav.home")}>
+            <Image
+              src="/logo-capsule.png"
+              alt="Capsula"
+              width={150}
+              height={50}
+              className="h-20 w-auto"
+              priority
+            />
+          </Link>
+          <nav className="flex flex-wrap items-center gap-4">
+            {navLabels.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={navLinkClass(pathname === href)}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className={navLinkClass(isSettingsActive)}
+                  aria-label={t("nav.settingsMenu")}
+                />
+              }
+            >
+              <HiOutlineCog6Tooth className="size-5" aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {settingsLabels.map(({ href, label }) => (
+                <DropdownMenuItem
+                  key={href}
+                  className={pathname === href ? "text-green-600" : undefined}
+                  onClick={() => router.push(href)}
+                >
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <div
+            className="flex rounded-lg border border-gray-200 text-xs font-medium"
+            role="group"
+            aria-label="Language"
+          >
+            {(["pt-BR", "en"] as Locale[]).map((loc) => {
+              const Flag = loc === "pt-BR" ? BR : US;
+              return (
+                <button
+                  key={loc}
+                  type="button"
+                  onClick={() => setLocale(loc)}
+                  aria-label={loc === "pt-BR" ? "Português (Brasil)" : "English"}
+                  aria-pressed={locale === loc}
+                  className={`flex items-center px-2 py-1.5 transition-colors first:rounded-l-lg last:rounded-r-lg ${
+                    locale === loc
+                      ? "bg-green-600"
+                      : "opacity-50 hover:bg-gray-50 hover:opacity-100"
+                  }`}
+                >
+                  <Flag className="h-4 w-6 rounded-sm" title={loc === "pt-BR" ? "Brasil" : "United States"} />
+                </button>
+              );
+            })}
+          </div>
+          <ConnectButton chainStatus="icon" showBalance={false} />
+        </div>
+      </div>
+    </header>
+  );
 }

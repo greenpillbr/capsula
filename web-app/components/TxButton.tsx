@@ -7,6 +7,7 @@ type TxButtonProps = {
   errorLabel?: string;
   onClick: () => void;
   disabled?: boolean;
+  disabledTooltip?: string;
   isPending?: boolean;
   isSuccess?: boolean;
   isError?: boolean;
@@ -20,6 +21,7 @@ export function TxButton({
   errorLabel = label,
   onClick,
   disabled,
+  disabledTooltip,
   isPending,
   isSuccess,
   isError,
@@ -30,14 +32,30 @@ export function TxButton({
   else if (isSuccess) text = successLabel;
   else if (isError) text = errorLabel;
 
-  return (
+  const isDisabled = disabled || isPending;
+  const showTooltip = !!disabledTooltip && !!disabled && !isPending;
+
+  const button = (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled || isPending}
-      className={`w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      disabled={isDisabled}
+      className={`w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 ${showTooltip ? "" : className}`}
     >
       {text}
     </button>
   );
+
+  if (showTooltip) {
+    return (
+      <span
+        className={`block w-full cursor-not-allowed ${className}`}
+        title={disabledTooltip}
+      >
+        {button}
+      </span>
+    );
+  }
+
+  return button;
 }

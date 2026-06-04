@@ -1,13 +1,14 @@
 import type { Translations } from "./types";
 
 export const ptBR: Translations = {
-  "meta.title": "Capsule Admin",
+  "meta.title": "Capsula",
   "meta.description":
     "Interface de administração para distribuições Capsula Attendance na Celo",
   "nav.home": "Início",
   "nav.createDistribution": "Criar distribuição",
   "nav.claim": "Resgatar",
   "nav.configure": "Configurar",
+  "nav.settingsMenu": "Menu de configurações",
   "common.yes": "Sim",
   "common.no": "Não",
   "common.loading": "…",
@@ -40,7 +41,7 @@ export const ptBR: Translations = {
   "createDistribution.distributionsCreated": "Distribuições criadas",
   "createDistribution.fundContract": "Financiar contrato",
   "createDistribution.fundDescription":
-    "Transfira tokens GPBR para o contrato Attendance. O valor usa 6 decimais (ex.: 1 = 1 GPBR).",
+    "Transfira tokens GPBR para o contrato Attendance.",
   "createDistribution.amountGpbr": "Valor (GPBR)",
   "createDistribution.errorInvalidAmount": "Informe um valor GPBR válido",
   "createDistribution.errorAmountZero": "O valor deve ser maior que zero",
