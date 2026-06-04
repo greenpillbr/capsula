@@ -1,6 +1,7 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { BR, US } from "country-flag-icons/react/3x2";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -95,20 +96,25 @@ export function Header({
             role="group"
             aria-label="Language"
           >
-            {(["pt-BR", "en"] as Locale[]).map((loc) => (
-              <button
-                key={loc}
-                type="button"
-                onClick={() => setLocale(loc)}
-                className={`px-2 py-1 transition-colors first:rounded-l-lg last:rounded-r-lg ${
-                  locale === loc
-                    ? "bg-green-600 text-white"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {loc === "pt-BR" ? "PT" : "EN"}
-              </button>
-            ))}
+            {(["pt-BR", "en"] as Locale[]).map((loc) => {
+              const Flag = loc === "pt-BR" ? BR : US;
+              return (
+                <button
+                  key={loc}
+                  type="button"
+                  onClick={() => setLocale(loc)}
+                  aria-label={loc === "pt-BR" ? "Português (Brasil)" : "English"}
+                  aria-pressed={locale === loc}
+                  className={`flex items-center px-2 py-1.5 transition-colors first:rounded-l-lg last:rounded-r-lg ${
+                    locale === loc
+                      ? "bg-green-600"
+                      : "opacity-50 hover:bg-gray-50 hover:opacity-100"
+                  }`}
+                >
+                  <Flag className="h-4 w-6 rounded-sm" title={loc === "pt-BR" ? "Brasil" : "United States"} />
+                </button>
+              );
+            })}
           </div>
           <ConnectButton chainStatus="icon" showBalance={false} />
         </div>
