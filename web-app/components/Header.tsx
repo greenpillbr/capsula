@@ -22,7 +22,7 @@ type NavLabel = {
 };
 
 const navLinkClass = (active: boolean) =>
-  `text-sm font-medium transition-colors ${
+  `text-base font-semibold transition-colors ${
     active ? "text-green-600" : "text-gray-600 hover:text-green-600"
   }`;
 
@@ -40,15 +40,15 @@ export function Header({
 
   return (
     <header className="border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+      <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <Link href="/" className="flex items-center gap-3" aria-label={t("nav.home")}>
             <Image
               src="/logo-capsule.png"
               alt="Capsula"
-              width={120}
-              height={40}
-              className="h-10 w-auto"
+              width={150}
+              height={50}
+              className="h-20 w-auto"
               priority
             />
           </Link>
