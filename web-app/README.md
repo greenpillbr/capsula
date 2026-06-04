@@ -5,7 +5,17 @@ Next.js web UI for the Capsula Attendance contract on Celo.
 ## Pages
 
 - **Create Distribution** (`/create-distribution`) — Fund the contract with GPBR and create distributions (whitelisted wallets only).
-- **Claim** (`/claim`) — Claim a distribution by ID.
+- **Claim** (`/claim`) — Claim the latest distribution.
+- **Configure** (`/configure`) — Contract config and creator allowlist (authorized wallets only).
+
+Interactive routes use a server `page.tsx` for static translated shell and a client sibling for wallet/forms (e.g. `app/claim/Claim.tsx`, `app/configure/Configure.tsx`).
+
+## Components
+
+- **`HeaderWrapper`** — Server component; resolves nav labels and renders **`Header`**.
+- **`Header`** — Client component; navigation, locale toggle, RainbowKit connect button.
+
+See `AGENTS.md` for i18n conventions and full agent guidance.
 
 ## Setup
 

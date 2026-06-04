@@ -13,7 +13,7 @@ import { TxButton } from "@/components/TxButton";
 import { ATTENDANCE_ADDRESS, attendanceAbi } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
-export function ClaimPageClient() {
+export function Claim() {
   const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();

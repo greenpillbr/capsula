@@ -4,6 +4,10 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+## Documentation
+
+**Always read `AGENTS.md` and `README.md` at the start of a task** that touches structure, naming, pages, or setup. When you rename files, add pages, or change conventions, **update both files** so they stay accurate.
+
 ## Internationalization (i18n)
 
 The web-app supports **Brazilian Portuguese (`pt-BR`)** and **English (`en`)**. There is no third-party i18n library — translations live in typed string files under `lib/i18n/`.
@@ -52,21 +56,21 @@ export default async function MyPage() {
 
 Use **`useTranslation()`** from `lib/i18n/LanguageProvider` only in client components (`"use client"`) that need interactivity, wagmi, or live locale updates (e.g. form validation messages, dynamic contract UI).
 
-**Pattern for interactive pages:** server `page.tsx` renders static translated shell (title, descriptions); a `*PageClient.tsx` sibling handles wallet/forms with `useTranslation()`.
+**Pattern for interactive pages:** server `page.tsx` renders static translated shell (title, descriptions); a client sibling (e.g. `Claim.tsx`, `Configure.tsx`) handles wallet/forms with `useTranslation()`.
 
 | Server (`getServerTranslations`) | Client (`useTranslation`) |
 |----------------------------------|---------------------------|
-| `app/page.tsx` | `app/*/ClaimPageClient.tsx`, etc. |
-| `app/*/page.tsx` (titles, static copy) | `components/HeaderClient.tsx` |
-| `components/Header.tsx` (nav labels) | `components/Providers.tsx`, `TxButton` |
+| `app/page.tsx` | `app/claim/Claim.tsx`, `app/configure/Configure.tsx`, etc. |
+| `app/*/page.tsx` (titles, static copy) | `components/Header.tsx` |
+| `components/HeaderWrapper.tsx` (nav labels) | `components/Providers.tsx`, `TxButton` |
 | `app/layout.tsx` (`generateMetadata`, `<html lang>`) | |
 
 `lib/i18n/server.ts` imports `next/headers` — **never import it from client components**.
 
 ### Components
 
-- **`Header`:** server component; resolves nav labels with `getServerTranslations()`.
-- **`HeaderClient`:** client; pathname highlighting, PT/EN toggle, RainbowKit connect button.
+- **`HeaderWrapper`:** server component; resolves nav labels with `getServerTranslations()` and renders `Header`.
+- **`Header`:** client; pathname highlighting, PT/EN toggle, RainbowKit connect button.
 - **`TxButton`:** client; receives all label strings as props (`label`, `pendingLabel`, `successLabel`, `errorLabel`) — no i18n hook inside.
 
 ### Untranslated strings

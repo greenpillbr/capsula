@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 
-import { Header } from "@/components/Header";
+import { HeaderWrapper } from "@/components/HeaderWrapper";
 import { Providers } from "@/components/Providers";
 import { translations } from "@/lib/i18n";
 import { getRequestLocale } from "@/lib/i18n/server";
@@ -37,7 +37,7 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full bg-white font-sans text-[#00122E] antialiased">
         <Providers>
-          <Header />
+          <HeaderWrapper />
           <main className="mx-auto max-w-2xl px-4 py-8">{children}</main>
         </Providers>
       </body>

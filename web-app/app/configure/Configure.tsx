@@ -19,7 +19,7 @@ import {
 } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
-export function ConfigurePageClient() {
+export function Configure() {
   const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
