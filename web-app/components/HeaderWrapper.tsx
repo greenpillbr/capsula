@@ -4,6 +4,7 @@ import type { TranslationKey } from "@/lib/i18n/types";
 
 const navLinks: { href: string; labelKey: TranslationKey }[] = [
   { href: "/claim", labelKey: "nav.claim" },
+  { href: "/gpbrv-swap/configure", labelKey: "nav.gpbrvSwap" },
 ];
 
 const settingsLinks: { href: string; labelKey: TranslationKey }[] = [
