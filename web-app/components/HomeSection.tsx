@@ -12,7 +12,7 @@ export function HomeSection({
   const Heading = headingLevel;
 
   return (
-    <section className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
+    <section className="flex flex-col items-center gap-4 text-center">
       <Heading className="max-w-lg text-2xl font-semibold text-foreground">
         {title}
       </Heading>

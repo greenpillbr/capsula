@@ -37,11 +37,12 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col">
-      <HomeSection title={t("home.title")} headingLevel="h1">
-        <p>{t("home.intro")}</p>
-      </HomeSection>
+      <div className="flex flex-col gap-10 py-12">
+        <HomeSection title={t("home.title")} headingLevel="h1">
+          <p>{t("home.intro")}</p>
+        </HomeSection>
 
-      <HomeSection title={t("home.participate.title")}>
+        <HomeSection title={t("home.participate.title")}>
         <p>{t("home.participate.time")}</p>
         <p>
           {t("home.participate.meetLabel")}{" "}
@@ -54,7 +55,8 @@ export default async function Home() {
             {MEET_URL.replace("https://", "")}
           </a>
         </p>
-      </HomeSection>
+        </HomeSection>
+      </div>
 
       <Separator />
 
