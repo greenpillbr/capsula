@@ -42,7 +42,7 @@ export default async function Home() {
           <p>{t("home.intro")}</p>
         </HomeSection>
 
-        <HomeSection title={t("home.participate.title")}>
+        <HomeSection title={t("home.participate.title")} headingLevel="h2">
         <p>{t("home.participate.time")}</p>
         <p>
           {t("home.participate.meetLabel")}{" "}
@@ -63,7 +63,7 @@ export default async function Home() {
       <section className="py-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{t("home.resources.title")}</CardTitle>
+            <CardTitle className="text-lg font-bold">{t("home.resources.title")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="flex flex-col gap-2">
