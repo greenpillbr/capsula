@@ -17,8 +17,17 @@ export const ptBR: Translations = {
   "common.confirmInWallet": "Confirme na carteira…",
   "common.success": "Sucesso",
   "common.tryAgain": "Tentar novamente",
-  "home.intro":
-    "Essa é a capsula, camada de abstração da comunidade GreenPillBR.",
+  "home.title": "O que é a capsula?",
+  "home.intro": "É a camada de abstração da comunidade GreenPillBR",
+  "home.participate.title":
+    "Quer participar? Compareça nos encontros da comunidade GreenPillBR!",
+  "home.participate.time": "⏰ As quartas-feiras das 17h30 às 19h00 (horário de São Paulo)",
+  "home.participate.meetLabel": "🔗 Link da videochamada:",
+  "home.resources.title": "Recursos úteis",
+  "home.resources.onboarding": "Tarefas de onboarding na balaio",
+  "home.resources.gardens": "Comunidade no gardens",
+  "home.resources.voucherPool": "Piscina de vouchers sarafu",
+  "home.resources.liquidityPool": "Piscina de liquidez sarafu",
   "claim.title": "Resgatar",
   "claim.description":
     "Resgate sua recompensa GPBR da distribuição criada mais recentemente, durante a janela ativa.",

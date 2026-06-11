@@ -31,7 +31,9 @@ UI primitives live under `components/ui/`. Configuration is in `components.json`
 
 `app/globals.css` imports `shadcn/tailwind.css` and `tw-animate-css`; theme tokens (`--primary`, `--border`, etc.) are defined on `:root`. Page-level Tailwind (e.g. `text-green-600` in the header) can coexist with shadcn tokens.
 
-**Currently installed:** `button`, `dropdown-menu`.
+**Currently installed:** `button`, `card`, `dropdown-menu`, `separator`.
+
+The home page (`app/page.tsx`) uses `HomeSection` for hero blocks and shadcn `Card` + `Separator` for the resources list.
 
 ### Icons
 

@@ -17,8 +17,17 @@ export const en: Translations = {
   "common.confirmInWallet": "Confirm in wallet…",
   "common.success": "Success",
   "common.tryAgain": "Try again",
-  "home.intro":
-    "This is Capsula, the abstraction layer for the GreenPillBR community.",
+  "home.title": "What is Capsula?",
+  "home.intro": "It is the abstraction layer of the GreenPillBR community",
+  "home.participate.title":
+    "Want to participate? Join the GreenPillBR community meetings (Portuguese speaking)!",
+  "home.participate.time": "⏰ Wednesday's at 5:30 PM to 7:00 PM (São Paulo time)",
+  "home.participate.meetLabel": "🔗 Video call link:",
+  "home.resources.title": "Useful resources",
+  "home.resources.onboarding": "Balaio Onboarding tasks",
+  "home.resources.gardens": "Gardens community",
+  "home.resources.voucherPool": "Sarafu voucher pool",
+  "home.resources.liquidityPool": "Sarafu liquidity pool",
   "claim.title": "Claim",
   "claim.description":
     "Claim your GPBR reward from the most recently created distribution during its active window.",
