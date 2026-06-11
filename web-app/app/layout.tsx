@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 
+import { Footer } from "@/components/Footer";
 import { HeaderWrapper } from "@/components/HeaderWrapper";
 import { Providers } from "@/components/Providers";
 import { translations } from "@/lib/i18n";
@@ -35,10 +36,15 @@ export default async function RootLayout({
       <head>
         <meta name="talentapp:project_verification" content="d4a687caadb48f873943a77e976b6a2dd685bd627427e6c0e4f7613e373791b37d5c2a202ad8575a5a9fd42741ceee30b8e1a38b89b62b7dd6896ab6cadffc87" />
       </head>
-      <body className="min-h-full bg-white font-sans text-[#00122E] antialiased">
+      <body className="min-h-dvh bg-white font-sans text-[#00122E] antialiased">
         <Providers>
-          <HeaderWrapper />
-          <main className="mx-auto max-w-2xl px-4 py-8">{children}</main>
+          <div className="flex min-h-dvh flex-col">
+            <HeaderWrapper />
+            <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 min-h-[calc(100dvh-10rem)]">
+              {children}
+            </main>
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>

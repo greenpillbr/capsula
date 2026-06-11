@@ -10,6 +10,7 @@ export const en: Translations = {
   "nav.configure": "Configure",
   "nav.gpbrvSwap": "GPBRV Swap",
   "nav.settingsMenu": "Settings menu",
+  "footer.developedByPrefix": "2026 - Developed by",
   "common.yes": "Yes",
   "common.no": "No",
   "common.loading": "…",

@@ -15,6 +15,7 @@ export type TranslationKey =
   | "nav.configure"
   | "nav.gpbrvSwap"
   | "nav.settingsMenu"
+  | "footer.developedByPrefix"
   | "common.yes"
   | "common.no"
   | "common.loading"
