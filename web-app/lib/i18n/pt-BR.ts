@@ -18,7 +18,7 @@ export const ptBR: Translations = {
   "common.success": "Sucesso",
   "common.tryAgain": "Tentar novamente",
   "home.title": "O que é a capsula?",
-  "home.intro": "É a camada de abstração da comunidade GreenPillBR",
+  "home.intro": "É a interface das atividades on-chain da comunidade GreenPillBR",
   "home.participate.title":
     "Quer participar? Compareça nos encontros da comunidade GreenPillBR!",
   "home.participate.time": "⏰ As quartas-feiras das 17h30 às 19h00 (horário de São Paulo)",

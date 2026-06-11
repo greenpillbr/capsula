@@ -18,7 +18,7 @@ export const en: Translations = {
   "common.success": "Success",
   "common.tryAgain": "Try again",
   "home.title": "What is Capsula?",
-  "home.intro": "It is the abstraction layer of the GreenPillBR community",
+  "home.intro": "It is the on-chain activities interface of the GreenPillBR community",
   "home.participate.title":
     "Want to participate? Join the GreenPillBR community meetings (Portuguese speaking)!",
   "home.participate.time": "⏰ Wednesday's at 5:30 PM to 7:00 PM (São Paulo time)",
