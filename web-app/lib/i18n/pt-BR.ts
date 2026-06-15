@@ -23,12 +23,12 @@ export const ptBR: Translations = {
   "home.participate.title":
     "Quer participar? Compareça nos encontros da comunidade GreenPillBR!",
   "home.participate.time": "⏰ As quartas-feiras das 17h30 às 19h00 (horário de São Paulo)",
-  "home.participate.meetLabel": "🔗 Link da videochamada:",
+  "home.participate.meetLabel": "🔗 Link do calendareio de encontros:",
   "home.resources.title": "Recursos úteis",
   "home.resources.onboarding": "Tarefas de onboarding na balaio",
-  "home.resources.gardens": "Comunidade no gardens",
-  "home.resources.voucherPool": "Piscina de vouchers sarafu",
-  "home.resources.liquidityPool": "Piscina de liquidez sarafu",
+  "home.resources.gardens": "Comunidade no Gardens",
+  "home.resources.voucherPool": "Piscina de vouchers no Sarafu",
+  "home.resources.liquidityPool": "Piscina de liquidez no Sarafu",
   "claim.title": "Resgatar",
   "claim.description":
     "Resgate sua recompensa GPBR da distribuição criada mais recentemente, durante a janela ativa.",

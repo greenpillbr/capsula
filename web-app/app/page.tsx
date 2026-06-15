@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import type { TranslationKey } from "@/lib/i18n/types";
 import { getServerTranslations } from "@/lib/i18n/server";
 
-const MEET_URL = "https://meet.google.com/ryu-jyok-sqm";
+const MEET_URL = "https://luma.com/greenpillbr?k=c";
 
 const RESOURCES: { labelKey: TranslationKey; href: string }[] = [
   {
