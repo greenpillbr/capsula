@@ -10,10 +10,6 @@ import { createWalletClient, encodeFunctionData, erc20Abi, http, parseUnits } fr
  * Required runtime setup:
  *   anvil --fork-url https://forno.celo.org --chain-id 42220
  *
- * Configure via env vars:
- *   GPBRV_WHALE - address holding GPBRV on Celo (seeds the main wallet for withdraw flows)
- *   USDM_WHALE  - address holding USDM on Celo (seeds wallets for deposit flows)
- *
  * The suite skips itself when anvil is unreachable or the whale env vars are unset,
  * so it does not break the default `hardhat test` flow.
  *
@@ -33,6 +29,10 @@ const DEPOSIT_AMOUNT = parseUnits("0.1", 18); // 0.1 USDM
 
 const gpbrvWhale = "0xd12f1ae0c018210d18f6cb01cd6c7bd669ef7529" as `0x${string}` | undefined; //GPBRV SWAP POOL (RICH IN GPBRV)
 const usdmWhale = "0xaa8299FC6A685B5f9Ce9bdA8d0B3ea3D54731976" as `0x${string}` | undefined; //USDM whale got from celoscan holders
+
+function logStep(test: string, step: number, total: number, label: string) {
+  console.log(`[GPBRVSwapper.live] ${test} | step ${step}/${total}: ${label} — ok`);
+}
 
 async function tryConnect() {
   try {
@@ -65,6 +65,10 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
   const { viem, publicClient } = ready;
   const testClient = await viem.getTestClient({ mode: "anvil" });
   const [owner, minipay] = await viem.getWalletClients();
+
+  console.log("[GPBRVSwapper.live] connected to anvil fork");
+  console.log("[GPBRVSwapper.live] owner:", owner.account.address);
+  console.log("[GPBRVSwapper.live] minipay:", minipay.account.address);
 
   // Bypass Hardhat's local-accounts handler by talking to anvil directly.
   const rawAnvil = createWalletClient({ transport: http("http://127.0.0.1:8545") });
@@ -99,9 +103,13 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
   }
 
   it("withdraw (single wallet): caller GPBRV becomes USDM in the same wallet", async () => {
+    const testName = "withdraw (single wallet)";
+
     const swapper = await deploySwapper();
+    logStep(testName, 1, 6, `deployed swapper at ${swapper.address}`);
 
     await seedToken(GPBRV_ADDRESS, gpbrvWhale!, owner.account.address, WITHDRAW_AMOUNT);
+    logStep(testName, 2, 6, `seeded ${WITHDRAW_AMOUNT} GPBRV to owner`);
 
     const approveHash = await owner.writeContract({
       address: GPBRV_ADDRESS,
@@ -110,6 +118,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       args: [swapper.address, WITHDRAW_AMOUNT],
     });
     await publicClient.waitForTransactionReceipt({ hash: approveHash });
+    logStep(testName, 3, 6, "approved swapper to spend GPBRV");
 
     const usdmBefore = await publicClient.readContract({
       address: USDM_ADDRESS,
@@ -117,9 +126,11 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       functionName: "balanceOf",
       args: [owner.account.address],
     });
+    logStep(testName, 4, 6, `read USDM balance before withdraw (${usdmBefore})`);
 
     const hash = await swapper.write.withdraw([WITHDRAW_AMOUNT, 0n]);
     await publicClient.waitForTransactionReceipt({ hash });
+    logStep(testName, 5, 6, `withdraw tx confirmed (${hash})`);
 
     const usdmAfter = await publicClient.readContract({
       address: USDM_ADDRESS,
@@ -127,6 +138,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       functionName: "balanceOf",
       args: [owner.account.address],
     });
+    logStep(testName, 6, 6, `USDM increased ${usdmBefore.toString()} -> ${usdmAfter.toString()}`);
 
     assert.ok(
       usdmAfter > usdmBefore,
@@ -135,9 +147,13 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
   });
 
   it("deposit (single wallet): caller USDM becomes GPBRV in the same wallet", async () => {
+    const testName = "deposit (single wallet)";
+
     const swapper = await deploySwapper();
+    logStep(testName, 1, 6, `deployed swapper at ${swapper.address}`);
 
     await seedToken(USDM_ADDRESS, usdmWhale!, owner.account.address, DEPOSIT_AMOUNT);
+    logStep(testName, 2, 6, `seeded ${DEPOSIT_AMOUNT} USDM to owner`);
 
     const approveHash = await owner.writeContract({
       address: USDM_ADDRESS,
@@ -146,6 +162,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       args: [swapper.address, DEPOSIT_AMOUNT],
     });
     await publicClient.waitForTransactionReceipt({ hash: approveHash });
+    logStep(testName, 3, 6, "approved swapper to spend USDM");
 
     const gpbrvBefore = await publicClient.readContract({
       address: GPBRV_ADDRESS,
@@ -153,9 +170,11 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       functionName: "balanceOf",
       args: [owner.account.address],
     });
+    logStep(testName, 4, 6, `read GPBRV balance before deposit (${gpbrvBefore})`);
 
     const hash = await swapper.write.deposit([DEPOSIT_AMOUNT, 0n]);
     await publicClient.waitForTransactionReceipt({ hash });
+    logStep(testName, 5, 6, `deposit tx confirmed (${hash})`);
 
     const gpbrvAfter = await publicClient.readContract({
       address: GPBRV_ADDRESS,
@@ -163,6 +182,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       functionName: "balanceOf",
       args: [owner.account.address],
     });
+    logStep(testName, 6, 6, `GPBRV increased ${gpbrvBefore} -> ${gpbrvAfter}`);
 
     assert.ok(
       gpbrvAfter > gpbrvBefore,
@@ -171,10 +191,16 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
   });
 
   it("withdrawWithMinipay: user GPBRV becomes USDM on the configured minipay", async () => {
+    const testName = "withdrawWithMinipay";
+
     const swapper = await deploySwapper();
+    logStep(testName, 1, 7, `deployed swapper at ${swapper.address}`);
 
     await seedToken(GPBRV_ADDRESS, gpbrvWhale!, owner.account.address, WITHDRAW_AMOUNT);
+    logStep(testName, 2, 7, `seeded ${WITHDRAW_AMOUNT} GPBRV to owner`);
+
     await swapper.write.configure([minipay.account.address]);
+    logStep(testName, 3, 7, `configured minipay ${minipay.account.address}`);
 
     const approveHash = await owner.writeContract({
       address: GPBRV_ADDRESS,
@@ -183,6 +209,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       args: [swapper.address, WITHDRAW_AMOUNT],
     });
     await publicClient.waitForTransactionReceipt({ hash: approveHash });
+    logStep(testName, 4, 7, "approved swapper to spend GPBRV");
 
     const minipayBefore = await publicClient.readContract({
       address: USDM_ADDRESS,
@@ -190,9 +217,11 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       functionName: "balanceOf",
       args: [minipay.account.address],
     });
+    logStep(testName, 5, 7, `read minipay USDM balance before withdraw (${minipayBefore})`);
 
     const hash = await swapper.write.withdrawWithMinipay([WITHDRAW_AMOUNT, 0n]);
     await publicClient.waitForTransactionReceipt({ hash });
+    logStep(testName, 6, 7, `withdrawWithMinipay tx confirmed (${hash})`);
 
     const minipayAfter = await publicClient.readContract({
       address: USDM_ADDRESS,
@@ -200,6 +229,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       functionName: "balanceOf",
       args: [minipay.account.address],
     });
+    logStep(testName, 7, 7, `minipay USDM increased ${minipayBefore} -> ${minipayAfter}`);
 
     assert.ok(
       minipayAfter > minipayBefore,
@@ -208,10 +238,16 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
   });
 
   it("depositWithMinipay: minipay USDM becomes GPBRV on the linked user", async () => {
+    const testName = "depositWithMinipay";
+
     const swapper = await deploySwapper();
+    logStep(testName, 1, 7, `deployed swapper at ${swapper.address}`);
 
     await seedToken(USDM_ADDRESS, usdmWhale!, minipay.account.address, DEPOSIT_AMOUNT);
+    logStep(testName, 2, 7, `seeded ${DEPOSIT_AMOUNT} USDM to minipay`);
+
     await swapper.write.configure([minipay.account.address]);
+    logStep(testName, 3, 7, `configured minipay ${minipay.account.address}`);
 
     const approveHash = await minipay.writeContract({
       address: USDM_ADDRESS,
@@ -220,6 +256,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       args: [swapper.address, DEPOSIT_AMOUNT],
     });
     await publicClient.waitForTransactionReceipt({ hash: approveHash });
+    logStep(testName, 4, 7, "minipay approved swapper to spend USDM");
 
     const userBefore = await publicClient.readContract({
       address: GPBRV_ADDRESS,
@@ -227,12 +264,14 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       functionName: "balanceOf",
       args: [owner.account.address],
     });
+    logStep(testName, 5, 7, `read user GPBRV balance before deposit (${userBefore})`);
 
     const swapperAsMinipay = await viem.getContractAt("GPBRVSwapper", swapper.address, {
       client: { wallet: minipay },
     });
     const hash = await swapperAsMinipay.write.depositWithMinipay([DEPOSIT_AMOUNT, 0n]);
     await publicClient.waitForTransactionReceipt({ hash });
+    logStep(testName, 6, 7, `depositWithMinipay tx confirmed (${hash})`);
 
     const userAfter = await publicClient.readContract({
       address: GPBRV_ADDRESS,
@@ -240,6 +279,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       functionName: "balanceOf",
       args: [owner.account.address],
     });
+    logStep(testName, 7, 7, `user GPBRV increased ${userBefore} -> ${userAfter}`);
 
     assert.ok(
       userAfter > userBefore,
