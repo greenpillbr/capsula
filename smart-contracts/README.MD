@@ -144,6 +144,7 @@ The live tests skip themselves automatically when anvil is unreachable
 
 | Token / contract | Address | Decimals |
 | --- | --- | --- |
+| GPBR | `0xd832B2F117db51021Ad0387c17182796DBEB69df` | 6 |
 | GPBRV | `0x6ec3d6e693526108990c6d5cbd2195e051321d32` | 6 |
 | BRLM | `0xe8537a3d056da446677b9e9d6c5db704eaab4787` | 18 |
 | USDM | `0x765de816845861e75a25fca122bb6898b8b1282a` | 18 |
