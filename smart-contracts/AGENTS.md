@@ -41,7 +41,7 @@ This file provides guidance to agents when working with code in smart-contracts 
 
 ### Local fork (anvil, Celo)
 ```bash
-anvil --fork-url https://forno.celo.org --chain-id 42220
+anvil --fork-url https://forno.celo.org --chain-id 99999
 ```
 
 ### Tests
@@ -54,10 +54,16 @@ GPBRV_WHALE=0x... USDM_WHALE=0x... bunx hardhat test nodejs test/GPBRVSwapper.li
 ```
 
 ### Deploy (Ignition)
+
+#### Local fork
 ```bash
 bunx hardhat ignition deploy ignition/modules/Attendance.ts --network localFork
-bunx hardhat ignition deploy ignition/modules/Attendance.ts --network celo
 bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts --network localFork
+```
+
+#### Celo
+```bash
+bunx hardhat ignition deploy ignition/modules/Attendance.ts --network celo
 bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts --network celo
 ```
 
