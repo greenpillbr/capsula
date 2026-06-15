@@ -131,13 +131,20 @@ The live tests skip themselves automatically when anvil is unreachable
 
 ## GPBRVSwapper
 
-`GPBRVSwapper` bridges a user's GPBRV (held in their main wallet) and USDM (held in their MiniPay wallet) by chaining the Sarafu swap pool and the Mento router.
+`GPBRVSwapper` converts between GPBRV and USDM by chaining the Sarafu swap pool and the Mento router. It offers two flavours: a single-wallet flow that needs no setup, and a MiniPay-linked flow.
+
+**Single wallet (no configuration required):**
+
+- `withdraw(amount, minUsdmOut)` spends the caller's GPBRV and returns USDM to the same wallet (GPBRV → BRLM via Sarafu → USDM via Mento).
+- `deposit(amount, minGpbrvOut)` spends the caller's USDM and returns GPBRV to the same wallet (USDM → BRLM via Mento → GPBRV via Sarafu).
+
+**MiniPay-linked:**
 
 - `configure(minipay)` links the caller's main wallet to a MiniPay wallet (forward and reverse mappings).
-- `withdraw(amount, minUsdmOut)` spends the caller's GPBRV and sends USDM to the linked MiniPay wallet (GPBRV → BRLM via Sarafu → USDM via Mento).
-- `deposit(amount, minGpbrvOut)` spends the MiniPay wallet's USDM and sends GPBRV to the linked main wallet (USDM → BRLM via Mento → GPBRV via Sarafu).
+- `withdrawWithMinipay(amount, minUsdmOut)` spends the caller's GPBRV and sends USDM to the linked MiniPay wallet.
+- `depositWithMinipay(amount, minGpbrvOut)` spends the MiniPay wallet's USDM and sends GPBRV to the linked main wallet.
 
-Both `withdraw` and `deposit` revert with `NotConfigured` when no mapping exists for the caller.
+`withdrawWithMinipay` and `depositWithMinipay` revert with `NotConfigured` when no mapping exists for the caller.
 
 ### Addresses (Celo mainnet)
 
@@ -182,6 +189,10 @@ All GPBRVSwapper scripts read the deployed address from `GPBRV_SWAPPER_ADDRESS` 
 
 ```bash
 export GPBRV_SWAPPER_ADDRESS=0x...
+# Single-wallet (no configure needed)
+AMOUNT=1000000 MIN_USDM_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw-direct.ts
+AMOUNT=100000000000000000 MIN_GPBRV_OUT=0 USER_INDEX=0 bun scripts/gpbrv-deposit-direct.ts
+# MiniPay-linked
 CONFIGURE_MINIPAY=0x... USER_INDEX=0 bun scripts/gpbrv-configure.ts
 AMOUNT=1000000 MIN_USDM_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw.ts
 AMOUNT=100000000000000000 MIN_GPBRV_OUT=0 MINIPAY_INDEX=1 bun scripts/gpbrv-deposit.ts

@@ -77,6 +77,11 @@ bun scripts/read-state.ts
 
 ### GPBRVSwapper scripts (require GPBRV_SWAPPER_ADDRESS, default NETWORK=localFork)
 ```bash
+# Single-wallet (no configure needed): caller spends one token, receives the other in the same wallet
+AMOUNT=1000000 MIN_USDM_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw-direct.ts   # withdraw(): GPBRV (6 dec) -> USDM
+AMOUNT=100000000000000000 MIN_GPBRV_OUT=0 USER_INDEX=0 bun scripts/gpbrv-deposit-direct.ts  # deposit(): USDM (18 dec) -> GPBRV
+
+# MiniPay-linked (requires configure): withdrawWithMinipay()/depositWithMinipay()
 CONFIGURE_MINIPAY=0x... USER_INDEX=0 bun scripts/gpbrv-configure.ts
 AMOUNT=1000000 MIN_USDM_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw.ts   # AMOUNT in GPBRV (6 dec)
 AMOUNT=100000000000000000 MIN_GPBRV_OUT=0 MINIPAY_INDEX=1 bun scripts/gpbrv-deposit.ts  # AMOUNT in USDM (18 dec)

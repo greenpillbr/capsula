@@ -21,10 +21,9 @@ const swapper = await viem.getContractAt("GPBRVSwapper", swapperAddress, {
 
 const gpbrv = (await swapper.read.gpbrv()) as `0x${string}`;
 const usdm = (await swapper.read.usdm()) as `0x${string}`;
-const minipay = (await swapper.read.userToMinipay([user.account.address])) as `0x${string}`;
 
-console.log(`[${networkName}] user: ${user.account.address}`);
-console.log(`[${networkName}] withdraw(amount=${amount}, minUsdmOut=${minUsdmOut}) -> minipay ${minipay}`);
+console.log(`[${networkName}] account: ${user.account.address}`);
+console.log(`[${networkName}] withdraw(amount=${amount}, minUsdmOut=${minUsdmOut}) -> same wallet`);
 
 const approveHash = await user.writeContract({
   address: gpbrv,
@@ -34,21 +33,21 @@ const approveHash = await user.writeContract({
 });
 await publicClient.waitForTransactionReceipt({ hash: approveHash });
 
-const minipayBefore = await publicClient.readContract({
+const before = await publicClient.readContract({
   address: usdm,
   abi: erc20Abi,
   functionName: "balanceOf",
-  args: [minipay],
+  args: [user.account.address],
 });
 
-const hash = await swapper.write.withdrawWithMinipay([amount, minUsdmOut]);
+const hash = await swapper.write.withdraw([amount, minUsdmOut]);
 const receipt = await publicClient.waitForTransactionReceipt({ hash });
 console.log(`tx mined in block ${receipt.blockNumber}: ${hash}`);
 
-const minipayAfter = await publicClient.readContract({
+const after = await publicClient.readContract({
   address: usdm,
   abi: erc20Abi,
   functionName: "balanceOf",
-  args: [minipay],
+  args: [user.account.address],
 });
-console.log(`minipay received: ${minipayAfter - minipayBefore} USDM units (balance now ${minipayAfter})`);
+console.log(`received: ${after - before} USDM units (balance now ${after})`);

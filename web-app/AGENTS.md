@@ -10,13 +10,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## GPBRV Swap section
 
-`app/gpbrv-swap/` hosts the `GPBRVSwapper` UI. It uses a client `layout.tsx` that renders sub-navigation tabs and three routes: `configure`, `withdraw`, `deposit` (each a server `page.tsx` plus a client component, except the shared `SwapForm.tsx` used by both withdraw and deposit). `Panel.tsx` is the shared section card.
+`app/gpbrv-swap/` hosts the `GPBRVSwapper` UI. It uses a client `layout.tsx` that renders sub-navigation tabs and five routes (each a server `page.tsx` plus a client component):
+
+- **Single-wallet (simpler) flow** — `swap-deposit`, `swap-withdraw`. Both use the shared `DirectSwapForm.tsx` and call the contract's `deposit` / `withdraw` (caller spends one token and receives the other in the same wallet). **No `configure` step is required.**
+- **MiniPay-linked flow** — `configure`, `withdraw`, `deposit`. Withdraw/Deposit use the shared `SwapForm.tsx` and call `withdrawWithMinipay` / `depositWithMinipay`, which require a prior `configure` link.
+
+`Panel.tsx` is the shared section card.
 
 - The top-level nav link lives in `components/HeaderWrapper.tsx` (`navLinks`) and points at `/gpbrv-swap/configure`.
-- Contract bindings, token addresses, the `getGpbrvSwapperAddress()` env helper, and the `isGpbrvSwapEnabled()` feature flag helper are in `lib/contracts.ts`.
-- Feature flag: `NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true` reveals the Withdraw/Deposit tabs (sub-layout) and unblocks those routes (server `page.tsx`). Configure is always available.
+- Contract bindings, token addresses, the `getGpbrvSwapperAddress()` env helper, and the `isGpbrvSwapEnabled()` feature flag helper are in `lib/contracts.ts`. The ABI exposes both `deposit`/`withdraw` (single wallet) and `depositWithMinipay`/`withdrawWithMinipay` (MiniPay).
+- Feature flag: `NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true` reveals all swap tabs except Configure (sub-layout) and unblocks those routes (server `page.tsx`). Configure is always available.
 - `NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS` supplies the deployed contract address; pages show a notice when it is unset.
-- Withdraw/Deposit show an amber warning and disable inputs when the connected wallet is not linked (`userToMinipay` for withdraw, `minipayToUser` for deposit), and pre-fill the minimum-received field at 1% slippage (editable).
+- The MiniPay Withdraw/Deposit pages show an amber warning and disable inputs when the connected wallet is not linked (`userToMinipay` for withdraw, `minipayToUser` for deposit). The single-wallet pages have no such gate. Both pre-fill the minimum-received field at 1% slippage (editable).
 
 ## UI libraries
 

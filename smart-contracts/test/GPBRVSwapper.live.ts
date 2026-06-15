@@ -119,7 +119,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       args: [minipay.account.address],
     });
 
-    const hash = await swapper.write.withdraw([WITHDRAW_AMOUNT, 0n]);
+    const hash = await swapper.write.withdrawWithMinipay([WITHDRAW_AMOUNT, 0n]);
     await publicClient.waitForTransactionReceipt({ hash });
 
     const minipayAfter = await publicClient.readContract({
@@ -159,7 +159,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     const swapperAsMinipay = await viem.getContractAt("GPBRVSwapper", swapper.address, {
       client: { wallet: minipay },
     });
-    const hash = await swapperAsMinipay.write.deposit([DEPOSIT_AMOUNT, 0n]);
+    const hash = await swapperAsMinipay.write.depositWithMinipay([DEPOSIT_AMOUNT, 0n]);
     await publicClient.waitForTransactionReceipt({ hash });
 
     const userAfter = await publicClient.readContract({

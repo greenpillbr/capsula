@@ -132,7 +132,99 @@ describe("GPBRVSwapper", async function () {
     });
   });
 
-  describe("withdraw", () => {
+  describe("withdraw (single wallet)", () => {
+    it("converts the caller's GPBRV into USDM sent back to the caller", async () => {
+      const { gpbrv, usdm, swapper } = await deployFixture();
+      const swapperAsUser = await asWallet("GPBRVSwapper", swapper, user);
+      const gpbrvAsUser = await asWallet("MockERC20", gpbrv, user);
+
+      await gpbrvAsUser.write.approve([swapper.address, WITHDRAW_AMOUNT]);
+
+      const gpbrvBefore = await gpbrv.read.balanceOf([user.account.address]);
+      const usdmBefore = await usdm.read.balanceOf([user.account.address]);
+
+      await swapperAsUser.write.withdraw([WITHDRAW_AMOUNT, parseUnits("9.9", USDM_DECIMALS)]);
+
+      assert.equal(
+        gpbrvBefore - (await gpbrv.read.balanceOf([user.account.address])),
+        WITHDRAW_AMOUNT,
+      );
+      assert.equal(
+        (await usdm.read.balanceOf([user.account.address])) - usdmBefore,
+        EXPECTED_USDM_OUT,
+      );
+    });
+
+    it("works without any minipay configuration", async () => {
+      const { gpbrv, usdm, swapper } = await deployFixture();
+      const swapperAsUser = await asWallet("GPBRVSwapper", swapper, user);
+      const gpbrvAsUser = await asWallet("MockERC20", gpbrv, user);
+
+      await gpbrvAsUser.write.approve([swapper.address, WITHDRAW_AMOUNT]);
+      const usdmBefore = await usdm.read.balanceOf([user.account.address]);
+
+      await swapperAsUser.write.withdraw([WITHDRAW_AMOUNT, 0n]);
+
+      assert.equal(
+        (await usdm.read.balanceOf([user.account.address])) - usdmBefore,
+        EXPECTED_USDM_OUT,
+      );
+    });
+
+    it("reverts when minUsdmOut exceeds the swap output", async () => {
+      const { gpbrv, router, swapper } = await deployFixture();
+      const swapperAsUser = await asWallet("GPBRVSwapper", swapper, user);
+      const gpbrvAsUser = await asWallet("MockERC20", gpbrv, user);
+
+      await gpbrvAsUser.write.approve([swapper.address, WITHDRAW_AMOUNT]);
+
+      await viem.assertions.revertWithCustomError(
+        swapperAsUser.write.withdraw([WITHDRAW_AMOUNT, parseUnits("11", USDM_DECIMALS)]),
+        router,
+        "InsufficientOutputAmount",
+      );
+    });
+  });
+
+  describe("deposit (single wallet)", () => {
+    it("converts the caller's USDM into GPBRV sent back to the caller", async () => {
+      const { gpbrv, usdm, swapper } = await deployFixture();
+      const swapperAsMinipay = await asWallet("GPBRVSwapper", swapper, minipay);
+      const usdmAsMinipay = await asWallet("MockERC20", usdm, minipay);
+
+      await usdmAsMinipay.write.approve([swapper.address, DEPOSIT_AMOUNT]);
+
+      const usdmBefore = await usdm.read.balanceOf([minipay.account.address]);
+      const gpbrvBefore = await gpbrv.read.balanceOf([minipay.account.address]);
+
+      await swapperAsMinipay.write.deposit([DEPOSIT_AMOUNT, parseUnits("9.9", GPBRV_DECIMALS)]);
+
+      assert.equal(
+        usdmBefore - (await usdm.read.balanceOf([minipay.account.address])),
+        DEPOSIT_AMOUNT,
+      );
+      assert.equal(
+        (await gpbrv.read.balanceOf([minipay.account.address])) - gpbrvBefore,
+        EXPECTED_GPBRV_OUT,
+      );
+    });
+
+    it("reverts when minGpbrvOut exceeds the swap output", async () => {
+      const { usdm, swapper } = await deployFixture();
+      const swapperAsMinipay = await asWallet("GPBRVSwapper", swapper, minipay);
+      const usdmAsMinipay = await asWallet("MockERC20", usdm, minipay);
+
+      await usdmAsMinipay.write.approve([swapper.address, DEPOSIT_AMOUNT]);
+
+      await viem.assertions.revertWithCustomError(
+        swapperAsMinipay.write.deposit([DEPOSIT_AMOUNT, parseUnits("11", GPBRV_DECIMALS)]),
+        swapper,
+        "InsufficientOutput",
+      );
+    });
+  });
+
+  describe("withdrawWithMinipay", () => {
     it("converts user GPBRV into USDM sent to the configured minipay", async () => {
       const { gpbrv, usdm, swapper } = await deployFixture();
       const swapperAsUser = await asWallet("GPBRVSwapper", swapper, user);
@@ -144,7 +236,7 @@ describe("GPBRVSwapper", async function () {
       const userBefore = await gpbrv.read.balanceOf([user.account.address]);
       const minipayBefore = await usdm.read.balanceOf([minipay.account.address]);
 
-      await swapperAsUser.write.withdraw([WITHDRAW_AMOUNT, parseUnits("9.9", USDM_DECIMALS)]);
+      await swapperAsUser.write.withdrawWithMinipay([WITHDRAW_AMOUNT, parseUnits("9.9", USDM_DECIMALS)]);
 
       assert.equal(
         userBefore - (await gpbrv.read.balanceOf([user.account.address])),
@@ -164,7 +256,7 @@ describe("GPBRVSwapper", async function () {
       await gpbrvAsUser.write.approve([swapper.address, WITHDRAW_AMOUNT]);
 
       await viem.assertions.revertWithCustomError(
-        swapperAsUser.write.withdraw([WITHDRAW_AMOUNT, 0n]),
+        swapperAsUser.write.withdrawWithMinipay([WITHDRAW_AMOUNT, 0n]),
         swapper,
         "NotConfigured",
       );
@@ -179,7 +271,7 @@ describe("GPBRVSwapper", async function () {
       await gpbrvAsStranger.write.approve([swapper.address, WITHDRAW_AMOUNT]);
 
       await viem.assertions.revertWithCustomError(
-        swapperAsStranger.write.withdraw([WITHDRAW_AMOUNT, 0n]),
+        swapperAsStranger.write.withdrawWithMinipay([WITHDRAW_AMOUNT, 0n]),
         gpbrv,
         "ERC20InsufficientBalance",
       );
@@ -194,14 +286,14 @@ describe("GPBRVSwapper", async function () {
       await gpbrvAsUser.write.approve([swapper.address, WITHDRAW_AMOUNT]);
 
       await viem.assertions.revertWithCustomError(
-        swapperAsUser.write.withdraw([WITHDRAW_AMOUNT, parseUnits("11", USDM_DECIMALS)]),
+        swapperAsUser.write.withdrawWithMinipay([WITHDRAW_AMOUNT, parseUnits("11", USDM_DECIMALS)]),
         router,
         "InsufficientOutputAmount",
       );
     });
   });
 
-  describe("deposit", () => {
+  describe("depositWithMinipay", () => {
     it("converts minipay USDM into GPBRV sent to the linked user", async () => {
       const { gpbrv, usdm, swapper } = await deployFixture();
       const swapperAsUser = await asWallet("GPBRVSwapper", swapper, user);
@@ -214,7 +306,7 @@ describe("GPBRVSwapper", async function () {
       const minipayBefore = await usdm.read.balanceOf([minipay.account.address]);
       const userBefore = await gpbrv.read.balanceOf([user.account.address]);
 
-      await swapperAsMinipay.write.deposit([DEPOSIT_AMOUNT, parseUnits("9.9", GPBRV_DECIMALS)]);
+      await swapperAsMinipay.write.depositWithMinipay([DEPOSIT_AMOUNT, parseUnits("9.9", GPBRV_DECIMALS)]);
 
       assert.equal(
         minipayBefore - (await usdm.read.balanceOf([minipay.account.address])),
@@ -234,7 +326,7 @@ describe("GPBRVSwapper", async function () {
       await usdmAsMinipay.write.approve([swapper.address, DEPOSIT_AMOUNT]);
 
       await viem.assertions.revertWithCustomError(
-        swapperAsMinipay.write.deposit([DEPOSIT_AMOUNT, 0n]),
+        swapperAsMinipay.write.depositWithMinipay([DEPOSIT_AMOUNT, 0n]),
         swapper,
         "NotConfigured",
       );
@@ -250,7 +342,7 @@ describe("GPBRVSwapper", async function () {
       await usdmAsMinipay.write.approve([swapper.address, DEPOSIT_AMOUNT]);
 
       await viem.assertions.revertWithCustomError(
-        swapperAsMinipay.write.deposit([DEPOSIT_AMOUNT, parseUnits("11", GPBRV_DECIMALS)]),
+        swapperAsMinipay.write.depositWithMinipay([DEPOSIT_AMOUNT, parseUnits("11", GPBRV_DECIMALS)]),
         swapper,
         "InsufficientOutput",
       );

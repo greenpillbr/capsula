@@ -16,6 +16,8 @@ export default function GpbrvSwapLayout({
   const enabled = isGpbrvSwapEnabled();
 
   const tabs = [
+    { href: "/gpbrv-swap/swap-deposit", label: t("gpbrvSwap.tabSwapDeposit"), show: enabled },
+    { href: "/gpbrv-swap/swap-withdraw", label: t("gpbrvSwap.tabSwapWithdraw"), show: enabled },
     { href: "/gpbrv-swap/configure", label: t("gpbrvSwap.tabConfigure"), show: true },
     { href: "/gpbrv-swap/withdraw", label: t("gpbrvSwap.tabWithdraw"), show: enabled },
     { href: "/gpbrv-swap/deposit", label: t("gpbrvSwap.tabDeposit"), show: enabled },

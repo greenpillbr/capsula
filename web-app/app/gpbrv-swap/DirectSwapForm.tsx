@@ -17,7 +17,6 @@ import {
   GPBRV_DECIMALS,
   USDM_ADDRESS,
   USDM_DECIMALS,
-  ZERO_ADDRESS,
   getGpbrvSwapperAddress,
   gpbrvSwapperAbi,
 } from "@/lib/contracts";
@@ -31,7 +30,7 @@ function defaultMinReceived(amount: string): string {
   return parseFloat((value * 0.99).toFixed(6)).toString();
 }
 
-export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
+export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
   const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
@@ -46,18 +45,6 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
   const spendToken = isWithdraw ? GPBRV_ADDRESS : USDM_ADDRESS;
   const spendDecimals = isWithdraw ? GPBRV_DECIMALS : USDM_DECIMALS;
   const outDecimals = isWithdraw ? USDM_DECIMALS : GPBRV_DECIMALS;
-  const mappingFn = isWithdraw ? "userToMinipay" : "minipayToUser";
-  const warningKey = isWithdraw
-    ? "gpbrvSwap.notConfiguredWarningUser"
-    : "gpbrvSwap.notConfiguredWarningMinipay";
-
-  const { data: mappedRecipient } = useReadContract({
-    address: swapper,
-    abi: gpbrvSwapperAbi,
-    functionName: mappingFn,
-    args: address ? [address] : undefined,
-    query: { enabled: !!swapper && !!address },
-  });
 
   const { data: balance } = useReadContract({
     address: spendToken,
@@ -125,10 +112,6 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
     );
   }
 
-  const recipient =
-    mappedRecipient && mappedRecipient !== ZERO_ADDRESS ? mappedRecipient : undefined;
-  const configured = recipient !== undefined;
-
   const resolvedMin = minOverride ?? defaultMinReceived(amount);
 
   let parsedAmount: bigint | undefined;
@@ -175,33 +158,24 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
     writeAction({
       address: swapper!,
       abi: gpbrvSwapperAbi,
-      functionName: isWithdraw ? "withdrawWithMinipay" : "depositWithMinipay",
+      functionName: isWithdraw ? "withdraw" : "deposit",
       args: [parsedAmount, minOut],
     });
   }
 
   return (
-    <Panel title={isWithdraw ? t("gpbrvSwap.withdrawTitle") : t("gpbrvSwap.depositTitle")}>
+    <Panel
+      title={
+        isWithdraw
+          ? t("gpbrvSwap.swapWithdrawTitle")
+          : t("gpbrvSwap.swapDepositTitle")
+      }
+    >
       <p className="mb-4 text-sm text-gray-600">
         {isWithdraw
-          ? t("gpbrvSwap.withdrawDescription")
-          : t("gpbrvSwap.depositDescription")}
+          ? t("gpbrvSwap.swapWithdrawDescription")
+          : t("gpbrvSwap.swapDepositDescription")}
       </p>
-
-      {!configured && (
-        <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
-          {t(warningKey)}
-        </p>
-      )}
-
-      {configured && (
-        <p className="mb-4 text-sm text-gray-600">
-          {isWithdraw
-            ? t("gpbrvSwap.recipientMinipay")
-            : t("gpbrvSwap.recipientUser")}
-          : <span className="font-medium">{recipient}</span>
-        </p>
-      )}
 
       <p className="mb-4 text-sm text-gray-600">
         {isWithdraw ? t("gpbrvSwap.gpbrvBalance") : t("gpbrvSwap.usdmBalance")}:{" "}
@@ -220,13 +194,12 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
         type="text"
         inputMode="decimal"
         value={amount}
-        disabled={!configured}
         onChange={(e) => {
           setAmount(e.target.value);
           setMinOverride(null);
           setFormError(null);
         }}
-        className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-gray-50"
+        className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
       />
 
       <label className="mb-2 block text-sm font-medium" htmlFor="swap-min">
@@ -237,12 +210,11 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
         type="text"
         inputMode="decimal"
         value={resolvedMin}
-        disabled={!configured}
         onChange={(e) => {
           setMinOverride(e.target.value);
           setFormError(null);
         }}
-        className="mb-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-gray-50"
+        className="mb-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
       />
       <p className="mb-4 text-xs text-gray-500">{t("gpbrvSwap.slippageNote")}</p>
 
@@ -255,7 +227,7 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
           successLabel={t("gpbrvSwap.approveSuccess")}
           errorLabel={t("common.tryAgain")}
           onClick={handleApprove}
-          disabled={!configured || !amount}
+          disabled={!amount}
           isPending={isApprovePending || isApproveConfirming}
           isSuccess={isApproveConfirmed}
           isError={isApproveWriteError || isApproveConfirmError}
@@ -271,7 +243,7 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
           }
           errorLabel={t("common.tryAgain")}
           onClick={handleAction}
-          disabled={!configured || !amount}
+          disabled={!amount}
           isPending={isActionPending || isActionConfirming}
           isSuccess={isActionConfirmed}
           isError={isActionWriteError || isActionConfirmError}

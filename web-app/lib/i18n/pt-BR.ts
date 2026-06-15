@@ -104,8 +104,16 @@ export const ptBR: Translations = {
   "configure.removeCreatorPending": "Removendo…",
   "configure.removeCreatorSuccess": "Criador removido",
   "gpbrvSwap.tabConfigure": "Configurar",
-  "gpbrvSwap.tabWithdraw": "Sacar",
-  "gpbrvSwap.tabDeposit": "Depositar",
+  "gpbrvSwap.tabWithdraw": "Sacar (MiniPay)",
+  "gpbrvSwap.tabDeposit": "Depositar (MiniPay)",
+  "gpbrvSwap.tabSwapWithdraw": "Sacar",
+  "gpbrvSwap.tabSwapDeposit": "Depositar",
+  "gpbrvSwap.swapWithdrawTitle": "Sacar (GPBRV para USDM)",
+  "gpbrvSwap.swapWithdrawDescription":
+    "Gaste GPBRV da sua carteira e receba USDM na mesma carteira. Nenhuma configuração necessária.",
+  "gpbrvSwap.swapDepositTitle": "Depositar (USDM para GPBRV)",
+  "gpbrvSwap.swapDepositDescription":
+    "Gaste USDM da sua carteira e receba GPBRV na mesma carteira. Nenhuma configuração necessária.",
   "gpbrvSwap.connectWallet": "Conecte sua carteira para acessar esta página.",
   "gpbrvSwap.notDeployed":
     "O endereço do GPBRVSwapper não está configurado. Defina NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS.",

@@ -8,12 +8,14 @@ import {ISwapPool} from "./interfaces/ISwapPool.sol";
 import {IMentoRouter} from "./interfaces/IMentoRouter.sol";
 
 /// @title GPBRVSwapper
-/// @notice Bridges a user's GPBRV (held in their main wallet) and USDM (held in their
-///         MiniPay wallet) by chaining the Sarafu swap pool and the Mento router.
-///         Each user links a MiniPay address once via `configure`, then either side
-///         can move value across:
-///           - withdraw: user spends GPBRV, MiniPay receives USDM
-///           - deposit:  MiniPay spends USDM, user receives GPBRV
+/// @notice Converts between GPBRV and USDM by chaining the Sarafu swap pool and the
+///         Mento router. Two flavours are available:
+///           - Single wallet (`deposit` / `withdraw`): the caller spends one token and
+///             receives the other in the same wallet. No setup required.
+///           - MiniPay-linked (`depositWithMinipay` / `withdrawWithMinipay`): a user links
+///             a MiniPay address once via `configure`, then either side can move value across:
+///               - withdrawWithMinipay: user spends GPBRV, MiniPay receives USDM
+///               - depositWithMinipay:  MiniPay spends USDM, user receives GPBRV
 contract GPBRVSwapper {
     using SafeERC20 for IERC20;
 
@@ -34,6 +36,8 @@ contract GPBRVSwapper {
     event Configured(address indexed user, address indexed minipay);
     event Withdrawn(address indexed user, address indexed minipay, uint256 gpbrvIn, uint256 usdmOut);
     event Deposited(address indexed minipay, address indexed user, uint256 usdmIn, uint256 gpbrvOut);
+    event WithdrawnDirect(address indexed account, uint256 gpbrvIn, uint256 usdmOut);
+    event DepositedDirect(address indexed account, uint256 usdmIn, uint256 gpbrvOut);
 
     error InvalidAddress();
     error MinipayAlreadyLinked();
@@ -85,10 +89,38 @@ contract GPBRVSwapper {
         emit Configured(msg.sender, minipay);
     }
 
+    /// @notice Caller spends GPBRV and receives USDM in the same wallet.
+    /// @param amount GPBRV amount to convert (6 decimals).
+    /// @param minUsdmOut Minimum USDM the caller must receive (slippage guard, 18 decimals).
+    function withdraw(uint256 amount, uint256 minUsdmOut) external returns (uint256 usdmOut) {
+        gpbrv.safeTransferFrom(msg.sender, address(this), amount);
+
+        uint256 brlmReceived = _sarafuSwap(gpbrv, brlm, amount);
+        usdmOut = _mentoSwap(brlm, usdm, brlmReceived, minUsdmOut, msg.sender);
+
+        emit WithdrawnDirect(msg.sender, amount, usdmOut);
+    }
+
+    /// @notice Caller spends USDM and receives GPBRV in the same wallet.
+    /// @param amount USDM amount to convert (18 decimals).
+    /// @param minGpbrvOut Minimum GPBRV the caller must receive (slippage guard, 6 decimals).
+    function deposit(uint256 amount, uint256 minGpbrvOut) external returns (uint256 gpbrvOut) {
+        usdm.safeTransferFrom(msg.sender, address(this), amount);
+
+        // Intermediate BRLM has no user-facing slippage guard; the final GPBRV output is checked instead.
+        uint256 brlmReceived = _mentoSwap(usdm, brlm, amount, 0, address(this));
+        gpbrvOut = _sarafuSwap(brlm, gpbrv, brlmReceived);
+        if (gpbrvOut < minGpbrvOut) revert InsufficientOutput();
+
+        gpbrv.safeTransfer(msg.sender, gpbrvOut);
+
+        emit DepositedDirect(msg.sender, amount, gpbrvOut);
+    }
+
     /// @notice User spends GPBRV; the configured MiniPay wallet receives USDM.
     /// @param amount GPBRV amount to convert (6 decimals).
     /// @param minUsdmOut Minimum USDM the MiniPay wallet must receive (slippage guard, 18 decimals).
-    function withdraw(uint256 amount, uint256 minUsdmOut) external returns (uint256 usdmOut) {
+    function withdrawWithMinipay(uint256 amount, uint256 minUsdmOut) external returns (uint256 usdmOut) {
         address minipay = userToMinipay[msg.sender];
         if (minipay == address(0)) revert NotConfigured();
 
@@ -103,7 +135,7 @@ contract GPBRVSwapper {
     /// @notice MiniPay spends USDM; the linked main wallet receives GPBRV.
     /// @param amount USDM amount to convert (18 decimals).
     /// @param minGpbrvOut Minimum GPBRV the user must receive (slippage guard, 6 decimals).
-    function deposit(uint256 amount, uint256 minGpbrvOut) external returns (uint256 gpbrvOut) {
+    function depositWithMinipay(uint256 amount, uint256 minGpbrvOut) external returns (uint256 gpbrvOut) {
         address user = minipayToUser[msg.sender];
         if (user == address(0)) revert NotConfigured();
 
