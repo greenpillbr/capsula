@@ -11,8 +11,8 @@ import { createWalletClient, encodeFunctionData, erc20Abi, http, parseUnits } fr
  *   anvil --fork-url https://forno.celo.org --chain-id 42220
  *
  * Configure via env vars:
- *   GPBRV_WHALE - address holding GPBRV on Celo (seeds the main wallet for withdraw)
- *   USDM_WHALE  - address holding USDM on Celo (seeds the MiniPay wallet for deposit)
+ *   GPBRV_WHALE - address holding GPBRV on Celo (seeds the main wallet for withdraw flows)
+ *   USDM_WHALE  - address holding USDM on Celo (seeds wallets for deposit flows)
  *
  * The suite skips itself when anvil is unreachable or the whale env vars are unset,
  * so it does not break the default `hardhat test` flow.
@@ -31,8 +31,8 @@ const MENTO_FACTORY = "0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3" as const;
 const WITHDRAW_AMOUNT = parseUnits("1", 6); // 1 GPBRV
 const DEPOSIT_AMOUNT = parseUnits("0.1", 18); // 0.1 USDM
 
-const gpbrvWhale = process.env.GPBRV_WHALE as `0x${string}` | undefined;
-const usdmWhale = process.env.USDM_WHALE as `0x${string}` | undefined;
+const gpbrvWhale = "0xd12f1ae0c018210d18f6cb01cd6c7bd669ef7529" as `0x${string}` | undefined; //GPBRV SWAP POOL (RICH IN GPBRV)
+const usdmWhale = "0xaa8299FC6A685B5f9Ce9bdA8d0B3ea3D54731976" as `0x${string}` | undefined; //USDM whale got from celoscan holders
 
 async function tryConnect() {
   try {
@@ -98,7 +98,79 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     ]);
   }
 
-  it("withdraw: user GPBRV becomes USDM on the configured minipay", async () => {
+  it("withdraw (single wallet): caller GPBRV becomes USDM in the same wallet", async () => {
+    const swapper = await deploySwapper();
+
+    await seedToken(GPBRV_ADDRESS, gpbrvWhale!, owner.account.address, WITHDRAW_AMOUNT);
+
+    const approveHash = await owner.writeContract({
+      address: GPBRV_ADDRESS,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [swapper.address, WITHDRAW_AMOUNT],
+    });
+    await publicClient.waitForTransactionReceipt({ hash: approveHash });
+
+    const usdmBefore = await publicClient.readContract({
+      address: USDM_ADDRESS,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [owner.account.address],
+    });
+
+    const hash = await swapper.write.withdraw([WITHDRAW_AMOUNT, 0n]);
+    await publicClient.waitForTransactionReceipt({ hash });
+
+    const usdmAfter = await publicClient.readContract({
+      address: USDM_ADDRESS,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [owner.account.address],
+    });
+
+    assert.ok(
+      usdmAfter > usdmBefore,
+      `expected caller USDM to increase, got ${usdmBefore} -> ${usdmAfter}`,
+    );
+  });
+
+  it("deposit (single wallet): caller USDM becomes GPBRV in the same wallet", async () => {
+    const swapper = await deploySwapper();
+
+    await seedToken(USDM_ADDRESS, usdmWhale!, owner.account.address, DEPOSIT_AMOUNT);
+
+    const approveHash = await owner.writeContract({
+      address: USDM_ADDRESS,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [swapper.address, DEPOSIT_AMOUNT],
+    });
+    await publicClient.waitForTransactionReceipt({ hash: approveHash });
+
+    const gpbrvBefore = await publicClient.readContract({
+      address: GPBRV_ADDRESS,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [owner.account.address],
+    });
+
+    const hash = await swapper.write.deposit([DEPOSIT_AMOUNT, 0n]);
+    await publicClient.waitForTransactionReceipt({ hash });
+
+    const gpbrvAfter = await publicClient.readContract({
+      address: GPBRV_ADDRESS,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [owner.account.address],
+    });
+
+    assert.ok(
+      gpbrvAfter > gpbrvBefore,
+      `expected caller GPBRV to increase, got ${gpbrvBefore} -> ${gpbrvAfter}`,
+    );
+  });
+
+  it("withdrawWithMinipay: user GPBRV becomes USDM on the configured minipay", async () => {
     const swapper = await deploySwapper();
 
     await seedToken(GPBRV_ADDRESS, gpbrvWhale!, owner.account.address, WITHDRAW_AMOUNT);
@@ -135,7 +207,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     );
   });
 
-  it("deposit: minipay USDM becomes GPBRV on the linked user", async () => {
+  it("depositWithMinipay: minipay USDM becomes GPBRV on the linked user", async () => {
     const swapper = await deploySwapper();
 
     await seedToken(USDM_ADDRESS, usdmWhale!, minipay.account.address, DEPOSIT_AMOUNT);

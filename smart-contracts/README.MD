@@ -142,15 +142,17 @@ The live tests skip themselves automatically when anvil is unreachable
 
 ### Addresses (Celo mainnet)
 
-| Token / contract | Address | Decimals |
-| --- | --- | --- |
-| GPBR | `0xd832B2F117db51021Ad0387c17182796DBEB69df` | 6 |
-| GPBRV | `0x6ec3d6e693526108990c6d5cbd2195e051321d32` | 6 |
-| BRLM | `0xe8537a3d056da446677b9e9d6c5db704eaab4787` | 18 |
-| USDM | `0x765de816845861e75a25fca122bb6898b8b1282a` | 18 |
-| Sarafu swap pool | `0xD12F1aE0C018210d18F6cB01cD6c7bd669eF7529` | — |
-| Mento router | `0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6` | — |
-| Mento factory | `0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3` | — |
+
+| Token / contract | Address                                      | Decimals |
+| ---------------- | -------------------------------------------- | -------- |
+| GPBR             | `0xd832B2F117db51021Ad0387c17182796DBEB69df` | 6        |
+| GPBRV            | `0x6ec3d6e693526108990c6d5cbd2195e051321d32` | 6        |
+| BRLM             | `0xe8537a3d056da446677b9e9d6c5db704eaab4787` | 18       |
+| USDM             | `0x765de816845861e75a25fca122bb6898b8b1282a` | 18       |
+| Sarafu swap pool | `0xD12F1aE0C018210d18F6cB01cD6c7bd669eF7529` | —        |
+| Mento router     | `0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6` | —        |
+| Mento factory    | `0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3` | —        |
+
 
 ### Unit tests
 
@@ -166,7 +168,7 @@ The live suite (`test/GPBRVSwapper.live.ts`) targets the running anvil fork and 
 
 ```bash
 anvil --fork-url https://forno.celo.org --chain-id 42220
-GPBRV_WHALE=0x... USDM_WHALE=0x... bunx hardhat test nodejs test/GPBRVSwapper.live.ts
+bunx hardhat test nodejs test/GPBRVSwapper.live.ts
 ```
 
 The suite skips itself when anvil is unreachable or the whale env vars are unset. The real Sarafu pool and Mento router enforce liquidity and per-swap limits, so the live amounts are intentionally small (`1` GPBRV for withdraw, `0.1` USDM for deposit); tune them to the live pool reserves.

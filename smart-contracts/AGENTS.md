@@ -31,6 +31,10 @@ This file provides guidance to agents when working with code in smart-contracts 
 
 ## Smart Contract development instructions
     - Be consice and don't overengineer the code we need simple gas-effective yet secure contracts
+    - After implementing a new feature or changing contract behavior, always check whether tests need updating:
+        - Unit tests in `test/*.ts` (mocked dependencies)
+        - Live fork tests in `test/*.live.ts` (real Celo pool/router on anvil)
+        - Scripts in `scripts/` and docs in `README.MD` / this file when CLI usage changes
 
 
 ## Addresses
@@ -49,8 +53,8 @@ anvil --fork-url https://forno.celo.org --chain-id 99999
 bunx hardhat test                              # all unit + solidity tests
 bunx hardhat test nodejs test/Attendance.ts    # Attendance unit tests
 bunx hardhat test nodejs test/GPBRVSwapper.ts  # GPBRVSwapper unit tests (mocked pool/router)
-GPBR_WHALE=0x... bunx hardhat test nodejs test/Attendance.live.ts                          # live fork tests
-GPBRV_WHALE=0x... USDM_WHALE=0x... bunx hardhat test nodejs test/GPBRVSwapper.live.ts      # live fork tests
+bunx hardhat test nodejs test/Attendance.live.ts                          # live fork tests
+bunx hardhat test nodejs test/GPBRVSwapper.live.ts      # live fork tests
 ```
 
 ### Deploy (Ignition)
