@@ -76,6 +76,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
   async function seedToken(token: `0x${string}`, whale: `0x${string}`, to: `0x${string}`, value: bigint) {
     await testClient.impersonateAccount({ address: whale });
     await testClient.setBalance({ address: whale, value: 10n ** 18n });
+    await testClient.setBalance({ address: to, value: 10n ** 18n });
 
     const data = encodeFunctionData({
       abi: erc20Abi,

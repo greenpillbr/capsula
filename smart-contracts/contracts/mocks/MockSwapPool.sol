@@ -13,6 +13,14 @@ contract MockSwapPool is ISwapPool {
     using SafeERC20 for IERC20;
 
     function withdraw(address outToken, address inToken, uint256 value) external override {
+        _swap(outToken, inToken, value);
+    }
+
+    function withdraw(address outToken, address inToken, uint256 value, bool) external override {
+        _swap(outToken, inToken, value);
+    }
+
+    function _swap(address outToken, address inToken, uint256 value) private {
         IERC20(inToken).safeTransferFrom(msg.sender, address(this), value);
 
         uint8 inDecimals = IERC20Metadata(inToken).decimals();
