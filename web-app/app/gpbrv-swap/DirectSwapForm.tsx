@@ -22,12 +22,12 @@ import {
 } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
-// Pre-fills the minimum-received field with a 1% slippage haircut applied to a naive
+// Pre-fills the minimum-received field with a 6% slippage haircut applied to a naive
 // 1:1 value estimate. The field is editable; users should tune it for live mainnet swaps.
 function defaultMinReceived(amount: string): string {
   const value = Number(amount);
   if (!amount || Number.isNaN(value) || value <= 0) return "";
-  return parseFloat((value * 0.99).toFixed(6)).toString();
+  return parseFloat((value * 0.94).toFixed(6)).toString();
 }
 
 export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {

@@ -140,7 +140,7 @@ export const ptBR: Translations = {
   "gpbrvSwap.amountGpbrv": "Valor (GPBRV)",
   "gpbrvSwap.amountUsdm": "Valor (USDM)",
   "gpbrvSwap.minReceived": "Mínimo recebido",
-  "gpbrvSwap.slippageNote": "Pré-preenchido com 1% de slippage. Edite se necessário.",
+  "gpbrvSwap.slippageNote": "Pré-preenchido com 6% de slippage. Edite se necessário.",
   "gpbrvSwap.gpbrvBalance": "Saldo GPBRV",
   "gpbrvSwap.usdmBalance": "Saldo USDM",
   "gpbrvSwap.recipientMinipay": "Destinatário USDM (MiniPay)",

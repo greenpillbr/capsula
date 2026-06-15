@@ -138,7 +138,7 @@ export const en: Translations = {
   "gpbrvSwap.amountGpbrv": "Amount (GPBRV)",
   "gpbrvSwap.amountUsdm": "Amount (USDM)",
   "gpbrvSwap.minReceived": "Minimum received",
-  "gpbrvSwap.slippageNote": "Pre-filled at 1% slippage. Edit if needed.",
+  "gpbrvSwap.slippageNote": "Pre-filled at 6% slippage. Edit if needed.",
   "gpbrvSwap.gpbrvBalance": "GPBRV balance",
   "gpbrvSwap.usdmBalance": "USDM balance",
   "gpbrvSwap.recipientMinipay": "USDM recipient (MiniPay)",

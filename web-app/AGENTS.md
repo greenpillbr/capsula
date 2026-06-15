@@ -21,7 +21,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Contract bindings, token addresses, the `getGpbrvSwapperAddress()` env helper, and the `isGpbrvSwapEnabled()` feature flag helper are in `lib/contracts.ts`. The ABI exposes both `deposit`/`withdraw` (single wallet) and `depositWithMinipay`/`withdrawWithMinipay` (MiniPay).
 - Feature flag: `NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true` reveals all swap tabs except Configure (sub-layout) and unblocks those routes (server `page.tsx`). Configure is always available.
 - `NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS` supplies the deployed contract address; pages show a notice when it is unset.
-- The MiniPay Withdraw/Deposit pages show an amber warning and disable inputs when the connected wallet is not linked (`userToMinipay` for withdraw, `minipayToUser` for deposit). The single-wallet pages have no such gate. Both pre-fill the minimum-received field at 1% slippage (editable).
+- The MiniPay Withdraw/Deposit pages show an amber warning and disable inputs when the connected wallet is not linked (`userToMinipay` for withdraw, `minipayToUser` for deposit). The single-wallet pages have no such gate. Both pre-fill the minimum-received field at 6% slippage (editable).
 
 ## UI libraries
 
