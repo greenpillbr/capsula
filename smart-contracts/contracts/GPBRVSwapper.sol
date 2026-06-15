@@ -34,8 +34,8 @@ contract GPBRVSwapper {
     mapping(address => address) public minipayToUser;
 
     event Configured(address indexed user, address indexed minipay);
-    event Withdrawn(address indexed user, address indexed minipay, uint256 gpbrvIn, uint256 usdmOut);
-    event Deposited(address indexed minipay, address indexed user, uint256 usdmIn, uint256 gpbrvOut);
+    event WithdrawMiniPay(address indexed user, address indexed minipay, uint256 gpbrvIn, uint256 usdmOut);
+    event DepositMinipay(address indexed minipay, address indexed user, uint256 usdmIn, uint256 gpbrvOut);
     event WithdrawnDirect(address indexed account, uint256 gpbrvIn, uint256 usdmOut);
     event DepositedDirect(address indexed account, uint256 usdmIn, uint256 gpbrvOut);
 
@@ -129,7 +129,7 @@ contract GPBRVSwapper {
         uint256 brlmReceived = _sarafuSwap(gpbrv, brlm, amount);
         usdmOut = _mentoSwap(brlm, usdm, brlmReceived, minUsdmOut, minipay);
 
-        emit Withdrawn(msg.sender, minipay, amount, usdmOut);
+        emit WithdrawMiniPay(msg.sender, minipay, amount, usdmOut);
     }
 
     /// @notice MiniPay spends USDM; the linked main wallet receives GPBRV.
@@ -148,7 +148,7 @@ contract GPBRVSwapper {
 
         gpbrv.safeTransfer(user, gpbrvOut);
 
-        emit Deposited(msg.sender, user, amount, gpbrvOut);
+        emit DepositMinipay(msg.sender, user, amount, gpbrvOut);
     }
 
     /// @dev Swaps `amountIn` of `tokenIn` for `tokenOut` through the Sarafu pool, returning
