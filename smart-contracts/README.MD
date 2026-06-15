@@ -42,7 +42,7 @@ The live suite auto-skips when anvil is unreachable or `GPBR_WHALE` is unset.
 Start a local anvil node forked from Celo (Foundry must be installed):
 
 ```shell
-anvil --fork-url https://forno.celo.org --chain-id 99999
+anvil --fork-url https://forno.celo.org --chain-id 42220
 ```
 
 The `localFork` network in `hardhat.config.ts` points at `http://127.0.0.1:8545` and uses the default anvil signing keys. Override with the `LOCAL_PRIVATE_KEY` and `LOCAL_USER_PRIVATE_KEY` env vars when targeting a non-default anvil instance.

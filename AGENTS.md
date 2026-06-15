@@ -15,6 +15,8 @@ Located in `mobile-app` directory.
 
 This is the main app that will be used to interact with the system.
 
+always add mobile-app/AGENTS.md to the context when working with mobile-app.
+
 
 ### Smart Contracts
 
@@ -22,11 +24,15 @@ Smart contracts are located in `smart-contracts` directory.
 
 This is the system that will be used to interact with the blockchain.
 
+always add smart-contracts/AGENTS.md to the context when working with smart-contracts.
+
 ### Web App
 
 Located in `web-app` directory.
 
 Used for: creating distributions, claiming rewards, withdrawing rewards, etc.
+
+always add web-app/AGENTS.md to the context when working with web-app.
 
 ### Common
 

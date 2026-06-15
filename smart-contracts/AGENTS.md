@@ -45,7 +45,7 @@ This file provides guidance to agents when working with code in smart-contracts 
 
 ### Local fork (anvil, Celo)
 ```bash
-anvil --fork-url https://forno.celo.org --chain-id 99999
+anvil --fork-url https://forno.celo.org --chain-id 42220
 ```
 
 ### Tests

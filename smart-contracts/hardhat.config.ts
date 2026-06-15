@@ -58,7 +58,7 @@ export default defineConfig({
     localFork: {
       type: "http",
       chainType: "l1",
-      chainId: 99999,
+      chainId: 42220,
       url: "http://127.0.0.1:8545",
       accounts: [localPrivateKey, localUserKey],
     },
