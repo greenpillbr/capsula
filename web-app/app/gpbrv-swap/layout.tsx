@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { isGpbrvSwapEnabled } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
 export default function GpbrvSwapLayout({
@@ -13,15 +12,14 @@ export default function GpbrvSwapLayout({
 }) {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const enabled = isGpbrvSwapEnabled();
 
   const tabs = [
-    { href: "/gpbrv-swap/swap-deposit", label: t("gpbrvSwap.tabSwapDeposit"), show: enabled },
-    { href: "/gpbrv-swap/swap-withdraw", label: t("gpbrvSwap.tabSwapWithdraw"), show: enabled },
-    { href: "/gpbrv-swap/configure", label: t("gpbrvSwap.tabConfigure"), show: true },
-    { href: "/gpbrv-swap/withdraw", label: t("gpbrvSwap.tabWithdraw"), show: enabled },
-    { href: "/gpbrv-swap/deposit", label: t("gpbrvSwap.tabDeposit"), show: enabled },
-  ].filter((tab) => tab.show);
+    { href: "/gpbrv-swap/swap-deposit", label: t("gpbrvSwap.tabSwapDeposit") },
+    { href: "/gpbrv-swap/swap-withdraw", label: t("gpbrvSwap.tabSwapWithdraw") },
+    { href: "/gpbrv-swap/deposit", label: t("gpbrvSwap.tabDeposit") },
+    { href: "/gpbrv-swap/withdraw", label: t("gpbrvSwap.tabWithdraw") },
+    { href: "/gpbrv-swap/configure", label: t("gpbrvSwap.tabConfigure") },
+  ];
 
   return (
     <div className="space-y-6">

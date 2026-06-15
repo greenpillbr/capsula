@@ -67,8 +67,14 @@ bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts --network localFor
 
 #### Celo
 ```bash
-bunx hardhat ignition deploy ignition/modules/Attendance.ts --network celo
-bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts --network celo
+bunx hardhat ignition deploy ignition/modules/Attendance.ts \
+  --network celo \
+  --default-sender 0x22682c3d3848294fF9bCBf3F0DDF48A605446B56 
+
+
+bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts \
+  --network celo \
+  --default-sender 0x22682c3d3848294fF9bCBf3F0DDF48A605446B56
 ```
 
 ### Attendance scripts (require ATTENDANCE_ADDRESS, default NETWORK=localFork)
