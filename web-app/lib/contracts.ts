@@ -17,8 +17,26 @@ export const GPBRV_ADDRESS =
 export const USDM_ADDRESS =
   "0x765de816845861e75a25fca122bb6898b8b1282a" as const;
 
+export const BRLM_ADDRESS =
+  "0xe8537a3d056da446677b9e9d6c5db704eaab4787" as const;
+
+export const MENTO_ROUTER_ADDRESS =
+  "0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6" as const;
+
+export const MENTO_FACTORY_ADDRESS =
+  "0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3" as const;
+
 export const GPBRV_DECIMALS = 6;
 export const USDM_DECIMALS = 18;
+export const BRLM_DECIMALS = 18;
+
+/** Fixed 5% fee charged by the Sarafu swap pool on GPBRV <-> BRLM swaps. */
+export const SARAFU_FEE_BPS = BigInt(500);
+
+/** Default slippage buffer applied on top of the live Mento quote. */
+export const SLIPPAGE_BPS = BigInt(600);
+
+export const BPS_DENOMINATOR = BigInt(10_000);
 
 export function getGpbrvSwapperAddress(): `0x${string}` | undefined {
   const value = (process.env.NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS ?? "").trim();
@@ -207,6 +225,27 @@ export const gpbrvSwapperAbi = [
     name: "minipayToUser",
     inputs: [{ name: "minipay", type: "address" }],
     outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+] as const;
+
+export const mentoRouterAbi = [
+  {
+    type: "function",
+    name: "getAmountsOut",
+    inputs: [
+      { name: "amountIn", type: "uint256" },
+      {
+        name: "routes",
+        type: "tuple[]",
+        components: [
+          { name: "from", type: "address" },
+          { name: "to", type: "address" },
+          { name: "factory", type: "address" },
+        ],
+      },
+    ],
+    outputs: [{ name: "amounts", type: "uint256[]" }],
     stateMutability: "view",
   },
 ] as const;

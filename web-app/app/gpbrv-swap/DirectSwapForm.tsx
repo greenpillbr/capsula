@@ -11,6 +11,8 @@ import {
 } from "wagmi";
 
 import { Panel } from "@/app/gpbrv-swap/Panel";
+import { QuoteSummary } from "@/app/gpbrv-swap/QuoteSummary";
+import { useEstimatedMin } from "@/app/gpbrv-swap/useEstimatedMin";
 import { TxButton } from "@/components/TxButton";
 import {
   GPBRV_ADDRESS,
@@ -22,22 +24,25 @@ import {
 } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
-// Pre-fills the minimum-received field with a 6% slippage haircut applied to a naive
-// 1:1 value estimate. The field is editable; users should tune it for live mainnet swaps.
-function defaultMinReceived(amount: string): string {
-  const value = Number(amount);
-  if (!amount || Number.isNaN(value) || value <= 0) return "";
-  return parseFloat((value * 0.94).toFixed(6)).toString();
-}
-
 export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
 
   const [amount, setAmount] = useState("");
   const [minOverride, setMinOverride] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const {
+    estimatedMin,
+    estimatedOutput,
+    exchangeRate,
+    mentoQuoteBrlPerUsd,
+    mentoQuoteUsdmPerBrl,
+    isEstimating,
+    spotFailed,
+    quoteFailed,
+  } = useEstimatedMin(mode, amount, locale);
 
   const swapper = getGpbrvSwapperAddress();
 
@@ -112,7 +117,7 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
     );
   }
 
-  const resolvedMin = minOverride ?? defaultMinReceived(amount);
+  const resolvedMin = minOverride ?? estimatedMin;
 
   let parsedAmount: bigint | undefined;
   try {
@@ -200,6 +205,17 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
           setFormError(null);
         }}
         className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+      />
+
+      <QuoteSummary
+        estimatedOutput={estimatedOutput}
+        exchangeRate={exchangeRate}
+        mentoQuoteBrlPerUsd={mentoQuoteBrlPerUsd}
+        mentoQuoteUsdmPerBrl={mentoQuoteUsdmPerBrl}
+        outputSymbol={isWithdraw ? "USDM" : "GPBRV"}
+        isEstimating={isEstimating}
+        spotFailed={spotFailed}
+        quoteFailed={quoteFailed}
       />
 
       <label className="mb-2 block text-sm font-medium" htmlFor="swap-min">
