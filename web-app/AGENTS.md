@@ -8,6 +8,21 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **Always read `AGENTS.md` and `README.md` at the start of a task** that touches structure, naming, pages, or setup. When you rename files, add pages, or change conventions, **update both files** so they stay accurate.
 
+## GPBRV Swap section
+
+`app/gpbrv-swap/` hosts the `GPBRVSwapper` UI. It uses a client `layout.tsx` that renders sub-navigation tabs and five routes (each a server `page.tsx` plus a client component):
+
+- **Single-wallet (simpler) flow** — `swap-deposit`, `swap-withdraw`. Both use the shared `DirectSwapForm.tsx` and call the contract's `deposit` / `withdraw` (caller spends one token and receives the other in the same wallet). **No `configure` step is required.**
+- **MiniPay-linked flow** — `configure`, `withdraw`, `deposit`. Withdraw/Deposit use the shared `SwapForm.tsx` and call `withdrawWithMinipay` / `depositWithMinipay`, which require a prior `configure` link.
+
+`Panel.tsx` is the shared section card.
+
+- The top-level nav link lives in `components/HeaderWrapper.tsx` (`navLinks`) and points at `/gpbrv-swap/configure`.
+- Contract bindings, token addresses, the `getGpbrvSwapperAddress()` env helper, and the `isGpbrvSwapEnabled()` feature flag helper are in `lib/contracts.ts`. The ABI exposes both `deposit`/`withdraw` (single wallet) and `depositWithMinipay`/`withdrawWithMinipay` (MiniPay).
+- Feature flag: `NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true` reveals all swap tabs except Configure (sub-layout) and unblocks those routes (server `page.tsx`). Configure is always available.
+- `NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS` supplies the deployed contract address; pages show a notice when it is unset.
+- The MiniPay Withdraw/Deposit pages show an amber warning and disable inputs when the connected wallet is not linked (`userToMinipay` for withdraw, `minipayToUser` for deposit). The single-wallet pages have no such gate. Both pre-fill the minimum-received field from a live on-chain Mento router quote, adjusted for the 5% Sarafu pool fee and 6% slippage buffer (editable). Quote logic lives in `app/gpbrv-swap/useEstimatedMin.ts`; Mento/BRLM addresses and ABIs are in `lib/contracts.ts`.
+
 ## UI libraries
 
 ### shadcn/ui
@@ -21,7 +36,9 @@ UI primitives live under `components/ui/`. Configuration is in `components.json`
 
 `app/globals.css` imports `shadcn/tailwind.css` and `tw-animate-css`; theme tokens (`--primary`, `--border`, etc.) are defined on `:root`. Page-level Tailwind (e.g. `text-green-600` in the header) can coexist with shadcn tokens.
 
-**Currently installed:** `button`, `dropdown-menu`.
+**Currently installed:** `button`, `card`, `dropdown-menu`, `separator`.
+
+The home page (`app/page.tsx`) uses `HomeSection` for hero blocks and shadcn `Card` + `Separator` for the resources list.
 
 ### Icons
 

@@ -33,3 +33,4 @@
 # Ephemeral Ignition deployments (local / CI only)
 /ignition/deployments/chain-31337/
 /ignition/deployments/local-*/
+/ignition/deployments/chain-99999/
