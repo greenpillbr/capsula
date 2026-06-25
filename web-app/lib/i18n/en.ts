@@ -10,6 +10,10 @@ export const en: Translations = {
   "nav.configure": "Configure",
   "nav.gpbrvSwap": "GPBRV Swap",
   "nav.settingsMenu": "Settings menu",
+  "nav.tools": "Tools",
+  "nav.empaticTech": "Desanuveador Tech Empático",
+  "nav.empaticTechTooltip":
+    "An empathetic conversational assistant that helps people choose the ideal computer, using simplified language and everyday metaphors.",
   "footer.developedByPrefix": "2026 - Developed by",
   "common.yes": "Yes",
   "common.no": "No",

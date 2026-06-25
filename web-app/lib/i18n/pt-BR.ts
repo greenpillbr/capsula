@@ -10,6 +10,10 @@ export const ptBR: Translations = {
   "nav.configure": "Configurar",
   "nav.gpbrvSwap": "Swap GPBRV",
   "nav.settingsMenu": "Menu de configurações",
+  "nav.tools": "Ferramentas",
+  "nav.empaticTech": "Desanuveador Tech Empático",
+  "nav.empaticTechTooltip":
+    "Um assistente conversacional empático que ajuda pessoas a escolherem o computador ideal, linguagem simplificada com metáforas do dia a dia.",
   "footer.developedByPrefix": "2026 - Desenvolvido por",
   "common.yes": "Sim",
   "common.no": "Não",

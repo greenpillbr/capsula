@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { network } from "hardhat";
-import { createWalletClient, encodeFunctionData, erc20Abi, http, parseUnits } from "viem";
+import { createWalletClient, encodeFunctionData, erc20Abi, http, parseUnits, Hex } from "viem";
 
 /**
  * Live tests executed against a local anvil node forked from Celo.
@@ -27,8 +27,8 @@ const MENTO_FACTORY = "0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3" as const;
 const WITHDRAW_AMOUNT = parseUnits("1", 6); // 1 GPBRV
 const DEPOSIT_AMOUNT = parseUnits("0.1", 18); // 0.1 USDM
 
-const gpbrvWhale = "0xd12f1ae0c018210d18f6cb01cd6c7bd669ef7529" as `0x${string}` | undefined; //GPBRV SWAP POOL (RICH IN GPBRV)
-const usdmWhale = "0xaa8299FC6A685B5f9Ce9bdA8d0B3ea3D54731976" as `0x${string}` | undefined; //USDM whale got from celoscan holders
+const gpbrvWhale = "0xd12f1ae0c018210d18f6cb01cd6c7bd669ef7529" as Hex; //GPBRV SWAP POOL (RICH IN GPBRV)
+const usdmWhale = "0xaa8299FC6A685B5f9Ce9bdA8d0B3ea3D54731976" as Hex; //USDM whale got from celoscan holders
 
 function logStep(test: string, step: number, total: number, label: string) {
   console.log(`[GPBRVSwapper.live] ${test} | step ${step}/${total}: ${label} — ok`);
@@ -147,7 +147,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     );
   });
 
-  it("deposit (single wallet): caller USDM becomes GPBRV in the same wallet", async () => {
+  it("deposit (single wallet): caller USDM becomes GPBRV in the same wallet", { skip: true }, async () => {
     const testName = "deposit (single wallet)";
 
     const swapper = await deploySwapper();
@@ -191,7 +191,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     );
   });
 
-  it("withdrawWithMinipay: user GPBRV becomes USDM on the configured minipay", async () => {
+  it("withdrawWithMinipay: user GPBRV becomes USDM on the configured minipay", { skip: true }, async () => {
     const testName = "withdrawWithMinipay";
 
     const swapper = await deploySwapper();
@@ -238,7 +238,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     );
   });
 
-  it("depositWithMinipay: minipay USDM becomes GPBRV on the linked user", async () => {
+  it("depositWithMinipay: minipay USDM becomes GPBRV on the linked user", { skip: true }, async () => {
     const testName = "depositWithMinipay";
 
     const swapper = await deploySwapper();

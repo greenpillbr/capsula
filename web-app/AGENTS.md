@@ -27,16 +27,19 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ### shadcn/ui
 
+**Always read and follow the shadcn skill before creating, adding, composing, styling, or fixing UI components.** In Cursor, load the `shadcn` skill (`SKILL.md`) at the start of any UI task — do not hand-roll primitives or copy registry files from memory. Use the skill's workflow: check installed components (`bunx shadcn@latest info`), fetch docs (`bunx shadcn@latest docs <component>`), add via CLI, then compose using the documented patterns and critical rules.
+
 UI primitives live under `components/ui/`. Configuration is in `components.json` (style: **base-nova**, RSC enabled, CSS variables in `app/globals.css`).
 
-- **Add a component:** `bunx shadcn@latest add <name>` (e.g. `dropdown-menu`, `button`).
+- **Add a component:** `bunx shadcn@latest add <name>` (e.g. `dropdown-menu`, `button`, `tooltip`).
 - **Prefer the CLI** over hand-copying registry files so versions and Base UI APIs stay aligned.
 - **Imports:** `@/components/ui/<component>`; merge class names with `cn()` from `@/lib/utils`.
 - **Primitives:** shadcn components here use [**Base UI**](https://base-ui.com) (`@base-ui/react`), not Radix. Triggers/items often support a `render` prop to compose with other elements (e.g. shadcn `Button` as `DropdownMenuTrigger`).
+- **TooltipProvider:** optional for a single tooltip; add locally around tooltip groups when multiple adjacent tooltips need shared open delay (see shadcn tooltip install docs).
 
 `app/globals.css` imports `shadcn/tailwind.css` and `tw-animate-css`; theme tokens (`--primary`, `--border`, etc.) are defined on `:root`. Page-level Tailwind (e.g. `text-green-600` in the header) can coexist with shadcn tokens.
 
-**Currently installed:** `button`, `card`, `dropdown-menu`, `separator`.
+**Currently installed:** `button`, `card`, `dropdown-menu`, `separator`, `tooltip`.
 
 The home page (`app/page.tsx`) uses `HomeSection` for hero blocks and shadcn `Card` + `Separator` for the resources list.
 
@@ -113,8 +116,8 @@ Use **`useTranslation()`** from `lib/i18n/LanguageProvider` only in client compo
 
 ### Components
 
-- **`HeaderWrapper`:** server component; resolves main nav and settings menu labels with `getServerTranslations()` and renders `Header`.
-- **`Header`:** client; Claim link, settings **gear dropdown** (Create Distribution, Configure via shadcn `DropdownMenu` + react-icons), logo links home, pathname highlighting, PT/EN toggle, RainbowKit connect button. Uses `useTranslation()` for locale toggle and `nav.settingsMenu` aria-label.
+- **`HeaderWrapper`:** server component; resolves main nav, tools menu, and settings menu labels with `getServerTranslations()` and renders `Header`.
+- **`Header`:** client; Claim link, **Ferramentas** tools dropdown (external links with shadcn `Tooltip`), settings **gear dropdown** (Create Distribution, Configure via shadcn `DropdownMenu` + react-icons), logo links home, pathname highlighting, PT/EN toggle, RainbowKit connect button. Uses `useTranslation()` for locale toggle and `nav.settingsMenu` aria-label.
 - **`TxButton`:** client; receives all label strings as props (`label`, `pendingLabel`, `successLabel`, `errorLabel`) — no i18n hook inside.
 
 ### Untranslated strings
