@@ -12,6 +12,18 @@ const settingsLinks: { href: string; labelKey: TranslationKey }[] = [
   { href: "/configure", labelKey: "nav.configure" },
 ];
 
+const toolsLinks: {
+  href: string;
+  labelKey: TranslationKey;
+  tooltipKey: TranslationKey;
+}[] = [
+  {
+    href: "https://empatictech.vercel.app/",
+    labelKey: "nav.empaticTech",
+    tooltipKey: "nav.empaticTechTooltip",
+  },
+];
+
 export async function HeaderWrapper() {
   const { t } = await getServerTranslations();
   const navLabels = navLinks.map(({ href, labelKey }) => ({
@@ -22,6 +34,18 @@ export async function HeaderWrapper() {
     href,
     label: t(labelKey),
   }));
+  const toolsItems = toolsLinks.map(({ href, labelKey, tooltipKey }) => ({
+    href,
+    label: t(labelKey),
+    tooltip: t(tooltipKey),
+  }));
 
-  return <Header navLabels={navLabels} settingsLabels={settingsLabels} />;
+  return (
+    <Header
+      navLabels={navLabels}
+      settingsLabels={settingsLabels}
+      toolsMenuLabel={t("nav.tools")}
+      toolsItems={toolsItems}
+    />
+  );
 }

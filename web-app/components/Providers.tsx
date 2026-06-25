@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { WagmiProvider } from "wagmi";
 
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider, useTranslation } from "@/lib/i18n/LanguageProvider";
 import { toRainbowKitLocale } from "@/lib/i18n";
 import { wagmiConfig } from "@/lib/wagmi";
@@ -28,7 +29,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
-          <RainbowKitWithLocale>{children}</RainbowKitWithLocale>
+          <TooltipProvider>
+            <RainbowKitWithLocale>{children}</RainbowKitWithLocale>
+          </TooltipProvider>
         </LanguageProvider>
       </QueryClientProvider>
     </WagmiProvider>
