@@ -3,7 +3,7 @@ export const ATTENDANCE_ADDRESS =
 
 /** Good Dollar TokenDistributor — update after deploying ignition/modules/TokenDistributor.ts */
 export const TOKEN_DISTRIBUTOR_ADDRESS =
-  "0x0000000000000000000000000000000000000000" as const;
+  "0xfE635634A0093bc6E0C8fc02424Aba04e8cB9267" as const;
 
 export const GPBR_ADDRESS =
   "0xd832B2F117db51021Ad0387c17182796DBEB69df" as const;
