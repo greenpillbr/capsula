@@ -16,7 +16,7 @@ if (user === undefined) {
   );
 }
 
-const attendance = await viem.getContractAt("Attendance", attendanceAddress, {
+const attendance = await viem.getContractAt("TokenDistributor", attendanceAddress, {
   client: { wallet: user },
 });
 const gpbrAddress = (await attendance.read.rewardToken()) as `0x${string}`;

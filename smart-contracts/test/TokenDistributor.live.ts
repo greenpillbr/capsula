@@ -41,13 +41,13 @@ async function tryConnect() {
     return { conn, viem, publicClient };
   } catch (err) {
     if (process.env.ATTENDANCE_LIVE_DEBUG === "1") {
-      console.error("[Attendance.live] connect failed:", err);
+      console.error("[TokenDistributor.live] connect failed:", err);
     }
     return null;
   }
 }
 
-describe("Attendance (live, forked Celo)", async function () {
+describe("TokenDistributor (live, forked Celo)", async function () {
   const ready = await tryConnect();
 
   if (ready === null) {
@@ -117,7 +117,7 @@ describe("Attendance (live, forked Celo)", async function () {
   });
 
   it("full happy path: deploy, fund, createDistribution, claim, withdraw", async () => {
-    const attendance = await viem.deployContract("Attendance", [
+    const attendance = await viem.deployContract("TokenDistributor", [
       GPBR_ADDRESS,
       owner.account.address,
     ]);
@@ -162,7 +162,7 @@ describe("Attendance (live, forked Celo)", async function () {
     });
 
     const attendanceAsUser = await viem.getContractAt(
-      "Attendance",
+      "TokenDistributor",
       attendance.address,
       { client: { wallet: user } },
     );
@@ -210,7 +210,7 @@ describe("Attendance (live, forked Celo)", async function () {
   });
 
   it("expired distributions are not claimable", async () => {
-    const attendance = await viem.deployContract("Attendance", [
+    const attendance = await viem.deployContract("TokenDistributor", [
       GPBR_ADDRESS,
       owner.account.address,
     ]);
@@ -222,7 +222,7 @@ describe("Attendance (live, forked Celo)", async function () {
     assert.equal(await attendance.read.isActive([0n]), false);
 
     const attendanceAsUser = await viem.getContractAt(
-      "Attendance",
+      "TokenDistributor",
       attendance.address,
       { client: { wallet: user } },
     );

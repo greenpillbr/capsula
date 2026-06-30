@@ -5,7 +5,7 @@ const { viem, publicClient, defaultWallet, networkName } = await connect();
 const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
 const distributionId = BigInt(requireEnv("DISTRIBUTION_ID"));
 
-const attendance = await viem.getContractAt("Attendance", attendanceAddress);
+const attendance = await viem.getContractAt("TokenDistributor", attendanceAddress);
 
 console.log(`[${networkName}] caller: ${defaultWallet.account.address}`);
 console.log(`[${networkName}] cancelDistribution(${distributionId}) at ${attendanceAddress}`);

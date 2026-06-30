@@ -7,7 +7,7 @@ const { viem, publicClient, defaultWallet, networkName } = await connect();
 const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
 const maxClaimers = BigInt(process.env.MAX_CLAIMERS ?? "0");
 
-const attendance = await viem.getContractAt("Attendance", attendanceAddress);
+const attendance = await viem.getContractAt("TokenDistributor", attendanceAddress);
 
 console.log(`[${networkName}] caller: ${defaultWallet.account.address}`);
 console.log(`[${networkName}] creating distribution at ${attendanceAddress}`);

@@ -32,7 +32,7 @@ bunx hardhat test
 Live tests require a local Celo fork via anvil (Foundry): see "Local fork" section below.
 
 ```bash
-bunx hardhat test nodejs test/Attendance.live.ts
+bunx hardhat test nodejs test/TokenDistributor.live.ts
 ```
 
 The live suite auto-skips when anvil is unreachable or `GPBR_WHALE` is unset.
@@ -76,6 +76,12 @@ bunx hardhat ignition deploy ignition/modules/Attendance.ts \
   --parameters params.json
 ```
 
+```shell
+bunx hardhat ignition deploy ignition/modules/TokenDistributor.ts \
+  --network celo \
+  --default-sender 0x22682c3d3848294fF9bCBf3F0DDF48A605446B56
+```
+
 `params.json` example:
 
 ```json
@@ -109,7 +115,7 @@ NETWORK=celo USER_ADDRESS=0xb558a17bB4C39BC92296a20BA538D11B8201db95 bun scripts
 
 ## Live tests
 
-The unit suite (`test/Attendance.ts`) runs against the in-process simulator and a `MockGPBR`. The live suite (`test/Attendance.live.ts`) targets the running anvil fork and uses the real GPBR token:
+The unit suite (`test/TokenDistributor.ts`) runs against the in-process simulator and a `MockGPBR`. The live suite (`test/TokenDistributor.live.ts`) targets the running anvil fork and uses the real GPBR token:
 
 To run live tests you should first start a local fork of the Celo network:
 
@@ -118,7 +124,7 @@ Then deploy the contract to the local fork:
 refer to sections "Deploy with Ignition" and "Local fork" above for more details.
 
 ```shell
-  bunx hardhat test nodejs test/Attendance.live.ts
+  bunx hardhat test nodejs test/TokenDistributor.live.ts
 ```
 
 The live tests skip themselves automatically when anvil is unreachable
@@ -148,6 +154,7 @@ The live tests skip themselves automatically when anvil is unreachable
 | GPBR             | `0xd832B2F117db51021Ad0387c17182796DBEB69df` | 6        |
 | GPBRV            | `0x6ec3d6e693526108990c6d5cbd2195e051321d32` | 6        |
 | BRLM             | `0xe8537a3d056da446677b9e9d6c5db704eaab4787` | 18       |
+| Good Dollar (G$) | `0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A` | 18       |
 | USDM             | `0x765de816845861e75a25fca122bb6898b8b1282a` | 18       |
 | Sarafu swap pool | `0xD12F1aE0C018210d18F6cB01cD6c7bd669eF7529` | —        |
 | Mento router     | `0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6` | —        |

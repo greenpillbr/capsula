@@ -11,16 +11,17 @@ import {
 } from "wagmi";
 
 import { TxButton } from "@/components/TxButton";
-import {
-  ATTENDANCE_ADDRESS,
-  GPBR_ADDRESS,
-  GPBR_DECIMALS,
-  attendanceAbi,
-  isAdminAddress,
-} from "@/lib/contracts";
+import { attendanceAbi, isAdminAddress, type DistributorToken } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
+import type { TranslationKey } from "@/lib/i18n/types";
 
-export function CreateDistributionPageClient() {
+export function CreateDistributionPageClient({
+  distributor,
+  fundDescriptionKey,
+}: {
+  distributor: DistributorToken;
+  fundDescriptionKey: TranslationKey;
+}) {
   const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
@@ -32,7 +33,7 @@ export function CreateDistributionPageClient() {
   const staticAuthorized = isAdminAddress(address);
 
   const { data: isCreator } = useReadContract({
-    address: ATTENDANCE_ADDRESS,
+    address: distributor.contractAddress,
     abi: attendanceAbi,
     functionName: "isCreator",
     args: address ? [address] : undefined,
@@ -42,14 +43,14 @@ export function CreateDistributionPageClient() {
   const authorized = staticAuthorized || isCreator === true;
 
   const { data: poolBalance, refetch: refetchPool } = useReadContract({
-    address: GPBR_ADDRESS,
+    address: distributor.tokenAddress,
     abi: erc20Abi,
     functionName: "balanceOf",
-    args: [ATTENDANCE_ADDRESS],
+    args: [distributor.contractAddress],
   });
 
   const { data: distributionsCount, refetch: refetchCount } = useReadContract({
-    address: ATTENDANCE_ADDRESS,
+    address: distributor.contractAddress,
     abi: attendanceAbi,
     functionName: "distributionsCount",
   });
@@ -106,16 +107,16 @@ export function CreateDistributionPageClient() {
       return;
     }
     try {
-      const units = parseUnits(fundAmount, GPBR_DECIMALS);
+      const units = parseUnits(fundAmount, distributor.decimals);
       if (units <= BigInt(0)) {
         setFundError(t("createDistribution.errorAmountZero"));
         return;
       }
       writeFund({
-        address: GPBR_ADDRESS,
+        address: distributor.tokenAddress,
         abi: erc20Abi,
         functionName: "transfer",
-        args: [ATTENDANCE_ADDRESS, units],
+        args: [distributor.contractAddress, units],
       });
     } catch {
       setFundError(t("createDistribution.errorInvalidAmountGeneric"));
@@ -130,7 +131,7 @@ export function CreateDistributionPageClient() {
       return;
     }
     writeCreate({
-      address: ATTENDANCE_ADDRESS,
+      address: distributor.contractAddress,
       abi: attendanceAbi,
       functionName: "createDistribution",
       args: [BigInt(maxClaimers)],
@@ -150,10 +151,12 @@ export function CreateDistributionPageClient() {
       <Panel title={t("createDistribution.contractPool")}>
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <dt className="text-gray-600">{t("createDistribution.gpbrInContract")}</dt>
+            <dt className="text-gray-600">
+              {distributor.symbol} {t("createDistribution.tokenInContract")}
+            </dt>
             <dd className="font-medium">
               {poolBalance !== undefined
-                ? `${formatUnits(poolBalance, GPBR_DECIMALS)} GPBR`
+                ? `${formatUnits(poolBalance, distributor.decimals)} ${distributor.symbol}`
                 : t("common.dash")}
             </dd>
           </div>
@@ -171,11 +174,9 @@ export function CreateDistributionPageClient() {
       </Panel>
 
       <Panel title={t("createDistribution.fundContract")}>
-        <p className="mb-4 text-sm text-gray-600">
-          {t("createDistribution.fundDescription")}
-        </p>
+        <p className="mb-4 text-sm text-gray-600">{t(fundDescriptionKey)}</p>
         <label className="mb-2 block text-sm font-medium" htmlFor="fund-amount">
-          {t("createDistribution.amountGpbr")}
+          {t("createDistribution.amountToken")} ({distributor.symbol})
         </label>
         <input
           id="fund-amount"

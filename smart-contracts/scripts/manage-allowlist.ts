@@ -8,7 +8,7 @@ const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
 const action = requireEnv("ACTION");
 const account = getAddress(requireAddressEnv("ACCOUNT"));
 
-const attendance = await viem.getContractAt("Attendance", attendanceAddress);
+const attendance = await viem.getContractAt("TokenDistributor", attendanceAddress);
 
 console.log(`[${networkName}] owner: ${defaultWallet.account.address}`);
 console.log(`[${networkName}] ${action} creator ${account} on ${attendanceAddress}`);

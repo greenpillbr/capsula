@@ -6,6 +6,7 @@ export const ptBR: Translations = {
     "Interface de administração para distribuições Capsula Attendance na Celo",
   "nav.home": "Início",
   "nav.createDistribution": "Criar distribuição",
+  "nav.registerAttendance": "Registrar presença",
   "nav.claim": "Resgatar",
   "nav.configure": "Configurar",
   "nav.gpbrvSwap": "Swap GPBRV",
@@ -33,6 +34,32 @@ export const ptBR: Translations = {
   "home.resources.gardens": "Comunidade no Gardens",
   "home.resources.voucherPool": "Piscina de vouchers no Sarafu",
   "home.resources.liquidityPool": "Piscina de liquidez no Sarafu",
+  "registerAttendance.title": "Registrar presença",
+  "registerAttendance.description":
+    "Registre sua presença na distribuição GPBR mais recente, durante a janela ativa.",
+  "registerAttendance.latestDistribution": "Última distribuição",
+  "registerAttendance.activeNow": "Ativa agora",
+  "registerAttendance.youClaimed": "Você registrou",
+  "registerAttendance.errorNoDistribution": "Nenhuma distribuição foi criada ainda.",
+  "registerAttendance.errorConnectWallet": "Conecte sua carteira para registrar presença",
+  "registerAttendance.connectWalletNotice":
+    "Conecte sua carteira para registrar presença.",
+  "registerAttendance.buttonLabel": "Registrar presença",
+  "registerAttendance.buttonPending": "Registrando…",
+  "registerAttendance.buttonSuccess": "Presença registrada",
+  "resgatar.title": "Resgatar",
+  "resgatar.description":
+    "Resgate sua recompensa Good Dollar (G$) da distribuição criada mais recentemente, durante a janela ativa.",
+  "resgatar.latestDistribution": "Última distribuição",
+  "resgatar.activeNow": "Ativa agora",
+  "resgatar.youClaimed": "Você resgatou",
+  "resgatar.errorNoDistribution": "Nenhuma distribuição foi criada ainda.",
+  "resgatar.errorConnectWallet": "Conecte sua carteira para resgatar",
+  "resgatar.connectWalletNotice":
+    "Conecte sua carteira para enviar um resgate.",
+  "resgatar.buttonLabel": "Resgatar distribuição",
+  "resgatar.buttonPending": "Resgatando…",
+  "resgatar.buttonSuccess": "Resgatado",
   "claim.title": "Resgatar",
   "claim.description":
     "Resgate sua recompensa GPBR da distribuição criada mais recentemente, durante a janela ativa.",
@@ -46,6 +73,8 @@ export const ptBR: Translations = {
   "claim.buttonLabel": "Resgatar distribuição",
   "claim.buttonPending": "Resgatando…",
   "claim.buttonSuccess": "Resgatado",
+  "createDistribution.tabGpbr": "GPBR",
+  "createDistribution.tabGoodDollar": "Good Dollar",
   "createDistribution.title": "Criar distribuição",
   "createDistribution.connectWallet":
     "Conecte sua carteira para acessar esta página.",
@@ -53,12 +82,15 @@ export const ptBR: Translations = {
     "Sua carteira não está na lista de permissão de criadores do contrato.",
   "createDistribution.contractPool": "Pool do contrato",
   "createDistribution.gpbrInContract": "GPBR no contrato",
+  "createDistribution.tokenInContract": "no contrato",
   "createDistribution.distributionsCreated": "Distribuições criadas",
   "createDistribution.fundContract": "Financiar contrato",
-  "createDistribution.fundDescription":
-    "Transfira tokens GPBR para o contrato Attendance.",
-  "createDistribution.amountGpbr": "Valor (GPBR)",
-  "createDistribution.errorInvalidAmount": "Informe um valor GPBR válido",
+  "createDistribution.fundDescriptionGpbr":
+    "Transfira tokens GPBR para o contrato TokenDistributor.",
+  "createDistribution.fundDescriptionGoodDollar":
+    "Transfira tokens Good Dollar (G$) para o contrato TokenDistributor.",
+  "createDistribution.amountToken": "Valor",
+  "createDistribution.errorInvalidAmount": "Informe um valor válido",
   "createDistribution.errorAmountZero": "O valor deve ser maior que zero",
   "createDistribution.errorInvalidAmountGeneric": "Valor inválido",
   "createDistribution.fundButton": "Financiar contrato",
@@ -73,6 +105,8 @@ export const ptBR: Translations = {
   "createDistribution.createButton": "Criar distribuição",
   "createDistribution.createButtonPending": "Criando…",
   "createDistribution.createButtonSuccess": "Distribuição criada",
+  "configure.tabGpbr": "GPBR",
+  "configure.tabGoodDollar": "Good Dollar",
   "configure.title": "Configurar",
   "configure.connectWallet":
     "Conecte sua carteira para acessar esta página.",
@@ -83,9 +117,9 @@ export const ptBR: Translations = {
     "Defina o valor padrão da recompensa e a duração da janela de resgate (em blocos) para novas distribuições. Apenas o proprietário do contrato pode enviar isso on-chain.",
   "configure.notOwnerConfig":
     "Sua carteira não é o proprietário do contrato. Atualizações de configuração falharão on-chain.",
-  "configure.amountGpbr": "Valor (GPBR)",
+  "configure.amountToken": "Valor",
   "configure.periodBlocks": "Período (blocos)",
-  "configure.errorInvalidAmount": "Informe um valor GPBR válido",
+  "configure.errorInvalidAmount": "Informe um valor válido",
   "configure.errorInvalidPeriod": "Informe um período válido em blocos",
   "configure.errorAmountPeriodZero":
     "Valor e período devem ser maiores que zero",

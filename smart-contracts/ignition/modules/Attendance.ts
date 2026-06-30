@@ -7,7 +7,9 @@ export default buildModule("AttendanceModule", (m) => {
   const gpbr = m.getParameter("gpbrAddress", GPBR_CELO);
   const initialOwner = m.getParameter("initialOwner", DEFAULT_OWNER);
 
-  const attendance = m.contract("Attendance", [gpbr, initialOwner]);
+  const attendance = m.contract("TokenDistributor", [gpbr, initialOwner], {
+    id: "Attendance",
+  });
 
   return { attendance };
 });

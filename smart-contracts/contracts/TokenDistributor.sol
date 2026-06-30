@@ -5,15 +5,15 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-/// @title Attendance
-/// @notice Owner-managed GPBR distribution events: each event is claimable once per user
+/// @title TokenDistributor
+/// @notice Owner-managed reward-token distribution events: each event is claimable once per user
 ///         inside a snapshotted block window [startBlock, startBlock + period].
-contract Attendance is Ownable {
+contract TokenDistributor is Ownable {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable rewardToken;
 
-    uint256 public amount = 1_000_000; // 1 GPBR (6 decimals)
+    uint256 public amount = 1_000_000; // default reward amount (1 token with 6 decimals)
     uint256 public period = 5_400; // 90 minutes (5400 blocks, 1 block = 1 second)
 
     mapping(address => bool) public isCreator;

@@ -7,7 +7,7 @@ const { viem, publicClient, defaultWallet, networkName } = await connect();
 const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
 const amount = BigInt(requireEnv("AMOUNT"));
 
-const attendance = await viem.getContractAt("Attendance", attendanceAddress);
+const attendance = await viem.getContractAt("TokenDistributor", attendanceAddress);
 const gpbrAddress = (await attendance.read.rewardToken()) as `0x${string}`;
 
 console.log(`[${networkName}] owner: ${defaultWallet.account.address}`);

@@ -6,7 +6,7 @@ const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
 const newAmount = BigInt(requireEnv("AMOUNT"));
 const newPeriod = BigInt(requireEnv("PERIOD"));
 
-const attendance = await viem.getContractAt("Attendance", attendanceAddress);
+const attendance = await viem.getContractAt("TokenDistributor", attendanceAddress);
 
 console.log(`[${networkName}] caller: ${defaultWallet.account.address}`);
 console.log(`[${networkName}] setConfig(amount=${newAmount}, period=${newPeriod})`);
