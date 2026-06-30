@@ -6,7 +6,7 @@ const { viem, publicClient, networkName } = await connect();
 
 //const attendanceAddress = requireAddressEnv("ATTENDANCE_ADDRESS");
 const attendanceAddress = "0x12bf6eB348566f2aE2c90DD919025520856236bC";
-const attendance = await viem.getContractAt("Attendance", attendanceAddress);
+const attendance = await viem.getContractAt("TokenDistributor", attendanceAddress);
 
 const gpbrAddress = (await attendance.read.rewardToken()) as `0x${string}`;
 const ownerAddress = (await attendance.read.owner()) as `0x${string}`;
@@ -20,7 +20,7 @@ const poolBalance = await publicClient.readContract({
   args: [attendanceAddress],
 });
 
-console.log(`[${networkName}] Attendance at ${attendanceAddress}`);
+console.log(`[${networkName}] TokenDistributor at ${attendanceAddress}`);
 console.log(`  gpbr:                  ${gpbrAddress}`);
 console.log(`  owner:                 ${ownerAddress}`);
 console.log(`  amount (current cfg):  ${amount}`);

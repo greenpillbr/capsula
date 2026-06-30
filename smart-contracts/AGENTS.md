@@ -23,6 +23,7 @@ This file provides guidance to agents when working with code in smart-contracts 
     - GPBRV - 6 decimals - 0x6ec3d6e693526108990c6d5cbd2195e051321d32
     - BRLM - 18 decimals - 0xe8537a3d056da446677b9e9d6c5db704eaab4787
     - USDM - 18 decimals - 0x765de816845861e75a25fca122bb6898b8b1282a
+    - Good Dollar (G$) - 18 decimals - 0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A
 
 ## GPBRVSwapper external contracts (Celo)
     - Sarafu swap pool - 0xD12F1aE0C018210d18F6cB01cD6c7bd669eF7529
@@ -51,9 +52,9 @@ anvil --fork-url https://forno.celo.org --chain-id 42220
 ### Tests
 ```bash
 bunx hardhat test                              # all unit + solidity tests
-bunx hardhat test nodejs test/Attendance.ts    # Attendance unit tests
+bunx hardhat test nodejs test/TokenDistributor.ts    # TokenDistributor unit tests
 bunx hardhat test nodejs test/GPBRVSwapper.ts  # GPBRVSwapper unit tests (mocked pool/router)
-bunx hardhat test nodejs test/Attendance.live.ts                          # live fork tests
+bunx hardhat test nodejs test/TokenDistributor.live.ts                          # live fork tests
 bunx hardhat test nodejs test/GPBRVSwapper.live.ts      # live fork tests
 ```
 
@@ -62,6 +63,7 @@ bunx hardhat test nodejs test/GPBRVSwapper.live.ts      # live fork tests
 #### Local fork
 ```bash
 bunx hardhat ignition deploy ignition/modules/Attendance.ts --network localFork
+bunx hardhat ignition deploy ignition/modules/TokenDistributor.ts --network localFork
 bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts --network localFork
 ```
 
@@ -71,13 +73,16 @@ bunx hardhat ignition deploy ignition/modules/Attendance.ts \
   --network celo \
   --default-sender 0x22682c3d3848294fF9bCBf3F0DDF48A605446B56 
 
+bunx hardhat ignition deploy ignition/modules/TokenDistributor.ts \
+  --network celo \
+  --default-sender 0x22682c3d3848294fF9bCBf3F0DDF48A605446B56
 
 bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts \
   --network celo \
   --default-sender 0x22682c3d3848294fF9bCBf3F0DDF48A605446B56
 ```
 
-### Attendance scripts (require ATTENDANCE_ADDRESS, default NETWORK=localFork)
+### TokenDistributor scripts (require ATTENDANCE_ADDRESS, default NETWORK=localFork)
 ```bash
 AMOUNT=3000000 bun scripts/fund-attendance.ts
 AMOUNT=1000000 PERIOD=5400 bun scripts/set-config.ts

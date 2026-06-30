@@ -3,13 +3,14 @@ import { getServerTranslations } from "@/lib/i18n/server";
 import type { TranslationKey } from "@/lib/i18n/types";
 
 const navLinks: { href: string; labelKey: TranslationKey }[] = [
-  { href: "/claim", labelKey: "nav.claim" },
+  { href: "/registrar-presenca", labelKey: "nav.registerAttendance" },
+  { href: "/resgatar", labelKey: "nav.claim" },
   { href: "/gpbrv-swap/configure", labelKey: "nav.gpbrvSwap" },
 ];
 
 const settingsLinks: { href: string; labelKey: TranslationKey }[] = [
-  { href: "/create-distribution", labelKey: "nav.createDistribution" },
-  { href: "/configure", labelKey: "nav.configure" },
+  { href: "/create-distribution/gpbr", labelKey: "nav.createDistribution" },
+  { href: "/configure/gpbr", labelKey: "nav.configure" },
 ];
 
 const toolsLinks: {

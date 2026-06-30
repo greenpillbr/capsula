@@ -10,17 +10,30 @@ import {
 } from "wagmi";
 
 import { TxButton } from "@/components/TxButton";
-import { ATTENDANCE_ADDRESS, attendanceAbi } from "@/lib/contracts";
+import { attendanceAbi, type DistributorToken } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
+import type { TranslationKey } from "@/lib/i18n/types";
 
-export function Claim() {
+type ClaimFormPrefix = "registerAttendance" | "resgatar";
+
+function claimKey(prefix: ClaimFormPrefix, suffix: string): TranslationKey {
+  return `${prefix}.${suffix}` as TranslationKey;
+}
+
+export function ClaimForm({
+  distributor,
+  translationPrefix,
+}: {
+  distributor: DistributorToken;
+  translationPrefix: ClaimFormPrefix;
+}) {
   const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
   const [inputError, setInputError] = useState<string | null>(null);
 
   const { data: distributionsCount } = useReadContract({
-    address: ATTENDANCE_ADDRESS,
+    address: distributor.contractAddress,
     abi: attendanceAbi,
     functionName: "distributionsCount",
   });
@@ -31,7 +44,7 @@ export function Claim() {
       : undefined;
 
   const { data: isActive } = useReadContract({
-    address: ATTENDANCE_ADDRESS,
+    address: distributor.contractAddress,
     abi: attendanceAbi,
     functionName: "isActive",
     args: latestDistributionId !== undefined ? [latestDistributionId] : undefined,
@@ -39,7 +52,7 @@ export function Claim() {
   });
 
   const { data: hasClaimed, refetch: refetchClaimed } = useReadContract({
-    address: ATTENDANCE_ADDRESS,
+    address: distributor.contractAddress,
     abi: attendanceAbi,
     functionName: "hasClaimed",
     args:
@@ -90,15 +103,15 @@ export function Claim() {
     setInputError(null);
     resetClaim();
     if (latestDistributionId === undefined) {
-      setInputError(t("claim.errorNoDistribution"));
+      setInputError(t(claimKey(translationPrefix, "errorNoDistribution")));
       return;
     }
     if (!isConnected) {
-      setInputError(t("claim.errorConnectWallet"));
+      setInputError(t(claimKey(translationPrefix, "errorConnectWallet")));
       return;
     }
     writeContract({
-      address: ATTENDANCE_ADDRESS,
+      address: distributor.contractAddress,
       abi: attendanceAbi,
       functionName: "claim",
       args: [latestDistributionId],
@@ -110,15 +123,21 @@ export function Claim() {
       {distributionsCount === undefined ? (
         <p className="mb-4 text-sm text-gray-600">{t("common.loading")}</p>
       ) : latestDistributionId === undefined ? (
-        <p className="mb-4 text-sm text-amber-700">{t("claim.errorNoDistribution")}</p>
+        <p className="mb-4 text-sm text-amber-700">
+          {t(claimKey(translationPrefix, "errorNoDistribution"))}
+        </p>
       ) : (
         <dl className="mb-4 space-y-2 rounded-lg bg-gray-50 p-3 text-sm">
           <div className="flex justify-between">
-            <dt className="text-gray-600">{t("claim.latestDistribution")}</dt>
+            <dt className="text-gray-600">
+              {t(claimKey(translationPrefix, "latestDistribution"))}
+            </dt>
             <dd className="font-medium">{String(latestDistributionId)}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-gray-600">{t("claim.activeNow")}</dt>
+            <dt className="text-gray-600">
+              {t(claimKey(translationPrefix, "activeNow"))}
+            </dt>
             <dd className="font-medium">
               {isActive === undefined
                 ? t("common.loading")
@@ -129,7 +148,9 @@ export function Claim() {
           </div>
           {isConnected && (
             <div className="flex justify-between">
-              <dt className="text-gray-600">{t("claim.youClaimed")}</dt>
+              <dt className="text-gray-600">
+                {t(claimKey(translationPrefix, "youClaimed"))}
+              </dt>
               <dd className="font-medium">
                 {youClaimed === undefined
                   ? t("common.loading")
@@ -148,14 +169,14 @@ export function Claim() {
 
       {!isConnected && (
         <p className="mb-4 text-sm text-amber-700">
-          {t("claim.connectWalletNotice")}
+          {t(claimKey(translationPrefix, "connectWalletNotice"))}
         </p>
       )}
 
       <TxButton
-        label={t("claim.buttonLabel")}
-        pendingLabel={t("claim.buttonPending")}
-        successLabel={t("claim.buttonSuccess")}
+        label={t(claimKey(translationPrefix, "buttonLabel"))}
+        pendingLabel={t(claimKey(translationPrefix, "buttonPending"))}
+        successLabel={t(claimKey(translationPrefix, "buttonSuccess"))}
         errorLabel={t("common.tryAgain")}
         onClick={handleClaim}
         disabled={latestDistributionId === undefined || !isConnected}

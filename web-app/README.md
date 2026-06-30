@@ -1,15 +1,16 @@
 # Capsula Web App
 
-Next.js web UI for the Capsula Attendance contract on Celo.
+Next.js web UI for Capsula `TokenDistributor` contracts on Celo (GPBR attendance + Good Dollar rewards).
 
 ## Pages
 
-- **Create Distribution** (`/create-distribution`) — Fund the contract with GPBR and create distributions (whitelisted wallets only).
-- **Claim** (`/claim`) — Claim the latest distribution.
-- **Configure** (`/configure`) — Contract config and creator allowlist (authorized wallets only).
+- **Register attendance** (`/registrar-presenca`) — Register GPBR attendance for the latest distribution.
+- **Claim** (`/resgatar`) — Claim Good Dollar (G$) from the latest distribution.
+- **Create Distribution** (`/create-distribution/gpbr`, `/create-distribution/good-dollar`) — Fund a distributor contract and create distributions (whitelisted wallets only). Tabbed subpages per token.
+- **Configure** (`/configure/gpbr`, `/configure/good-dollar`) — Contract config and creator allowlist per token (authorized wallets only).
 - **GPBRV Swap** (`/gpbrv-swap/*`) — Link a MiniPay wallet (`configure`), and swap GPBRV to USDM (`withdraw`) or USDM to GPBRV (`deposit`) through the `GPBRVSwapper` contract. Withdraw and Deposit are gated behind the `NEXT_PUBLIC_ENABLE_GPBRV_SWAP` feature flag and show a warning when the connected wallet is not linked.
 
-Interactive routes use a server `page.tsx` for static translated shell and a client sibling for wallet/forms (e.g. `app/claim/Claim.tsx`, `app/configure/Configure.tsx`).
+Interactive routes use a server `page.tsx` for static translated shell and a client sibling for wallet/forms (e.g. `app/claim/ClaimForm.tsx`, `app/configure/Configure.tsx`).
 
 ## Components
 
@@ -55,8 +56,10 @@ bun dev
 
 ## Contracts (Celo mainnet)
 
-- Attendance: `0x12bf6eB348566f2aE2c90DD919025520856236bC`
+- GPBR TokenDistributor (`ATTENDANCE_ADDRESS`): `0x12bf6eB348566f2aE2c90DD919025520856236bC`
+- Good Dollar TokenDistributor (`TOKEN_DISTRIBUTOR_ADDRESS`): update in `lib/contracts.ts` after deploying `ignition/modules/TokenDistributor.ts`
 - GPBR (6 decimals): `0xd832B2F117db51021Ad0387c17182796DBEB69df`
+- Good Dollar / G$ (18 decimals): `0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`
 - GPBRV (6 decimals): `0x6ec3d6e693526108990c6d5cbd2195e051321d32`
 - USDM (18 decimals): `0x765de816845861e75a25fca122bb6898b8b1282a`
 - GPBRVSwapper: set via `NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS` (no fixed mainnet deployment yet)

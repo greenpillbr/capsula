@@ -8,6 +8,29 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **Always read `AGENTS.md` and `README.md` at the start of a task** that touches structure, naming, pages, or setup. When you rename files, add pages, or change conventions, **update both files** so they stay accurate.
 
+## TokenDistributor (dual instances)
+
+The app talks to two `TokenDistributor` deployments on Celo:
+
+- **GPBR** — `ATTENDANCE_ADDRESS` in `lib/contracts.ts` (legacy Attendance deployment; same ABI).
+- **Good Dollar (G$)** — `TOKEN_DISTRIBUTOR_ADDRESS` in `lib/contracts.ts` (deploy via `smart-contracts/ignition/modules/TokenDistributor.ts`).
+
+`lib/contracts.ts` exports `DistributorToken`, `GPBR_DISTRIBUTOR`, and `GOOD_DOLLAR_DISTRIBUTOR` (contract address, reward token, decimals, symbol). Shared ABI: `attendanceAbi`.
+
+### Claim routes
+
+- `/registrar-presenca` — GPBR attendance (`ClaimForm` + `registerAttendance.*` i18n keys).
+- `/resgatar` — Good Dollar claim (`ClaimForm` + `resgatar.*` keys).
+- Shared form: `app/claim/ClaimForm.tsx`.
+
+### Admin routes (tabbed subpages)
+
+- `/create-distribution/gpbr` and `/create-distribution/good-dollar` — `CreateDistributionPageClient` receives a `DistributorToken` and fund-description key.
+- `/configure/gpbr` and `/configure/good-dollar` — `Configure` receives a `DistributorToken`.
+- Root `/create-distribution` and `/configure` redirect to the GPBR tab.
+
+Header nav: **Registrar presença**, **Resgatar**; settings menu links to GPBR admin tabs by default.
+
 ## GPBRV Swap section
 
 `app/gpbrv-swap/` hosts the `GPBRVSwapper` UI. It uses a client `layout.tsx` that renders sub-navigation tabs and five routes (each a server `page.tsx` plus a client component):
@@ -103,11 +126,11 @@ export default async function MyPage() {
 
 Use **`useTranslation()`** from `lib/i18n/LanguageProvider` only in client components (`"use client"`) that need interactivity, wagmi, or live locale updates (e.g. form validation messages, dynamic contract UI).
 
-**Pattern for interactive pages:** server `page.tsx` renders static translated shell (title, descriptions); a client sibling (e.g. `Claim.tsx`, `Configure.tsx`) handles wallet/forms with `useTranslation()`.
+**Pattern for interactive pages:** server `page.tsx` renders static translated shell (title, descriptions); a client sibling (e.g. `ClaimForm.tsx`, `Configure.tsx`) handles wallet/forms with `useTranslation()`.
 
 | Server (`getServerTranslations`) | Client (`useTranslation`) |
 |----------------------------------|---------------------------|
-| `app/page.tsx` | `app/claim/Claim.tsx`, `app/configure/Configure.tsx`, etc. |
+| `app/page.tsx` | `app/claim/ClaimForm.tsx`, `app/configure/Configure.tsx`, etc. |
 | `app/*/page.tsx` (titles, static copy) | `components/Header.tsx` |
 | `components/HeaderWrapper.tsx` (nav labels) | `components/Providers.tsx`, `TxButton` |
 | `app/layout.tsx` (`generateMetadata`, `<html lang>`) | |
@@ -117,7 +140,7 @@ Use **`useTranslation()`** from `lib/i18n/LanguageProvider` only in client compo
 ### Components
 
 - **`HeaderWrapper`:** server component; resolves main nav, tools menu, and settings menu labels with `getServerTranslations()` and renders `Header`.
-- **`Header`:** client; Claim link, **Ferramentas** tools dropdown (external links with shadcn `Tooltip`), settings **gear dropdown** (Create Distribution, Configure via shadcn `DropdownMenu` + react-icons), logo links home, pathname highlighting, PT/EN toggle, RainbowKit connect button. Uses `useTranslation()` for locale toggle and `nav.settingsMenu` aria-label.
+- **`Header`:** client; **Registrar presença** and **Resgatar** nav links, **Ferramentas** tools dropdown (external links with shadcn `Tooltip`), settings **gear dropdown** (Create Distribution, Configure via shadcn `DropdownMenu` + react-icons), logo links home, pathname highlighting, PT/EN toggle, RainbowKit connect button. Uses `useTranslation()` for locale toggle and `nav.settingsMenu` aria-label.
 - **`TxButton`:** client; receives all label strings as props (`label`, `pendingLabel`, `successLabel`, `errorLabel`) — no i18n hook inside.
 
 ### Untranslated strings

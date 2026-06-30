@@ -1,4 +1,5 @@
 {
   "AttendanceModule#Attendance": "0x12bf6eB348566f2aE2c90DD919025520856236bC",
-  "GPBRVSwapperModule#GPBRVSwapper": "0x2bff1F71f5b051596431c050146A59fEb6633526"
+  "GPBRVSwapperModule#GPBRVSwapper": "0x2bff1F71f5b051596431c050146A59fEb6633526",
+  "TokenDistributorModule#TokenDistributor": "0xfE635634A0093bc6E0C8fc02424Aba04e8cB9267"
 }

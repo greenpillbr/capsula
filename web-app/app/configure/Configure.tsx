@@ -11,15 +11,10 @@ import {
 } from "wagmi";
 
 import { TxButton } from "@/components/TxButton";
-import {
-  ATTENDANCE_ADDRESS,
-  GPBR_DECIMALS,
-  attendanceAbi,
-  isAdminAddress,
-} from "@/lib/contracts";
+import { attendanceAbi, isAdminAddress, type DistributorToken } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
-export function Configure() {
+export function Configure({ distributor }: { distributor: DistributorToken }) {
   const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
@@ -33,7 +28,7 @@ export function Configure() {
   const staticAuthorized = isAdminAddress(address);
 
   const { data: contractOwner } = useReadContract({
-    address: ATTENDANCE_ADDRESS,
+    address: distributor.contractAddress,
     abi: attendanceAbi,
     functionName: "owner",
   });
@@ -46,13 +41,13 @@ export function Configure() {
   const authorized = staticAuthorized || isOwner;
 
   const { data: currentAmount } = useReadContract({
-    address: ATTENDANCE_ADDRESS,
+    address: distributor.contractAddress,
     abi: attendanceAbi,
     functionName: "amount",
   });
 
   const { data: currentPeriod } = useReadContract({
-    address: ATTENDANCE_ADDRESS,
+    address: distributor.contractAddress,
     abi: attendanceAbi,
     functionName: "period",
   });
@@ -60,7 +55,7 @@ export function Configure() {
   const resolvedAmountInput =
     amountInput ??
     (currentAmount !== undefined
-      ? formatUnits(currentAmount, GPBR_DECIMALS)
+      ? formatUnits(currentAmount, distributor.decimals)
       : "");
 
   const resolvedPeriodInput =
@@ -71,7 +66,7 @@ export function Configure() {
     creatorAddress && isAddress(creatorAddress) ? creatorAddress : undefined;
 
   const { data: isCreatorLookup } = useReadContract({
-    address: ATTENDANCE_ADDRESS,
+    address: distributor.contractAddress,
     abi: attendanceAbi,
     functionName: "isCreator",
     args: lookupAddress ? [lookupAddress] : undefined,
@@ -132,14 +127,14 @@ export function Configure() {
       return;
     }
     try {
-      const amountUnits = parseUnits(resolvedAmountInput, GPBR_DECIMALS);
+      const amountUnits = parseUnits(resolvedAmountInput, distributor.decimals);
       const periodBlocks = BigInt(resolvedPeriodInput);
       if (amountUnits <= BigInt(0) || periodBlocks <= BigInt(0)) {
         setConfigError(t("configure.errorAmountPeriodZero"));
         return;
       }
       writeConfig({
-        address: ATTENDANCE_ADDRESS,
+        address: distributor.contractAddress,
         abi: attendanceAbi,
         functionName: "setConfig",
         args: [amountUnits, periodBlocks],
@@ -157,7 +152,7 @@ export function Configure() {
       return;
     }
     writeAllowlist({
-      address: ATTENDANCE_ADDRESS,
+      address: distributor.contractAddress,
       abi: attendanceAbi,
       functionName: action === "add" ? "addCreator" : "removeCreator",
       args: [creatorAddress],
@@ -188,7 +183,7 @@ export function Configure() {
           </p>
         )}
         <label className="mb-2 block text-sm font-medium" htmlFor="cfg-amount">
-          {t("configure.amountGpbr")}
+          {t("configure.amountToken")} ({distributor.symbol})
         </label>
         <input
           id="cfg-amount"

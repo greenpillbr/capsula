@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { network } from "hardhat";
 import { getAddress, parseUnits } from "viem";
 
-describe("Attendance", async function () {
+describe("TokenDistributor", async function () {
   const { viem } = await network.create();
   const publicClient = await viem.getPublicClient();
   const testClient = await viem.getTestClient();
@@ -17,7 +17,7 @@ describe("Attendance", async function () {
     const mock = await viem.deployContract("MockGPBR");
     await mock.write.mint([owner.account.address, POOL_AMOUNT]);
 
-    const attendance = await viem.deployContract("Attendance", [
+    const attendance = await viem.deployContract("TokenDistributor", [
       mock.address,
       owner.account.address,
     ]);
@@ -49,13 +49,13 @@ describe("Attendance", async function () {
     });
 
     it("reverts on zero token address", async () => {
-      const helper = await viem.deployContract("Attendance", [
+      const helper = await viem.deployContract("TokenDistributor", [
         (await viem.deployContract("MockGPBR")).address,
         owner.account.address,
       ]);
 
       await viem.assertions.revertWithCustomError(
-        viem.deployContract("Attendance", [
+        viem.deployContract("TokenDistributor", [
           "0x0000000000000000000000000000000000000000",
           owner.account.address,
         ]) as unknown as Promise<`0x${string}`>,
@@ -69,7 +69,7 @@ describe("Attendance", async function () {
     it("only owner can add or remove creators", async () => {
       const { attendance } = await deployFixture();
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -97,7 +97,7 @@ describe("Attendance", async function () {
       );
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -117,7 +117,7 @@ describe("Attendance", async function () {
       );
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -157,7 +157,7 @@ describe("Attendance", async function () {
       const { attendance } = await deployFixture();
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -204,7 +204,7 @@ describe("Attendance", async function () {
     it("only allowlisted creator can call createDistribution", async () => {
       const { attendance } = await deployFixture();
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -275,7 +275,7 @@ describe("Attendance", async function () {
       await attendance.write.createDistribution([0n]);
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -322,7 +322,7 @@ describe("Attendance", async function () {
       await attendance.write.createDistribution([0n]);
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -352,12 +352,12 @@ describe("Attendance", async function () {
       await attendance.write.createDistribution([2n]);
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
       const attendanceAsBob = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: bob } },
       );
@@ -367,7 +367,7 @@ describe("Attendance", async function () {
 
       const [charlie] = await viem.getWalletClients({ accountCount: 4 });
       const attendanceAsCharlie = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: charlie } },
       );
@@ -395,7 +395,7 @@ describe("Attendance", async function () {
       await attendance.write.createDistribution([0n]);
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -416,7 +416,7 @@ describe("Attendance", async function () {
       await testClient.mine({ blocks: 11 });
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -436,7 +436,7 @@ describe("Attendance", async function () {
       await attendance.write.cancelDistribution([0n]);
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -450,14 +450,14 @@ describe("Attendance", async function () {
 
     it("reverts when the pool cannot cover the amount", async () => {
       const mock = await viem.deployContract("MockGPBR");
-      const attendance = await viem.deployContract("Attendance", [
+      const attendance = await viem.deployContract("TokenDistributor", [
         mock.address,
         owner.account.address,
       ]);
       await attendance.write.createDistribution([0n]);
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
@@ -474,12 +474,12 @@ describe("Attendance", async function () {
       await attendance.write.createDistribution([0n]);
 
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );
       const attendanceAsBob = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: bob } },
       );
@@ -502,7 +502,7 @@ describe("Attendance", async function () {
     it("only owner can withdraw", async () => {
       const { attendance } = await deployFixture();
       const attendanceAsAlice = await viem.getContractAt(
-        "Attendance",
+        "TokenDistributor",
         attendance.address,
         { client: { wallet: alice } },
       );

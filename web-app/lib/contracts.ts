@@ -1,10 +1,40 @@
 export const ATTENDANCE_ADDRESS =
   "0x12bf6eB348566f2aE2c90DD919025520856236bC" as const;
 
+/** Good Dollar TokenDistributor — update after deploying ignition/modules/TokenDistributor.ts */
+export const TOKEN_DISTRIBUTOR_ADDRESS =
+  "0xfE635634A0093bc6E0C8fc02424Aba04e8cB9267" as const;
+
 export const GPBR_ADDRESS =
   "0xd832B2F117db51021Ad0387c17182796DBEB69df" as const;
 
 export const GPBR_DECIMALS = 6;
+
+export const GOOD_DOLLAR_ADDRESS =
+  "0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A" as const;
+
+export const GOOD_DOLLAR_DECIMALS = 18;
+
+export type DistributorToken = {
+  contractAddress: `0x${string}`;
+  tokenAddress: `0x${string}`;
+  decimals: number;
+  symbol: string;
+};
+
+export const GPBR_DISTRIBUTOR: DistributorToken = {
+  contractAddress: ATTENDANCE_ADDRESS,
+  tokenAddress: GPBR_ADDRESS,
+  decimals: GPBR_DECIMALS,
+  symbol: "GPBR",
+};
+
+export const GOOD_DOLLAR_DISTRIBUTOR: DistributorToken = {
+  contractAddress: TOKEN_DISTRIBUTOR_ADDRESS,
+  tokenAddress: GOOD_DOLLAR_ADDRESS,
+  decimals: GOOD_DOLLAR_DECIMALS,
+  symbol: "G$",
+};
 
 export const ZERO_ADDRESS =
   "0x0000000000000000000000000000000000000000" as const;
