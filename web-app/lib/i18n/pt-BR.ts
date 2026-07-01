@@ -36,7 +36,7 @@ export const ptBR: Translations = {
   "home.resources.liquidityPool": "Piscina de liquidez no Sarafu",
   "registerAttendance.title": "Registrar presença",
   "registerAttendance.description":
-    "Registre sua presença na distribuição GPBR mais recente, durante a janela ativa.",
+    "Registre sua presença no nosso encontro de hoje, durante a janela ativa.",
   "registerAttendance.latestDistribution": "Última distribuição",
   "registerAttendance.activeNow": "Ativa agora",
   "registerAttendance.youClaimed": "Você registrou",

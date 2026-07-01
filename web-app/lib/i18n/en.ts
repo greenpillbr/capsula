@@ -36,7 +36,7 @@ export const en: Translations = {
   "home.resources.liquidityPool": "Sarafu liquidity pool",
   "registerAttendance.title": "Register attendance",
   "registerAttendance.description":
-    "Register your attendance for the most recently created GPBR distribution during its active window.",
+    "Register your attendance for today's meeting during its active window.",
   "registerAttendance.latestDistribution": "Latest distribution",
   "registerAttendance.activeNow": "Active now",
   "registerAttendance.youClaimed": "You registered",
