@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { erc20Abi, formatUnits, parseUnits } from "viem";
 import {
   useAccount,
@@ -13,6 +13,7 @@ import {
 import { Panel } from "@/app/gpbrv-swap/Panel";
 import { QuoteSummary } from "@/app/gpbrv-swap/QuoteSummary";
 import { useEstimatedMin } from "@/app/gpbrv-swap/useEstimatedMin";
+import { useSpendTokenApproval } from "@/app/gpbrv-swap/useSpendTokenApproval";
 import { TxButton } from "@/components/TxButton";
 import {
   GPBRV_ADDRESS,
@@ -72,27 +73,30 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
     query: { enabled: !!address },
   });
 
-  const { data: allowance } = useReadContract({
-    address: spendToken,
-    abi: erc20Abi,
-    functionName: "allowance",
-    args: address && swapper ? [address, swapper] : undefined,
-    query: { enabled: !!address && !!swapper },
+  const parsedAmount = useMemo(() => {
+    try {
+      return amount ? parseUnits(amount, spendDecimals) : undefined;
+    } catch {
+      return undefined;
+    }
+  }, [amount, spendDecimals]);
+
+  const {
+    needsApproval,
+    isResetStep,
+    handleApprove,
+    isApprovePending,
+    isApproveConfirming,
+    isApproveConfirmed,
+    isApproveWriteError,
+    isApproveConfirmError,
+  } = useSpendTokenApproval({
+    owner: address,
+    token: spendToken,
+    spender: swapper,
+    amount: parsedAmount,
+    resetAllowanceBeforeApprove: isWithdraw,
   });
-
-  const {
-    writeContract: writeApprove,
-    data: approveHash,
-    isPending: isApprovePending,
-    isError: isApproveWriteError,
-    reset: resetApprove,
-  } = useWriteContract();
-
-  const {
-    isLoading: isApproveConfirming,
-    isSuccess: isApproveConfirmed,
-    isError: isApproveConfirmError,
-  } = useWaitForTransactionReceipt({ hash: approveHash });
 
   const {
     writeContract: writeAction,
@@ -109,10 +113,10 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
   } = useWaitForTransactionReceipt({ hash: actionHash });
 
   useEffect(() => {
-    if (isApproveConfirmed || isActionConfirmed) {
+    if (isActionConfirmed) {
       void queryClient.invalidateQueries();
     }
-  }, [isApproveConfirmed, isActionConfirmed, queryClient]);
+  }, [isActionConfirmed, queryClient]);
 
   if (!isConnected) {
     return (
@@ -136,31 +140,13 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
 
   const resolvedMin = minOverride ?? estimatedMin;
 
-  let parsedAmount: bigint | undefined;
-  try {
-    parsedAmount = amount ? parseUnits(amount, spendDecimals) : undefined;
-  } catch {
-    parsedAmount = undefined;
-  }
-
-  const needsApproval =
-    parsedAmount !== undefined &&
-    parsedAmount > BigInt(0) &&
-    (allowance === undefined || allowance < parsedAmount);
-
-  function handleApprove() {
+  function onApprove() {
     setFormError(null);
-    resetApprove();
     if (parsedAmount === undefined || parsedAmount <= BigInt(0)) {
       setFormError(t("gpbrvSwap.errorInvalidAmount"));
       return;
     }
-    writeApprove({
-      address: spendToken,
-      abi: erc20Abi,
-      functionName: "approve",
-      args: [swapper!, parsedAmount],
-    });
+    handleApprove(parsedAmount);
   }
 
   function handleAction() {
@@ -266,11 +252,17 @@ export function SwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
 
       {needsApproval ? (
         <TxButton
-          label={t("gpbrvSwap.approveButton")}
-          pendingLabel={t("gpbrvSwap.approvePending")}
-          successLabel={t("gpbrvSwap.approveSuccess")}
+          label={
+            isResetStep ? t("gpbrvSwap.resetApproveButton") : t("gpbrvSwap.approveButton")
+          }
+          pendingLabel={
+            isResetStep ? t("gpbrvSwap.resetApprovePending") : t("gpbrvSwap.approvePending")
+          }
+          successLabel={
+            isResetStep ? t("gpbrvSwap.resetApproveSuccess") : t("gpbrvSwap.approveSuccess")
+          }
           errorLabel={t("common.tryAgain")}
-          onClick={handleApprove}
+          onClick={onApprove}
           disabled={!configured || !amount}
           isPending={isApprovePending || isApproveConfirming}
           isSuccess={isApproveConfirmed}
