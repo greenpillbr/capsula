@@ -36,7 +36,7 @@ export const en: Translations = {
   "home.resources.liquidityPool": "Sarafu liquidity pool",
   "registerAttendance.title": "Register attendance",
   "registerAttendance.description":
-    "Register your attendance for the most recently created GPBR distribution during its active window.",
+    "Register your attendance for today's meeting during its active window.",
   "registerAttendance.latestDistribution": "Latest distribution",
   "registerAttendance.activeNow": "Active now",
   "registerAttendance.youClaimed": "You registered",
@@ -190,6 +190,9 @@ export const en: Translations = {
   "gpbrvSwap.approveButton": "Approve",
   "gpbrvSwap.approvePending": "Approving…",
   "gpbrvSwap.approveSuccess": "Approved",
+  "gpbrvSwap.resetApproveButton": "Reset approval",
+  "gpbrvSwap.resetApprovePending": "Resetting approval…",
+  "gpbrvSwap.resetApproveSuccess": "Approval reset",
   "gpbrvSwap.withdrawButton": "Withdraw",
   "gpbrvSwap.withdrawPending": "Withdrawing…",
   "gpbrvSwap.withdrawSuccess": "Withdrawn",
