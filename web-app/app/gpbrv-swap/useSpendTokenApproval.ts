@@ -83,10 +83,16 @@ export function useSpendTokenApproval({
     }
   }, [isApproveWriteError, isApproveConfirmError]);
 
+  function invalidateAllowance() {
+    void queryClient.invalidateQueries({
+      queryKey: ["readContract", { address: token, functionName: "allowance" }],
+    });
+  }
+
   useEffect(() => {
     if (!isApproveConfirmed) return;
 
-    void queryClient.invalidateQueries();
+    invalidateAllowance();
 
     if (approvePhase === "reset" && pendingAmountRef.current !== undefined && spender) {
       setApprovePhase("approve");
@@ -118,6 +124,8 @@ export function useSpendTokenApproval({
   ]);
 
   function handleApprove(targetAmount: bigint) {
+    if (!spender) return;
+
     resetApprove();
     pendingAmountRef.current = targetAmount;
 
@@ -131,7 +139,7 @@ export function useSpendTokenApproval({
         address: token,
         abi: erc20Abi,
         functionName: "approve",
-        args: [spender!, BigInt(0)],
+        args: [spender, BigInt(0)],
       });
       return;
     }
@@ -141,7 +149,7 @@ export function useSpendTokenApproval({
       address: token,
       abi: erc20Abi,
       functionName: "approve",
-      args: [spender!, targetAmount],
+      args: [spender, targetAmount],
     });
   }
 
