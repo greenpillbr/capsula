@@ -45,7 +45,6 @@ Header nav: **Registrar presença**, **Resgatar**; settings menu links to GPBR a
 - **Single-wallet flow** — `swap-deposit` / `swap-withdraw` share `DirectSwapForm.tsx`. **No `configure` step is required.** In `withdraw` mode the form also offers a checkbox that redirects the USDM to the caller's linked MiniPay wallet by calling `withdrawWithMinipay` instead of `withdraw`; it is disabled until `userToMinipay[address]` is set. `withdrawWithMinipay` pulls GPBRV from the caller, so it can only be sent by the *main* wallet — that is why it lives here and not under the MiniPay tab.
 - **MiniPay tab** — `app/gpbrv-swap/minipay/` with a segmented sub-nav (`MinipayGate.tsx`) over `deposit` (`MinipayDepositForm.tsx` → `depositWithMinipay`) and `configure` (`ConfigureFromMinipay.tsx` → `configureFromMinipay`, where the input is the *main wallet* address). Both require the connected wallet to be the MiniPay wallet.
 - `MinipayGate.tsx` blocks the sub-section when `useIsMiniPay()` is `false`, showing how to open the page from inside MiniPay plus a link to `/gpbrv-swap/configure` when the wallet has no link yet. While detection is pending (`undefined`) it renders the children, so nobody sees a flash of the fallback.
-- Legacy routes `/gpbrv-swap/deposit` and `/gpbrv-swap/withdraw` are `redirect()` stubs to `/gpbrv-swap/minipay/deposit` and `/gpbrv-swap/swap-withdraw`.
 
 `Panel.tsx` is the shared section card.
 
