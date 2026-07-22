@@ -139,10 +139,17 @@ export const en: Translations = {
   "configure.removeCreatorPending": "Removing…",
   "configure.removeCreatorSuccess": "Creator removed",
   "gpbrvSwap.tabConfigure": "Configure",
-  "gpbrvSwap.tabWithdraw": "Withdraw (MiniPay)",
-  "gpbrvSwap.tabDeposit": "Deposit (MiniPay)",
   "gpbrvSwap.tabSwapWithdraw": "Withdraw",
   "gpbrvSwap.tabSwapDeposit": "Deposit",
+  "gpbrvSwap.tabMinipay": "MiniPay",
+  "gpbrvSwap.minipayTabDeposit": "Deposit",
+  "gpbrvSwap.minipayTabConfigure": "Configure",
+  "gpbrvSwap.openInMinipayTitle": "Open this page in MiniPay",
+  "gpbrvSwap.openInMinipayBody":
+    "This section only works inside the MiniPay in-app browser, where the connected wallet is your MiniPay wallet. Open MiniPay on your phone and go to this address:",
+  "gpbrvSwap.openInMinipayConfigureCta":
+    "Your wallet has no linked MiniPay address yet. You can link one from here using your main wallet:",
+  "gpbrvSwap.openInMinipayConfigureLink": "Go to Configure",
   "gpbrvSwap.swapWithdrawTitle": "Withdraw (GPBRV to USDM)",
   "gpbrvSwap.swapWithdrawDescription":
     "Spend GPBRV from your wallet and receive USDM in the same wallet. No setup required.",
@@ -162,14 +169,21 @@ export const en: Translations = {
   "gpbrvSwap.notConfiguredYet": "No MiniPay wallet is linked to your address yet.",
   "gpbrvSwap.errorInvalidAddress": "Enter a valid address",
   "gpbrvSwap.errorInvalidAmount": "Enter a valid amount",
+  "gpbrvSwap.errorSameAddress":
+    "The main wallet address must differ from your MiniPay wallet",
   "gpbrvSwap.saveButton": "Save link",
   "gpbrvSwap.savePending": "Saving…",
   "gpbrvSwap.saveSuccess": "Linked",
-  "gpbrvSwap.withdrawTitle": "Withdraw (GPBRV to USDM)",
-  "gpbrvSwap.withdrawDescription":
-    "Spend GPBRV from your wallet; your linked MiniPay wallet receives USDM.",
-  "gpbrvSwap.notConfiguredWarningUser":
-    "Your wallet has no linked MiniPay address. Link one on the Configure tab before withdrawing.",
+  "gpbrvSwap.configureFromMinipayTitle": "Link your main wallet",
+  "gpbrvSwap.configureFromMinipayDescription":
+    "You are in MiniPay. Enter your main wallet address so it receives GPBRV when you deposit from here.",
+  "gpbrvSwap.userAddress": "Main wallet address",
+  "gpbrvSwap.currentUser": "Linked main wallet",
+  "gpbrvSwap.notConfiguredYetMinipay":
+    "No main wallet is linked to this MiniPay wallet yet.",
+  "gpbrvSwap.sendToMinipayLabel": "Send the USDM to my linked MiniPay wallet",
+  "gpbrvSwap.sendToMinipayNotLinked":
+    "Available once a MiniPay wallet is linked. Link one on the Configure tab.",
   "gpbrvSwap.notConfiguredWarningMinipay":
     "Your wallet is not registered as a MiniPay wallet. The owner must link it on the Configure tab before depositing.",
   "gpbrvSwap.amountGpbrv": "Amount (GPBRV)",

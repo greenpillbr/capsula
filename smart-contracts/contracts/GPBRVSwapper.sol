@@ -13,9 +13,16 @@ import {IMentoRouter} from "./interfaces/IMentoRouter.sol";
 ///           - Single wallet (`deposit` / `withdraw`): the caller spends one token and
 ///             receives the other in the same wallet. No setup required.
 ///           - MiniPay-linked (`depositWithMinipay` / `withdrawWithMinipay`): a user links
-///             a MiniPay address once via `configure`, then either side can move value across:
+///             a MiniPay address once, then either side can move value across:
 ///               - withdrawWithMinipay: user spends GPBRV, MiniPay receives USDM
 ///               - depositWithMinipay:  MiniPay spends USDM, user receives GPBRV
+///         The link can be created from either end: `configure` is called by the main
+///         wallet, `configureFromMinipay` by the MiniPay wallet (which is the only option
+///         while browsing inside MiniPay).
+/// @dev The two Sarafu legs are not symmetric. GPBRV (6) -> BRLM (18) uses the plain
+///      3-arg `withdraw`; BRLM (18) -> GPBRV (6) must use the `deductFee` overload, since
+///      the 3-arg form mixes fee units and reverts with ERR_BALANCE when the input token
+///      has more decimals than the output.
 contract GPBRVSwapper {
     using SafeERC20 for IERC20;
 
@@ -41,6 +48,7 @@ contract GPBRVSwapper {
 
     error InvalidAddress();
     error MinipayAlreadyLinked();
+    error UserAlreadyLinked();
     error NotConfigured();
     error NothingReceived();
     error InsufficientOutput();
@@ -89,13 +97,33 @@ contract GPBRVSwapper {
         emit Configured(msg.sender, minipay);
     }
 
+    /// @notice Link the calling MiniPay wallet to a main wallet. Mirror of `configure`
+    ///         for users browsing inside MiniPay, where the caller is the MiniPay wallet.
+    ///         Re-configuring with a new main wallet clears the previous forward mapping.
+    function configureFromMinipay(address user) external {
+        if (user == address(0) || user == msg.sender) revert InvalidAddress();
+
+        address existingMinipay = userToMinipay[user];
+        if (existingMinipay != address(0) && existingMinipay != msg.sender) revert UserAlreadyLinked();
+
+        address oldUser = minipayToUser[msg.sender];
+        if (oldUser != address(0) && oldUser != user) {
+            delete userToMinipay[oldUser];
+        }
+
+        userToMinipay[user] = msg.sender;
+        minipayToUser[msg.sender] = user;
+
+        emit Configured(user, msg.sender);
+    }
+
     /// @notice Caller spends GPBRV and receives USDM in the same wallet.
     /// @param amount GPBRV amount to convert (6 decimals).
     /// @param minUsdmOut Minimum USDM the caller must receive (slippage guard, 18 decimals).
     function withdraw(uint256 amount, uint256 minUsdmOut) external returns (uint256 usdmOut) {
         gpbrv.safeTransferFrom(msg.sender, address(this), amount);
 
-        uint256 brlmReceived = _sarafuSwap(gpbrv, brlm, amount);
+        uint256 brlmReceived = _sarafuSwap(gpbrv, brlm, amount, false);
         usdmOut = _mentoSwap(brlm, usdm, brlmReceived, minUsdmOut, msg.sender);
 
         emit WithdrawnDirect(msg.sender, amount, usdmOut);
@@ -109,7 +137,8 @@ contract GPBRVSwapper {
 
         // Intermediate BRLM has no user-facing slippage guard; the final GPBRV output is checked instead.
         uint256 brlmReceived = _mentoSwap(usdm, brlm, amount, 0, address(this));
-        gpbrvOut = _sarafuSwap(brlm, gpbrv, brlmReceived);
+        // BRLM (18) -> GPBRV (6) requires the deductFee overload; see the contract-level @dev note.
+        gpbrvOut = _sarafuSwap(brlm, gpbrv, brlmReceived, true);
         if (gpbrvOut < minGpbrvOut) revert InsufficientOutput();
 
         gpbrv.safeTransfer(msg.sender, gpbrvOut);
@@ -126,7 +155,7 @@ contract GPBRVSwapper {
 
         gpbrv.safeTransferFrom(msg.sender, address(this), amount);
 
-        uint256 brlmReceived = _sarafuSwap(gpbrv, brlm, amount);
+        uint256 brlmReceived = _sarafuSwap(gpbrv, brlm, amount, false);
         usdmOut = _mentoSwap(brlm, usdm, brlmReceived, minUsdmOut, minipay);
 
         emit WithdrawMiniPay(msg.sender, minipay, amount, usdmOut);
@@ -143,7 +172,8 @@ contract GPBRVSwapper {
 
         // Intermediate BRLM has no user-facing slippage guard; the final GPBRV output is checked instead.
         uint256 brlmReceived = _mentoSwap(usdm, brlm, amount, 0, address(this));
-        gpbrvOut = _sarafuSwap(brlm, gpbrv, brlmReceived);
+        // BRLM (18) -> GPBRV (6) requires the deductFee overload; see the contract-level @dev note.
+        gpbrvOut = _sarafuSwap(brlm, gpbrv, brlmReceived, true);
         if (gpbrvOut < minGpbrvOut) revert InsufficientOutput();
 
         gpbrv.safeTransfer(user, gpbrvOut);
@@ -152,11 +182,22 @@ contract GPBRVSwapper {
     }
 
     /// @dev Swaps `amountIn` of `tokenIn` for `tokenOut` through the Sarafu pool, returning
-    ///      the amount of `tokenOut` received by this contract.
-    function _sarafuSwap(IERC20 tokenIn, IERC20 tokenOut, uint256 amountIn) private returns (uint256 received) {
+    ///      the amount of `tokenOut` received by this contract. `deductFee` selects the
+    ///      overload that takes the pool fee from the output token, required whenever
+    ///      `tokenIn` has more decimals than `tokenOut`.
+    function _sarafuSwap(
+        IERC20 tokenIn,
+        IERC20 tokenOut,
+        uint256 amountIn,
+        bool deductFee
+    ) private returns (uint256 received) {
         uint256 before = tokenOut.balanceOf(address(this));
         tokenIn.forceApprove(address(sarafuPool), amountIn);
-        sarafuPool.withdraw(address(tokenOut), address(tokenIn), amountIn);
+        if (deductFee) {
+            sarafuPool.withdraw(address(tokenOut), address(tokenIn), amountIn, true);
+        } else {
+            sarafuPool.withdraw(address(tokenOut), address(tokenIn), amountIn);
+        }
         received = tokenOut.balanceOf(address(this)) - before;
         if (received == 0) revert NothingReceived();
     }

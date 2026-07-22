@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import type { Locale } from "@/lib/i18n/types";
+import { useIsMiniPay } from "@/lib/useIsMiniPay";
 import { cn } from "@/lib/utils";
 
 type NavLabel = {
@@ -183,6 +184,7 @@ export function Header({
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useTranslation();
+  const isMiniPay = useIsMiniPay();
   const isSettingsActive = settingsLabels.some(({ href }) => pathname === href);
 
   const settingsMenu = (
@@ -228,7 +230,8 @@ export function Header({
         <div className="flex w-full items-center justify-center gap-4 md:w-auto md:justify-end">
           <div className="hidden shrink-0 md:block">{settingsMenu}</div>
           <LanguageToggle />
-          <ConnectButton chainStatus="icon" showBalance={false} />
+          {/* Inside MiniPay the connection is implicit; the Celo docs require hiding this. */}
+          {!isMiniPay && <ConnectButton chainStatus="icon" showBalance={false} />}
         </div>
       </div>
     </header>

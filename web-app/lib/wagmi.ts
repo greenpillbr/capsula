@@ -1,4 +1,12 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import {
+  base,
+  injectedWallet,
+  metaMaskWallet,
+  rainbowWallet,
+  safeWallet,
+  walletConnectWallet,
+} from "@rainbow-me/rainbowkit/wallets";
 import { celo } from "wagmi/chains";
 import { fallback, http } from "wagmi";
 
@@ -19,8 +27,20 @@ if (useAnvilOverride) {
 }
 
 export const wagmiConfig = getDefaultConfig({
-  appName: "Capsule Admin",
+  appName: "Capsula Admin",
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "",
+  // Spelled out rather than left to the defaults so an `injected` connector always
+  // exists: MiniPay's in-app browser is injected-only and is auto-connected in Providers.
+  wallets: [
+    {
+      groupName: "Recommended",
+      wallets: [injectedWallet, metaMaskWallet, rainbowWallet],
+    },
+    {
+      groupName: "Other",
+      wallets: [base, walletConnectWallet, safeWallet],
+    },
+  ],
   chains: [celo],
   transports: {
     [celo.id]: fallback(celoTransports),

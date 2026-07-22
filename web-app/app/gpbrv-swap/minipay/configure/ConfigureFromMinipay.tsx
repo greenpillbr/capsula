@@ -19,20 +19,24 @@ import {
 } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
-export function ConfigureSwap() {
+/**
+ * Mirror of `ConfigureSwap`: here the connected wallet is the MiniPay wallet and the
+ * user types their *main* wallet address, so the link can be created from inside MiniPay.
+ */
+export function ConfigureFromMinipay() {
   const { t } = useTranslation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
 
-  const [minipayInput, setMinipayInput] = useState("");
+  const [userInput, setUserInput] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const swapper = getGpbrvSwapperAddress();
 
-  const { data: currentMinipay } = useReadContract({
+  const { data: currentUser } = useReadContract({
     address: swapper,
     abi: gpbrvSwapperAbi,
-    functionName: "userToMinipay",
+    functionName: "minipayToUser",
     args: address ? [address] : undefined,
     query: { enabled: !!swapper && !!address },
   });
@@ -71,47 +75,51 @@ export function ConfigureSwap() {
     );
   }
 
-  const linkedMinipay =
-    currentMinipay && currentMinipay !== ZERO_ADDRESS ? currentMinipay : undefined;
+  const linkedUser =
+    currentUser && currentUser !== ZERO_ADDRESS ? currentUser : undefined;
 
   function handleConfigure() {
     setFormError(null);
     reset();
-    if (!minipayInput || !isAddress(minipayInput)) {
+    if (!userInput || !isAddress(userInput)) {
       setFormError(t("gpbrvSwap.errorInvalidAddress"));
+      return;
+    }
+    if (address && userInput.toLowerCase() === address.toLowerCase()) {
+      setFormError(t("gpbrvSwap.errorSameAddress"));
       return;
     }
     writeContract({
       address: swapper!,
       abi: gpbrvSwapperAbi,
-      functionName: "configure",
-      args: [minipayInput],
+      functionName: "configureFromMinipay",
+      args: [userInput],
     });
   }
 
   return (
-    <Panel title={t("gpbrvSwap.configureTitle")}>
+    <Panel title={t("gpbrvSwap.configureFromMinipayTitle")}>
       <p className="mb-4 text-sm text-gray-600">
-        {t("gpbrvSwap.configureDescription")}
+        {t("gpbrvSwap.configureFromMinipayDescription")}
       </p>
 
-      <p className="mb-4 text-sm text-gray-600">
-        {t("gpbrvSwap.currentMinipay")}:{" "}
+      <p className="mb-4 break-all text-sm text-gray-600">
+        {t("gpbrvSwap.currentUser")}:{" "}
         <span className="font-medium">
-          {linkedMinipay ?? t("gpbrvSwap.notConfiguredYet")}
+          {linkedUser ?? t("gpbrvSwap.notConfiguredYetMinipay")}
         </span>
       </p>
 
-      <label className="mb-2 block text-sm font-medium" htmlFor="minipay-address">
-        {t("gpbrvSwap.minipayAddress")}
+      <label className="mb-2 block text-sm font-medium" htmlFor="user-address">
+        {t("gpbrvSwap.userAddress")}
       </label>
       <input
-        id="minipay-address"
+        id="user-address"
         type="text"
         placeholder="0x…"
-        value={minipayInput}
+        value={userInput}
         onChange={(e) => {
-          setMinipayInput(e.target.value);
+          setUserInput(e.target.value);
           setFormError(null);
         }}
         className="mb-2 h-12 w-full rounded-lg border border-gray-300 px-3 text-base focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
@@ -124,7 +132,7 @@ export function ConfigureSwap() {
         successLabel={t("gpbrvSwap.saveSuccess")}
         errorLabel={t("common.tryAgain")}
         onClick={handleConfigure}
-        disabled={!minipayInput}
+        disabled={!userInput}
         isPending={isPending || isConfirming}
         isSuccess={isConfirmed}
         isError={isWriteError || isConfirmError}

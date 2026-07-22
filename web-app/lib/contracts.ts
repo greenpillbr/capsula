@@ -205,6 +205,13 @@ export const gpbrvSwapperAbi = [
   },
   {
     type: "function",
+    name: "configureFromMinipay",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "withdraw",
     inputs: [
       { name: "amount", type: "uint256" },

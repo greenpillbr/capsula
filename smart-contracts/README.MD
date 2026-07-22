@@ -140,11 +140,14 @@ The live tests skip themselves automatically when anvil is unreachable
 
 **MiniPay-linked:**
 
-- `configure(minipay)` links the caller's main wallet to a MiniPay wallet (forward and reverse mappings).
-- `withdrawWithMinipay(amount, minUsdmOut)` spends the caller's GPBRV and sends USDM to the linked MiniPay wallet.
+- `configure(minipay)` links the caller's main wallet to a MiniPay wallet (forward and reverse mappings). Reverts `MinipayAlreadyLinked` when that MiniPay belongs to someone else.
+- `configureFromMinipay(user)` is the mirror image, called *by* the MiniPay wallet — the only way to create the link from inside the MiniPay app. Reverts `UserAlreadyLinked` when that user is already linked to a different MiniPay.
+- `withdrawWithMinipay(amount, minUsdmOut)` spends the caller's GPBRV and sends USDM to the linked MiniPay wallet. Since it pulls GPBRV from the caller, it can only be sent by the main wallet.
 - `depositWithMinipay(amount, minGpbrvOut)` spends the MiniPay wallet's USDM and sends GPBRV to the linked main wallet.
 
 `withdrawWithMinipay` and `depositWithMinipay` revert with `NotConfigured` when no mapping exists for the caller.
+
+**Sarafu fee handling.** The two pool legs are not symmetric. GPBRV (6) → BRLM (18) uses the plain 3-arg `ISwapPool.withdraw`; BRLM (18) → GPBRV (6) must use the `withdraw(out, in, value, true)` deductFee overload, which takes the fee from the output token. The 3-arg form mixes fee units and reverts with `ERR_BALANCE` whenever the input token has more decimals than the output, so both deposit paths depend on the overload.
 
 ### Addresses (Celo mainnet)
 
@@ -187,6 +190,18 @@ bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts --network localFor
 bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts --network celo
 ```
 
+Redeploying on Celo needs a fresh `--deployment-id`, otherwise Ignition reconciles the
+existing `chain-42220` record as already deployed:
+
+```bash
+bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts \
+  --network celo \
+  --deployment-id gpbrv-swapper-v2 \
+  --default-sender 0x22682c3d3848294fF9bCBf3F0DDF48A605446B56
+
+bunx hardhat ignition verify gpbrv-swapper-v2
+```
+
 ### Scripts
 
 All GPBRVSwapper scripts read the deployed address from `GPBRV_SWAPPER_ADDRESS` and connect to `localFork` by default (override with `NETWORK=<name>`):
@@ -198,6 +213,7 @@ AMOUNT=1000000 MIN_USDM_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw-direct.ts
 AMOUNT=100000000000000000 MIN_GPBRV_OUT=0 USER_INDEX=0 bun scripts/gpbrv-deposit-direct.ts
 # MiniPay-linked
 CONFIGURE_MINIPAY=0x... USER_INDEX=0 bun scripts/gpbrv-configure.ts
+CONFIGURE_USER=0x... MINIPAY_INDEX=1 bun scripts/gpbrv-configure-from-minipay.ts
 AMOUNT=1000000 MIN_USDM_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw.ts
 AMOUNT=100000000000000000 MIN_GPBRV_OUT=0 MINIPAY_INDEX=1 bun scripts/gpbrv-deposit.ts
 ADDRESS=0x... bun scripts/gpbrv-read-state.ts

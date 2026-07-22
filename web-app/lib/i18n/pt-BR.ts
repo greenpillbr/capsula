@@ -142,10 +142,17 @@ export const ptBR: Translations = {
   "configure.removeCreatorPending": "Removendo…",
   "configure.removeCreatorSuccess": "Criador removido",
   "gpbrvSwap.tabConfigure": "Configurar",
-  "gpbrvSwap.tabWithdraw": "Sacar (MiniPay)",
-  "gpbrvSwap.tabDeposit": "Depositar (MiniPay)",
   "gpbrvSwap.tabSwapWithdraw": "Sacar",
   "gpbrvSwap.tabSwapDeposit": "Depositar",
+  "gpbrvSwap.tabMinipay": "MiniPay",
+  "gpbrvSwap.minipayTabDeposit": "Depositar",
+  "gpbrvSwap.minipayTabConfigure": "Configurar",
+  "gpbrvSwap.openInMinipayTitle": "Abra esta página no MiniPay",
+  "gpbrvSwap.openInMinipayBody":
+    "Esta seção só funciona dentro do navegador do app MiniPay, onde a carteira conectada é a sua MiniPay. Abra o MiniPay no celular e acesse este endereço:",
+  "gpbrvSwap.openInMinipayConfigureCta":
+    "Sua carteira ainda não tem um endereço MiniPay vinculado. Você pode vincular por aqui mesmo, pela carteira principal:",
+  "gpbrvSwap.openInMinipayConfigureLink": "Ir para Configurar",
   "gpbrvSwap.swapWithdrawTitle": "Sacar (GPBRV para USDM)",
   "gpbrvSwap.swapWithdrawDescription":
     "Gaste GPBRV da sua carteira e receba USDM na mesma carteira. Nenhuma configuração necessária.",
@@ -165,14 +172,22 @@ export const ptBR: Translations = {
   "gpbrvSwap.notConfiguredYet": "Nenhuma carteira MiniPay vinculada ao seu endereço ainda.",
   "gpbrvSwap.errorInvalidAddress": "Informe um endereço válido",
   "gpbrvSwap.errorInvalidAmount": "Informe um valor válido",
+  "gpbrvSwap.errorSameAddress":
+    "O endereço da carteira principal deve ser diferente da sua carteira MiniPay",
   "gpbrvSwap.saveButton": "Salvar vínculo",
   "gpbrvSwap.savePending": "Salvando…",
   "gpbrvSwap.saveSuccess": "Vinculado",
-  "gpbrvSwap.withdrawTitle": "Sacar (GPBRV para USDM)",
-  "gpbrvSwap.withdrawDescription":
-    "Gaste GPBRV da sua carteira; sua carteira MiniPay vinculada recebe USDM.",
-  "gpbrvSwap.notConfiguredWarningUser":
-    "Sua carteira não tem um endereço MiniPay vinculado. Vincule um na aba Configurar antes de sacar.",
+  "gpbrvSwap.configureFromMinipayTitle": "Vincule sua carteira principal",
+  "gpbrvSwap.configureFromMinipayDescription":
+    "Você está no MiniPay. Informe o endereço da sua carteira principal para receber GPBRV ao depositar por aqui.",
+  "gpbrvSwap.userAddress": "Endereço da carteira principal",
+  "gpbrvSwap.currentUser": "Carteira principal vinculada",
+  "gpbrvSwap.notConfiguredYetMinipay":
+    "Nenhuma carteira principal vinculada a esta MiniPay ainda.",
+  "gpbrvSwap.sendToMinipayLabel":
+    "Enviar o USDM para minha carteira MiniPay vinculada",
+  "gpbrvSwap.sendToMinipayNotLinked":
+    "Disponível apenas com uma carteira MiniPay vinculada. Vincule na aba Configurar.",
   "gpbrvSwap.notConfiguredWarningMinipay":
     "Sua carteira não está registrada como MiniPay. O proprietário deve vinculá-la na aba Configurar antes de depositar.",
   "gpbrvSwap.amountGpbrv": "Valor (GPBRV)",

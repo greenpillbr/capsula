@@ -12,11 +12,16 @@ import {ISwapPool} from "../interfaces/ISwapPool.sol";
 contract MockSwapPool is ISwapPool {
     using SafeERC20 for IERC20;
 
+    /// @notice `deductFee` seen on the last swap; the 3-arg overload records `false`.
+    bool public lastDeductFee;
+
     function withdraw(address outToken, address inToken, uint256 value) external override {
+        lastDeductFee = false;
         _swap(outToken, inToken, value);
     }
 
-    function withdraw(address outToken, address inToken, uint256 value, bool) external override {
+    function withdraw(address outToken, address inToken, uint256 value, bool deductFee) external override {
+        lastDeductFee = deductFee;
         _swap(outToken, inToken, value);
     }
 
