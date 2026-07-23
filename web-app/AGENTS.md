@@ -49,9 +49,9 @@ Header nav: **Registrar presença**, **Resgatar**; settings menu links to GPBR a
 `Panel.tsx` is the shared section card.
 
 - The top-level nav link lives in `components/HeaderWrapper.tsx` (`navLinks`) and points at `/gpbrv-swap/configure`.
-- Contract bindings, token addresses, the `getGpbrvSwapperAddress()` env helper, and the `isGpbrvSwapEnabled()` feature flag helper are in `lib/contracts.ts`. The ABI exposes `deposit`/`withdraw` (single wallet), `depositWithMinipay`/`withdrawWithMinipay`, and both link entry points `configure`/`configureFromMinipay`.
-- Feature flag: `NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true` unblocks the swap routes (server `page.tsx`). Both Configure pages (main-wallet and MiniPay) are always available.
-- `NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS` supplies the deployed contract address; pages show a notice when it is unset.
+- Contract bindings, token addresses, the deployed `GPBRV_SWAPPER_ADDRESS` constant (exposed via the `getGpbrvSwapperAddress()` helper), and the `GPBRV_SWAP_ENABLED` feature flag (via `isGpbrvSwapEnabled()`) are in `lib/contracts.ts`. The ABI exposes `deposit`/`withdraw` (single wallet), `depositWithMinipay`/`withdrawWithMinipay`, and both link entry points `configure`/`configureFromMinipay`.
+- Feature flag: `GPBRV_SWAP_ENABLED` in `lib/contracts.ts` unblocks the swap routes (server `page.tsx`). Both Configure pages (main-wallet and MiniPay) are always available.
+- `GPBRV_SWAPPER_ADDRESS` in `lib/contracts.ts` holds the deployed contract address, alongside the other Celo addresses. Update it after redeploying the swapper.
 - The MiniPay deposit page shows an amber warning and disables inputs when the connected wallet is not registered (`minipayToUser`). Forms pre-fill the minimum-received field from a live on-chain Mento router quote, adjusted for the 5% Sarafu pool fee and 6% slippage buffer (editable). Quote logic lives in `app/gpbrv-swap/useEstimatedMin.ts`; Mento/BRLM addresses and ABIs are in `lib/contracts.ts`. The deposit estimate stays correct under the contract's `deductFee` swap: taking 5% off the BRLM input is proportionally identical to taking it off the GPBRV output.
 
 ## MiniPay

@@ -28,7 +28,7 @@ export const en: Translations = {
   "home.participate.title":
     "Want to participate? Join the GreenPillBR community meetings (Portuguese speaking)!",
   "home.participate.time": "⏰ Wednesday's at 5:30 PM to 7:00 PM (São Paulo time)",
-  "home.participate.meetLabel": "🔗 Link to the community meetings calendar:",
+  "home.participate.meetLabel": "🔗 Community meetings:",
   "home.resources.title": "Useful resources",
   "home.resources.onboarding": "Balaio Onboarding tasks",
   "home.resources.gardens": "Gardens community",
