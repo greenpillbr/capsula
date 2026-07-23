@@ -199,7 +199,7 @@ bunx hardhat ignition deploy ignition/modules/GPBRVSwapper.ts \
   --deployment-id gpbrv-swapper-v2 \
   --default-sender 0x22682c3d3848294fF9bCBf3F0DDF48A605446B56
 
-bunx hardhat ignition verify gpbrv-swapper-v2
+bunx hardhat ignition verify gpbrv-swapper-v2 --network celo
 ```
 
 ### Scripts
