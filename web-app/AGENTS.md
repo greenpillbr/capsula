@@ -33,24 +33,42 @@ Header nav: **Registrar presença**, **Resgatar**; settings menu links to GPBR a
 
 ## GPBRV Swap section
 
-`app/gpbrv-swap/` hosts the `GPBRVSwapper` UI. It uses a client `layout.tsx` that renders sub-navigation tabs and five routes (each a server `page.tsx` plus a client component):
+`app/gpbrv-swap/` hosts the `GPBRVSwapper` UI. A client `layout.tsx` renders **four** top-level tabs:
 
-- **Single-wallet (simpler) flow** — `swap-deposit`, `swap-withdraw`. Both use the shared `DirectSwapForm.tsx` and call the contract's `deposit` / `withdraw` (caller spends one token and receives the other in the same wallet). **No `configure` step is required.**
-- **MiniPay-linked flow** — `configure`, `withdraw`, `deposit`. Withdraw/Deposit use the shared `SwapForm.tsx` and call `withdrawWithMinipay` / `depositWithMinipay`, which require a prior `configure` link.
+| Tab | Route | Contract call |
+|---|---|---|
+| Depositar | `/gpbrv-swap/swap-deposit` | `deposit` |
+| Sacar | `/gpbrv-swap/swap-withdraw` | `withdraw`, or `withdrawWithMinipay` when the MiniPay checkbox is on |
+| Configurar | `/gpbrv-swap/configure` | `configure` |
+| MiniPay | `/gpbrv-swap/minipay/*` | see below |
+
+- **Single-wallet flow** — `swap-deposit` / `swap-withdraw` share `DirectSwapForm.tsx`. **No `configure` step is required.** In `withdraw` mode the form also offers a checkbox that redirects the USDM to the caller's linked MiniPay wallet by calling `withdrawWithMinipay` instead of `withdraw`; it is disabled until `userToMinipay[address]` is set. `withdrawWithMinipay` pulls GPBRV from the caller, so it can only be sent by the *main* wallet — that is why it lives here and not under the MiniPay tab.
+- **MiniPay tab** — `app/gpbrv-swap/minipay/` with a segmented sub-nav (`MinipayGate.tsx`) over `deposit` (`MinipayDepositForm.tsx` → `depositWithMinipay`) and `configure` (`ConfigureFromMinipay.tsx` → `configureFromMinipay`, where the input is the *main wallet* address). Both require the connected wallet to be the MiniPay wallet.
+- `MinipayGate.tsx` blocks the sub-section when `useIsMiniPay()` is `false`, showing how to open the page from inside MiniPay plus a link to `/gpbrv-swap/configure` when the wallet has no link yet. While detection is pending (`undefined`) it renders the children, so nobody sees a flash of the fallback.
 
 `Panel.tsx` is the shared section card.
 
 - The top-level nav link lives in `components/HeaderWrapper.tsx` (`navLinks`) and points at `/gpbrv-swap/configure`.
-- Contract bindings, token addresses, the `getGpbrvSwapperAddress()` env helper, and the `isGpbrvSwapEnabled()` feature flag helper are in `lib/contracts.ts`. The ABI exposes both `deposit`/`withdraw` (single wallet) and `depositWithMinipay`/`withdrawWithMinipay` (MiniPay).
-- Feature flag: `NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true` reveals all swap tabs except Configure (sub-layout) and unblocks those routes (server `page.tsx`). Configure is always available.
-- `NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS` supplies the deployed contract address; pages show a notice when it is unset.
-- The MiniPay Withdraw/Deposit pages show an amber warning and disable inputs when the connected wallet is not linked (`userToMinipay` for withdraw, `minipayToUser` for deposit). The single-wallet pages have no such gate. Both pre-fill the minimum-received field from a live on-chain Mento router quote, adjusted for the 5% Sarafu pool fee and 6% slippage buffer (editable). Quote logic lives in `app/gpbrv-swap/useEstimatedMin.ts`; Mento/BRLM addresses and ABIs are in `lib/contracts.ts`.
+- Contract bindings, token addresses, the deployed `GPBRV_SWAPPER_ADDRESS` constant (exposed via the `getGpbrvSwapperAddress()` helper), and the `GPBRV_SWAP_ENABLED` feature flag (via `isGpbrvSwapEnabled()`) are in `lib/contracts.ts`. The ABI exposes `deposit`/`withdraw` (single wallet), `depositWithMinipay`/`withdrawWithMinipay`, and both link entry points `configure`/`configureFromMinipay`.
+- Feature flag: `GPBRV_SWAP_ENABLED` in `lib/contracts.ts` unblocks the swap routes (server `page.tsx`). Both Configure pages (main-wallet and MiniPay) are always available.
+- `GPBRV_SWAPPER_ADDRESS` in `lib/contracts.ts` holds the deployed contract address, alongside the other Celo addresses. Update it after redeploying the swapper.
+- The MiniPay deposit page shows an amber warning and disables inputs when the connected wallet is not registered (`minipayToUser`). Forms pre-fill the minimum-received field from a live on-chain Mento router quote, adjusted for the 5% Sarafu pool fee and 6% slippage buffer (editable). Quote logic lives in `app/gpbrv-swap/useEstimatedMin.ts`; Mento/BRLM addresses and ABIs are in `lib/contracts.ts`. The deposit estimate stays correct under the contract's `deductFee` swap: taking 5% off the BRLM input is proportionally identical to taking it off the GPBRV output.
+
+## MiniPay
+
+MiniPay is a mobile-only in-app browser on Celo. Three pieces of plumbing support it:
+
+- **`lib/useIsMiniPay.ts`** — reads `window.ethereum?.isMiniPay` in an effect and returns `boolean | undefined`; `undefined` until the effect runs, so server render and first paint agree.
+- **`components/Providers.tsx`** — `MiniPayAutoConnect` connects the `injected` connector automatically when MiniPay is detected (the connection is implicit there). `lib/wagmi.ts` spells out the RainbowKit wallet list including `injectedWallet` so that connector always exists.
+- **`components/Header.tsx`** — hides the RainbowKit `ConnectButton` inside MiniPay, as the Celo docs require.
+
+`app/layout.tsx` exports an explicit `viewport` (`width=device-width, initialScale=1`). Swap inputs use `h-12 text-base` (16px avoids iOS focus zoom) and the tab row scrolls horizontally on narrow screens. Testing on a real device goes through MiniPay's **Site Tester** (Developer Settings) pointed at an ngrok tunnel — the Android emulator cannot be used.
 
 ## UI libraries
 
 ### shadcn/ui
 
-**Always read and follow the shadcn skill before creating, adding, composing, styling, or fixing UI components.** In Cursor, load the `shadcn` skill (`SKILL.md`) at the start of any UI task — do not hand-roll primitives or copy registry files from memory. Use the skill's workflow: check installed components (`bunx shadcn@latest info`), fetch docs (`bunx shadcn@latest docs <component>`), add via CLI, then compose using the documented patterns and critical rules.
+**Always read and follow the shadcn tooling before creating, adding, composing, styling, or fixing UI components** — do not hand-roll primitives or copy registry files from memory. In Cursor, load the `shadcn` skill (`SKILL.md`) at the start of any UI task; in Claude Code the equivalent is the `shadcn` MCP server declared in the repo-root `.mcp.json`. Either way use the same workflow: check installed components (`bunx shadcn@latest info`), fetch docs (`bunx shadcn@latest docs <component>`), add via CLI, then compose using the documented patterns and critical rules.
 
 UI primitives live under `components/ui/`. Configuration is in `components.json` (style: **base-nova**, RSC enabled, CSS variables in `app/globals.css`).
 

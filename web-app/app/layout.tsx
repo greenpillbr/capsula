@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 
 import { Footer } from "@/components/Footer";
@@ -13,6 +13,13 @@ const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
+
+// MiniPay is a mobile in-app browser; pin the viewport so the swap pages render at
+// device width instead of a desktop-sized canvas.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();

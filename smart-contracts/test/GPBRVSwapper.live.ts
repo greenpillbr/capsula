@@ -147,7 +147,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     );
   });
 
-  it("deposit (single wallet): caller USDM becomes GPBRV in the same wallet", { skip: true }, async () => {
+  it("deposit (single wallet): caller USDM becomes GPBRV in the same wallet", async () => {
     const testName = "deposit (single wallet)";
 
     const swapper = await deploySwapper();
@@ -238,7 +238,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     );
   });
 
-  it("depositWithMinipay: minipay USDM becomes GPBRV on the linked user", { skip: true }, async () => {
+  it("depositWithMinipay: minipay USDM becomes GPBRV on the linked user", async () => {
     const testName = "depositWithMinipay";
 
     const swapper = await deploySwapper();
@@ -247,8 +247,12 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     await seedToken(USDM_ADDRESS, usdmWhale!, minipay.account.address, DEPOSIT_AMOUNT);
     logStep(testName, 2, 7, `seeded ${DEPOSIT_AMOUNT} USDM to minipay`);
 
-    await swapper.write.configure([minipay.account.address]);
-    logStep(testName, 3, 7, `configured minipay ${minipay.account.address}`);
+    // Link from the MiniPay side, the only option for a user browsing inside MiniPay.
+    const swapperForLink = await viem.getContractAt("GPBRVSwapper", swapper.address, {
+      client: { wallet: minipay },
+    });
+    await swapperForLink.write.configureFromMinipay([owner.account.address]);
+    logStep(testName, 3, 7, `configureFromMinipay linked user ${owner.account.address}`);
 
     const approveHash = await minipay.writeContract({
       address: USDM_ADDRESS,

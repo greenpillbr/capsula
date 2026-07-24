@@ -39,8 +39,14 @@ export const GOOD_DOLLAR_DISTRIBUTOR: DistributorToken = {
 export const ZERO_ADDRESS =
   "0x0000000000000000000000000000000000000000" as const;
 
-// GPBRVSwapper bindings. The deployed swapper address is environment-driven so the
-// same build can target a local anvil fork or Celo mainnet.
+// GPBRVSwapper bindings. Deployed on Celo mainnet via
+// smart-contracts/ignition/modules/GPBRVSwapper.ts — update after redeploying.
+export const GPBRV_SWAPPER_ADDRESS =
+  "0x7A267B904F3B97551c5C4F4821Cd29f08C380202" as const;
+
+/** Feature flag that unblocks the GPBRV swap routes. */
+export const GPBRV_SWAP_ENABLED = true;
+
 export const GPBRV_ADDRESS =
   "0x6ec3d6e693526108990c6d5cbd2195e051321d32" as const;
 
@@ -69,12 +75,11 @@ export const SLIPPAGE_BPS = BigInt(600);
 export const BPS_DENOMINATOR = BigInt(10_000);
 
 export function getGpbrvSwapperAddress(): `0x${string}` | undefined {
-  const value = (process.env.NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS ?? "").trim();
-  return /^0x[0-9a-fA-F]{40}$/.test(value) ? (value as `0x${string}`) : undefined;
+  return GPBRV_SWAPPER_ADDRESS;
 }
 
 export function isGpbrvSwapEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_GPBRV_SWAP === "true";
+  return GPBRV_SWAP_ENABLED;
 }
 
 export const ADMIN_WHITELIST = new Set(
@@ -200,6 +205,13 @@ export const gpbrvSwapperAbi = [
     type: "function",
     name: "configure",
     inputs: [{ name: "minipay", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "configureFromMinipay",
+    inputs: [{ name: "user", type: "address" }],
     outputs: [],
     stateMutability: "nonpayable",
   },

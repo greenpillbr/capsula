@@ -8,7 +8,13 @@ Next.js web UI for Capsula `TokenDistributor` contracts on Celo (GPBR attendance
 - **Claim** (`/resgatar`) — Claim Good Dollar (G$) from the latest distribution.
 - **Create Distribution** (`/create-distribution/gpbr`, `/create-distribution/good-dollar`) — Fund a distributor contract and create distributions (whitelisted wallets only). Tabbed subpages per token.
 - **Configure** (`/configure/gpbr`, `/configure/good-dollar`) — Contract config and creator allowlist per token (authorized wallets only).
-- **GPBRV Swap** (`/gpbrv-swap/*`) — Link a MiniPay wallet (`configure`), and swap GPBRV to USDM (`withdraw`) or USDM to GPBRV (`deposit`) through the `GPBRVSwapper` contract. Withdraw and Deposit are gated behind the `NEXT_PUBLIC_ENABLE_GPBRV_SWAP` feature flag and show a warning when the connected wallet is not linked.
+- **GPBRV Swap** (`/gpbrv-swap/*`) — Four tabs over the `GPBRVSwapper` contract:
+  - `/gpbrv-swap/swap-deposit` — spend USDM, receive GPBRV in the same wallet.
+  - `/gpbrv-swap/swap-withdraw` — spend GPBRV, receive USDM in the same wallet; optionally send the USDM to a linked MiniPay wallet instead.
+  - `/gpbrv-swap/configure` — link a MiniPay wallet from your main wallet.
+  - `/gpbrv-swap/minipay/*` — the MiniPay-only section (deposit + link your main wallet). Usable only inside the MiniPay in-app browser; elsewhere it explains how to get there.
+
+  The swap routes are gated behind the `NEXT_PUBLIC_ENABLE_GPBRV_SWAP` feature flag; both Configure pages are always available.
 
 Interactive routes use a server `page.tsx` for static translated shell and a client sibling for wallet/forms (e.g. `app/claim/ClaimForm.tsx`, `app/configure/Configure.tsx`).
 

@@ -132,9 +132,98 @@ describe("GPBRVSwapper", async function () {
     });
   });
 
+  describe("configureFromMinipay", () => {
+    it("stores both forward and reverse mappings", async () => {
+      const { swapper } = await deployFixture();
+      const swapperAsMinipay = await asWallet("GPBRVSwapper", swapper, minipay);
+
+      await swapperAsMinipay.write.configureFromMinipay([user.account.address]);
+
+      assert.equal(
+        (await swapper.read.userToMinipay([user.account.address])).toLowerCase(),
+        minipay.account.address.toLowerCase(),
+      );
+      assert.equal(
+        (await swapper.read.minipayToUser([minipay.account.address])).toLowerCase(),
+        user.account.address.toLowerCase(),
+      );
+    });
+
+    it("reverts on zero address", async () => {
+      const { swapper } = await deployFixture();
+      const swapperAsMinipay = await asWallet("GPBRVSwapper", swapper, minipay);
+
+      await viem.assertions.revertWithCustomError(
+        swapperAsMinipay.write.configureFromMinipay(["0x0000000000000000000000000000000000000000"]),
+        swapper,
+        "InvalidAddress",
+      );
+    });
+
+    it("reverts when linking a user equal to the caller", async () => {
+      const { swapper } = await deployFixture();
+      const swapperAsMinipay = await asWallet("GPBRVSwapper", swapper, minipay);
+
+      await viem.assertions.revertWithCustomError(
+        swapperAsMinipay.write.configureFromMinipay([minipay.account.address]),
+        swapper,
+        "InvalidAddress",
+      );
+    });
+
+    it("reverts when the user is already linked to another minipay", async () => {
+      const { swapper } = await deployFixture();
+      const swapperAsUser = await asWallet("GPBRVSwapper", swapper, user);
+      const swapperAsStranger = await asWallet("GPBRVSwapper", swapper, stranger);
+
+      await swapperAsUser.write.configure([minipay.account.address]);
+
+      await viem.assertions.revertWithCustomError(
+        swapperAsStranger.write.configureFromMinipay([user.account.address]),
+        swapper,
+        "UserAlreadyLinked",
+      );
+    });
+
+    it("clears the previous forward mapping when re-configuring", async () => {
+      const { swapper } = await deployFixture();
+      const swapperAsMinipay = await asWallet("GPBRVSwapper", swapper, minipay);
+
+      await swapperAsMinipay.write.configureFromMinipay([user.account.address]);
+      await swapperAsMinipay.write.configureFromMinipay([stranger.account.address]);
+
+      assert.equal(
+        await swapper.read.userToMinipay([user.account.address]),
+        "0x0000000000000000000000000000000000000000",
+      );
+      assert.equal(
+        (await swapper.read.userToMinipay([stranger.account.address])).toLowerCase(),
+        minipay.account.address.toLowerCase(),
+      );
+    });
+
+    it("is accepted by depositWithMinipay as a valid link", async () => {
+      const { gpbrv, usdm, swapper } = await deployFixture();
+      const swapperAsMinipay = await asWallet("GPBRVSwapper", swapper, minipay);
+      const usdmAsMinipay = await asWallet("MockERC20", usdm, minipay);
+
+      await swapperAsMinipay.write.configureFromMinipay([user.account.address]);
+      await usdmAsMinipay.write.approve([swapper.address, DEPOSIT_AMOUNT]);
+
+      const userBefore = await gpbrv.read.balanceOf([user.account.address]);
+
+      await swapperAsMinipay.write.depositWithMinipay([DEPOSIT_AMOUNT, 0n]);
+
+      assert.equal(
+        (await gpbrv.read.balanceOf([user.account.address])) - userBefore,
+        EXPECTED_GPBRV_OUT,
+      );
+    });
+  });
+
   describe("withdraw (single wallet)", () => {
     it("converts the caller's GPBRV into USDM sent back to the caller", async () => {
-      const { gpbrv, usdm, swapper } = await deployFixture();
+      const { gpbrv, pool, usdm, swapper } = await deployFixture();
       const swapperAsUser = await asWallet("GPBRVSwapper", swapper, user);
       const gpbrvAsUser = await asWallet("MockERC20", gpbrv, user);
 
@@ -153,6 +242,8 @@ describe("GPBRVSwapper", async function () {
         (await usdm.read.balanceOf([user.account.address])) - usdmBefore,
         EXPECTED_USDM_OUT,
       );
+      // GPBRV (6) -> BRLM (18) keeps the plain 3-arg pool withdraw.
+      assert.equal(await pool.read.lastDeductFee(), false);
     });
 
     it("works without any minipay configuration", async () => {
@@ -188,7 +279,7 @@ describe("GPBRVSwapper", async function () {
 
   describe("deposit (single wallet)", () => {
     it("converts the caller's USDM into GPBRV sent back to the caller", async () => {
-      const { gpbrv, usdm, swapper } = await deployFixture();
+      const { gpbrv, pool, usdm, swapper } = await deployFixture();
       const swapperAsMinipay = await asWallet("GPBRVSwapper", swapper, minipay);
       const usdmAsMinipay = await asWallet("MockERC20", usdm, minipay);
 
@@ -207,6 +298,8 @@ describe("GPBRVSwapper", async function () {
         (await gpbrv.read.balanceOf([minipay.account.address])) - gpbrvBefore,
         EXPECTED_GPBRV_OUT,
       );
+      // BRLM (18) -> GPBRV (6) must take the deductFee overload.
+      assert.equal(await pool.read.lastDeductFee(), true);
     });
 
     it("reverts when minGpbrvOut exceeds the swap output", async () => {
@@ -295,7 +388,7 @@ describe("GPBRVSwapper", async function () {
 
   describe("depositWithMinipay", () => {
     it("converts minipay USDM into GPBRV sent to the linked user", async () => {
-      const { gpbrv, usdm, swapper } = await deployFixture();
+      const { gpbrv, pool, usdm, swapper } = await deployFixture();
       const swapperAsUser = await asWallet("GPBRVSwapper", swapper, user);
       const swapperAsMinipay = await asWallet("GPBRVSwapper", swapper, minipay);
       const usdmAsMinipay = await asWallet("MockERC20", usdm, minipay);
@@ -316,6 +409,8 @@ describe("GPBRVSwapper", async function () {
         (await gpbrv.read.balanceOf([user.account.address])) - userBefore,
         EXPECTED_GPBRV_OUT,
       );
+      // BRLM (18) -> GPBRV (6) must take the deductFee overload.
+      assert.equal(await pool.read.lastDeductFee(), true);
     });
 
     it("reverts when the sender is not a registered minipay", async () => {

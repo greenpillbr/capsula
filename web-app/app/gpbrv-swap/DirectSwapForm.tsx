@@ -20,6 +20,7 @@ import {
   GPBRV_DECIMALS,
   USDM_ADDRESS,
   USDM_DECIMALS,
+  ZERO_ADDRESS,
   getGpbrvSwapperAddress,
   gpbrvSwapperAbi,
 } from "@/lib/contracts";
@@ -33,6 +34,7 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
   const [amount, setAmount] = useState("");
   const [minOverride, setMinOverride] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [sendToMinipay, setSendToMinipay] = useState(false);
 
   const {
     estimatedMin,
@@ -59,6 +61,19 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
     args: address ? [address] : undefined,
     query: { enabled: !!address },
   });
+
+  // Withdraw only: a linked MiniPay wallet unlocks `withdrawWithMinipay`, which sends the
+  // USDM there instead of back to the caller.
+  const { data: linkedMinipay } = useReadContract({
+    address: swapper,
+    abi: gpbrvSwapperAbi,
+    functionName: "userToMinipay",
+    args: address ? [address] : undefined,
+    query: { enabled: !!swapper && !!address && isWithdraw },
+  });
+
+  const minipayRecipient =
+    linkedMinipay && linkedMinipay !== ZERO_ADDRESS ? linkedMinipay : undefined;
 
   const parsedAmount = useMemo(() => {
     try {
@@ -146,10 +161,15 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
       setFormError(t("gpbrvSwap.errorInvalidAmount"));
       return;
     }
+    const useMinipay = isWithdraw && sendToMinipay && !!minipayRecipient;
     writeAction({
       address: swapper!,
       abi: gpbrvSwapperAbi,
-      functionName: isWithdraw ? "withdraw" : "deposit",
+      functionName: isWithdraw
+        ? useMinipay
+          ? "withdrawWithMinipay"
+          : "withdraw"
+        : "deposit",
       args: [parsedAmount, minOut],
     });
   }
@@ -177,6 +197,34 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
         </span>
       </p>
 
+      {isWithdraw && (
+        <div className="mb-4 rounded-lg border border-gray-200 p-3">
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={sendToMinipay}
+              disabled={!minipayRecipient}
+              onChange={(e) => setSendToMinipay(e.target.checked)}
+              className="mt-0.5 size-4 shrink-0 accent-green-600 disabled:opacity-50"
+            />
+            <span className={minipayRecipient ? "text-gray-700" : "text-gray-400"}>
+              {t("gpbrvSwap.sendToMinipayLabel")}
+            </span>
+          </label>
+          {sendToMinipay && minipayRecipient && (
+            <p className="mt-2 break-all text-xs text-gray-600">
+              {t("gpbrvSwap.recipientMinipay")}:{" "}
+              <span className="font-medium">{minipayRecipient}</span>
+            </p>
+          )}
+          {!minipayRecipient && (
+            <p className="mt-2 text-xs text-gray-500">
+              {t("gpbrvSwap.sendToMinipayNotLinked")}
+            </p>
+          )}
+        </div>
+      )}
+
       <label className="mb-2 block text-sm font-medium" htmlFor="swap-amount">
         {isWithdraw ? t("gpbrvSwap.amountGpbrv") : t("gpbrvSwap.amountUsdm")}
       </label>
@@ -190,7 +238,7 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
           setMinOverride(null);
           setFormError(null);
         }}
-        className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+        className="mb-4 h-12 w-full rounded-lg border border-gray-300 px-3 text-base focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
       />
 
       <QuoteSummary
@@ -216,7 +264,7 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
           setMinOverride(e.target.value);
           setFormError(null);
         }}
-        className="mb-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+        className="mb-1 h-12 w-full rounded-lg border border-gray-300 px-3 text-base focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
       />
       <p className="mb-4 text-xs text-gray-500">{t("gpbrvSwap.slippageNote")}</p>
 
