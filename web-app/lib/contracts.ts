@@ -44,6 +44,9 @@ export const ZERO_ADDRESS =
 export const GPBRV_SWAPPER_ADDRESS =
   "0x126514F2A10e8B10F70c66aeFE9886C7129a727D" as const;
 
+/** Feature flag that unblocks the GPBRV swap routes. */
+export const GPBRV_SWAP_ENABLED = true;
+
 export const GPBRV_ADDRESS =
   "0x6ec3d6e693526108990c6d5cbd2195e051321d32" as const;
 
