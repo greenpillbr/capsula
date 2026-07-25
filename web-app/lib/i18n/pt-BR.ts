@@ -5,12 +5,10 @@ export const ptBR: Translations = {
   "meta.description":
     "Interface de administração para distribuições Capsula Attendance na Celo",
   "nav.home": "Início",
-  "nav.createDistribution": "Criar distribuição",
   "nav.registerAttendance": "Registrar presença",
   "nav.claim": "Resgatar",
   "nav.configure": "Configurar",
   "nav.gpbrvSwap": "Swap GPBRV",
-  "nav.settingsMenu": "Menu de configurações",
   "nav.tools": "Ferramentas",
   "nav.empaticTech": "Desanuveador Tech Empático",
   "nav.empaticTechTooltip":
@@ -24,9 +22,22 @@ export const ptBR: Translations = {
   "common.success": "Sucesso",
   "common.tryAgain": "Tentar novamente",
   "home.title": "O que é a capsula?",
-  "home.intro": "É a interface das atividades on-chain da comunidade GreenPillBR",
+  "home.tagline":
+    "Framework customizável para gerenciamento de comunidades com poder descentralizado.",
+  "home.selectCommunity": "Escolha sua comunidade",
+  "home.switchCommunity": "Trocar comunidade",
+  "community.notDeployed":
+    "Este recurso ainda não foi implantado para esta comunidade.",
+  "community.greenpillbr.description":
+    "Comunidade online para organizar ações de regeneração, economia solidária e descentralização",
+  "community.greenpillbr.intro":
+    "É a interface das atividades on-chain da comunidade GreenPillBR",
+  "community.grow.description":
+    "Empresa decentralizada habilitadora de frameworks de governança, mrv e desenvolvimento rural inteligente",
+  "community.grow.intro":
+    "É a interface das atividades on-chain da GrowEcossistemas",
   "home.participate.title":
-    "Quer participar? Compareça nos encontros da comunidade GreenPillBR!",
+    "Quer participar? Compareça nos encontros da comunidade!",
   "home.participate.time": "⏰ As quartas-feiras das 17h30 às 19h00 (horário de São Paulo)",
   "home.participate.meetLabel": "🔗 Sala dos encontros:",
   "home.resources.title": "Recursos úteis",
@@ -73,8 +84,6 @@ export const ptBR: Translations = {
   "claim.buttonLabel": "Resgatar distribuição",
   "claim.buttonPending": "Resgatando…",
   "claim.buttonSuccess": "Resgatado",
-  "createDistribution.tabGpbr": "GPBR",
-  "createDistribution.tabGoodDollar": "Good Dollar",
   "createDistribution.title": "Criar distribuição",
   "createDistribution.connectWallet":
     "Conecte sua carteira para acessar esta página.",
@@ -105,8 +114,6 @@ export const ptBR: Translations = {
   "createDistribution.createButton": "Criar distribuição",
   "createDistribution.createButtonPending": "Criando…",
   "createDistribution.createButtonSuccess": "Distribuição criada",
-  "configure.tabGpbr": "GPBR",
-  "configure.tabGoodDollar": "Good Dollar",
   "configure.title": "Configurar",
   "configure.connectWallet":
     "Conecte sua carteira para acessar esta página.",
@@ -161,9 +168,7 @@ export const ptBR: Translations = {
     "Gaste a stablecoin escolhida da sua carteira e receba GPBRV na mesma carteira. Nenhuma configuração necessária.",
   "gpbrvSwap.connectWallet": "Conecte sua carteira para acessar esta página.",
   "gpbrvSwap.notDeployed":
-    "O endereço do GPBRVSwapper não está configurado. Defina NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS.",
-  "gpbrvSwap.featureDisabled":
-    "Esta página está desabilitada. Defina NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true para habilitá-la.",
+    "O endereço do GPBRVSwapper não está configurado para esta comunidade.",
   "gpbrvSwap.configureTitle": "Vincule sua carteira MiniPay",
   "gpbrvSwap.configureDescription":
     "Armazene o endereço MiniPay que deve receber USDM ao sacar e gastar USDM ao depositar. Este vínculo é necessário antes de sacar ou depositar.",

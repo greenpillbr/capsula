@@ -5,12 +5,10 @@ export const en: Translations = {
   "meta.description":
     "Admin UI for Capsula Attendance distributions on Celo",
   "nav.home": "Home",
-  "nav.createDistribution": "Create Distribution",
   "nav.registerAttendance": "Register attendance",
   "nav.claim": "Claim",
   "nav.configure": "Configure",
   "nav.gpbrvSwap": "GPBRV Swap",
-  "nav.settingsMenu": "Settings menu",
   "nav.tools": "Tools",
   "nav.empaticTech": "Desanuveador Tech Empático",
   "nav.empaticTechTooltip":
@@ -24,9 +22,22 @@ export const en: Translations = {
   "common.success": "Success",
   "common.tryAgain": "Try again",
   "home.title": "What is Capsula?",
-  "home.intro": "It is the on-chain activities interface of the GreenPillBR community",
+  "home.tagline":
+    "A customizable framework for community management with decentralized power.",
+  "home.selectCommunity": "Choose your community",
+  "home.switchCommunity": "Switch community",
+  "community.notDeployed":
+    "This feature has not been deployed for this community yet.",
+  "community.greenpillbr.description":
+    "Online community organizing regeneration, solidarity economy and decentralization initiatives",
+  "community.greenpillbr.intro":
+    "It is the on-chain activities interface of the GreenPillBR community",
+  "community.grow.description":
+    "Decentralized company enabling governance, MRV and smart rural development frameworks",
+  "community.grow.intro":
+    "It is the on-chain activities interface of GrowEcossistemas",
   "home.participate.title":
-    "Want to participate? Join the GreenPillBR community meetings (Portuguese speaking)!",
+    "Want to participate? Join the community meetings (Portuguese speaking)!",
   "home.participate.time": "⏰ Wednesday's at 5:30 PM to 7:00 PM (São Paulo time)",
   "home.participate.meetLabel": "🔗 Community meetings:",
   "home.resources.title": "Useful resources",
@@ -71,8 +82,6 @@ export const en: Translations = {
   "claim.buttonLabel": "Claim distribution",
   "claim.buttonPending": "Claiming…",
   "claim.buttonSuccess": "Claimed",
-  "createDistribution.tabGpbr": "GPBR",
-  "createDistribution.tabGoodDollar": "Good Dollar",
   "createDistribution.title": "Create Distribution",
   "createDistribution.connectWallet":
     "Connect your wallet to access this page.",
@@ -103,8 +112,6 @@ export const en: Translations = {
   "createDistribution.createButton": "Create distribution",
   "createDistribution.createButtonPending": "Creating…",
   "createDistribution.createButtonSuccess": "Distribution created",
-  "configure.tabGpbr": "GPBR",
-  "configure.tabGoodDollar": "Good Dollar",
   "configure.title": "Configure",
   "configure.connectWallet": "Connect your wallet to access this page.",
   "configure.notAuthorized":
@@ -158,9 +165,7 @@ export const en: Translations = {
     "Spend the chosen stablecoin from your wallet and receive GPBRV in the same wallet. No setup required.",
   "gpbrvSwap.connectWallet": "Connect your wallet to access this page.",
   "gpbrvSwap.notDeployed":
-    "The GPBRVSwapper address is not configured. Set NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS.",
-  "gpbrvSwap.featureDisabled":
-    "This page is disabled. Set NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true to enable it.",
+    "The GPBRVSwapper address is not configured for this community.",
   "gpbrvSwap.configureTitle": "Link your MiniPay wallet",
   "gpbrvSwap.configureDescription":
     "Store the MiniPay address that should receive USDM on withdraw and spend USDM on deposit. This link is required before withdrawing or depositing.",

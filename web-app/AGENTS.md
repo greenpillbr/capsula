@@ -8,6 +8,44 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **Always read `AGENTS.md` and `README.md` at the start of a task** that touches structure, naming, pages, or setup. When you rename files, add pages, or change conventions, **update both files** so they stay accurate.
 
+## Multi-tenant communities
+
+The app is multi-tenant: **every routed page lives under an `app/[community]/` segment**, and the first path segment names the instance (`/greenpillbr/registrar-presenca`, `/grow/registrar-presenca`). There is no cookie or env var — **the URL is the only source of truth** for which community is active.
+
+### The config module — `lib/communities.ts`
+
+One entry per community in `COMMUNITIES`; adding a third is a data change, not a code change. Each `CommunityConfig` carries:
+
+| Field | Purpose |
+|---|---|
+| `slug` | URL segment |
+| `name` | brand name, deliberately **not** translated |
+| `logo` | path under `public/communities/` |
+| `descriptionKey` | `TranslationKey` for the selector card |
+| `features` | which of `attendance` / `redeem` / `swap` / `tools` are on |
+| `contracts` | `attendance`, `redeem` (`DistributorToken \| null`), `swapper` (`0x… \| null`) — `null` means *not deployed yet* |
+| `home` | `introKey`, optional `meetUrl`, `resources[]` |
+| `tools` | external links for the **Ferramentas** dropdown |
+
+Also exported: `COMMUNITY_SLUGS`, `DEFAULT_COMMUNITY_SLUG`, `getCommunity()`, `hasFeature()`, `communitySlugFromPathname()`, and `FEATURE_NAV` (feature → route segment + nav label key, shared by the header and the route guards so they cannot drift).
+
+The module must stay importable from **both** server and client components — no `next/headers`, no server-only imports. It composes the addresses out of `lib/contracts.ts`, which remains the single place addresses are edited.
+
+Current instances: **greenpillbr** (all four features) and **grow** (`attendance` only, all contracts `null`).
+
+### Feature gating and undeployed contracts
+
+- Every page under `[community]` starts with `getCommunity(slug)` → `notFound()` when the slug is unknown **or** the feature is off. So `/grow/resgatar` is a 404.
+- When the feature is on but its contract is `null`, the page renders `NotDeployedNotice` (`community.notDeployed`) instead of the form and makes **no on-chain reads**. That is what `/grow/registrar-presenca` shows today.
+
+### Chrome: root layout vs `AppShell`
+
+`app/layout.tsx` cannot read a nested segment's params, so it holds only `<html>`, fonts, `viewport`, metadata and `Providers`. The header/`<main>`/footer chrome lives in **`components/AppShell.tsx`**, rendered by `app/[community]/layout.tsx` (with that community's header) and by `app/page.tsx` (with `community={null}`). `HeaderWrapper` takes a `CommunityConfig | null` and builds the nav from `features` + `FEATURE_NAV`; `Header` renders no `<nav>` at all when both nav and tools are empty.
+
+### Legacy URLs
+
+`next.config.ts` redirects the old un-prefixed paths (`/registrar-presenca`, `/resgatar`, `/gpbrv-swap/*`, `/configure/*`, `/create-distribution/*`) to the `greenpillbr` instance, because MiniPay Site Tester URLs and shared links are configured outside this repo. That file is transpiled **without** the `@/*` aliases, so its `DEFAULT_COMMUNITY_SLUG` is a hand-synced copy of the one in `lib/communities.ts`.
+
 ## TokenDistributor (dual instances)
 
 The app talks to two `TokenDistributor` deployments on Celo:
@@ -15,46 +53,51 @@ The app talks to two `TokenDistributor` deployments on Celo:
 - **GPBR** — `ATTENDANCE_ADDRESS` in `lib/contracts.ts` (legacy Attendance deployment; same ABI).
 - **Good Dollar (G$)** — `TOKEN_DISTRIBUTOR_ADDRESS` in `lib/contracts.ts` (deploy via `smart-contracts/ignition/modules/TokenDistributor.ts`).
 
-`lib/contracts.ts` exports `DistributorToken`, `GPBR_DISTRIBUTOR`, and `GOOD_DOLLAR_DISTRIBUTOR` (contract address, reward token, decimals, symbol). Shared ABI: `attendanceAbi`.
+`lib/contracts.ts` exports `DistributorToken`, `GPBR_DISTRIBUTOR`, and `GOOD_DOLLAR_DISTRIBUTOR` (contract address, reward token, decimals, symbol). Shared ABI: `attendanceAbi`. Communities point at these through `contracts.attendance` / `contracts.redeem`.
 
 ### Claim routes
 
-- `/registrar-presenca` — GPBR attendance (`ClaimForm` + `registerAttendance.*` i18n keys).
-- `/resgatar` — Good Dollar claim (`ClaimForm` + `resgatar.*` keys).
-- Shared form: `app/claim/ClaimForm.tsx`.
+- `/[community]/registrar-presenca` — attendance, gated on the `attendance` feature (`ClaimForm` + `registerAttendance.*` i18n keys).
+- `/[community]/resgatar` — Good Dollar claim, gated on the `redeem` feature (`ClaimForm` + `resgatar.*` keys).
+- Shared form: `app/claim/ClaimForm.tsx` (not a route — no `page.tsx`).
 
-### Admin routes (tabbed subpages)
+### Admin routes (one page per feature)
 
-- `/create-distribution/gpbr` and `/create-distribution/good-dollar` — `CreateDistributionPageClient` receives a `DistributorToken` and fund-description key.
-- `/configure/gpbr` and `/configure/good-dollar` — `Configure` receives a `DistributorToken`.
-- Root `/create-distribution` and `/configure` redirect to the GPBR tab.
+Admin is **owned by the feature it configures** — there is no header settings menu any more. Each claim page puts a `SettingsGearLink` (`components/SettingsGearLink.tsx`) next to its `<h1>`, pointing at its own admin page:
 
-Header nav: **Registrar presença**, **Resgatar**; settings menu links to GPBR admin tabs by default.
+- `/[community]/registrar-presenca/configurar` — the attendance distributor.
+- `/[community]/resgatar/configurar` — the redeem distributor.
+
+Each stacks both panel groups from `app/[community]/distributor-admin/` on one page, no tabs: `CreateDistributionPanels` (pool status, funding, create distribution — takes a `DistributorToken` + fund-description key) then `ConfigurePanels` (reward config, creator allowlist — takes a `DistributorToken`). Authorization is unchanged: static `ADMIN_WHITELIST` **or** on-chain `isCreator`/`owner`. The gear is visible to everyone; the panels themselves gate every action.
+
+Header nav is derived per community — for greenpillbr: **Registrar presença**, **Resgatar**, **Swap GPBRV**, **Ferramentas**.
 
 ## GPBRV Swap section
 
-`app/gpbrv-swap/` hosts the `GPBRVSwapper` UI. A client `layout.tsx` renders **four** top-level tabs:
+`app/[community]/gpbrv-swap/` hosts the `GPBRVSwapper` UI, gated on the community's `swap` feature. A **server** `layout.tsx` reads `params`, resolves the tab labels, and passes them to the client `SwapTabs.tsx` — four top-level tabs:
 
 | Tab | Route | Contract call |
 |---|---|---|
-| Depositar | `/gpbrv-swap/deposit` | `deposit` |
-| Sacar | `/gpbrv-swap/withdraw` | `withdraw`, or `withdrawWithMinipay` when the MiniPay checkbox is on |
-| Configurar | `/gpbrv-swap/configure` | `configure` |
-| MiniPay | `/gpbrv-swap/minipay/*` | see below |
+| Depositar | `/[community]/gpbrv-swap/deposit` | `deposit` |
+| Sacar | `/[community]/gpbrv-swap/withdraw` | `withdraw`, or `withdrawWithMinipay` when the MiniPay checkbox is on |
+| Configurar | `/[community]/gpbrv-swap/configure` | `configure` |
+| MiniPay | `/[community]/gpbrv-swap/minipay/*` | see below |
+
+**The swapper address is a prop, not a global.** Each server page passes `config.contracts.swapper ?? undefined` into `DirectSwapForm` / `ConfigureSwap` / `MinipayDepositForm` / `ConfigureFromMinipay` / `MinipayGate`, which render the `gpbrvSwap.notDeployed` panel when it is missing. There is no `getGpbrvSwapperAddress()` helper any more.
 
 - **Single-wallet flow** — `deposit` / `withdraw` share `DirectSwapForm.tsx`. **No `configure` step is required.** In `withdraw` mode the form also offers a checkbox that redirects the stablecoin to the caller's linked MiniPay wallet by calling `withdrawWithMinipay` instead of `withdraw`; it is disabled until `userToMinipay[address]` is set. `withdrawWithMinipay` pulls GPBRV from the caller, so it can only be sent by the *main* wallet — that is why it lives here and not under the MiniPay tab.
 - **Stablecoin selector** — deposit, withdraw, and the MiniPay deposit form all render `TokenSelector.tsx` to pick the stable side (USDM / USDC / USDT, from `SWAP_STABLES` in `lib/contracts.ts`, logos in `public/tokens/`). The selected stable's address is passed as the trailing arg to every `deposit`/`withdraw`/`*WithMinipay` call. USDC/USDT (6 decimals) route via the contract's 2-hop path; USDM (18) is single-hop.
 - **Slippage & minimum received** — the minimum-received field is read-only and computed from the live Mento quote minus the 5% Sarafu fee minus the slippage buffer. Slippage (default 5%, `SLIPPAGE_BPS`) is the editable knob via `SlippageControl.tsx` (gear icon → inline percent input). `useEstimatedMin` takes the selected stable and the slippage bps.
-- **MiniPay tab** — `app/gpbrv-swap/minipay/` with a segmented sub-nav (`MinipayGate.tsx`) over `deposit` (`MinipayDepositForm.tsx` → `depositWithMinipay`) and `configure` (`ConfigureFromMinipay.tsx` → `configureFromMinipay`, where the input is the *main wallet* address). Both require the connected wallet to be the MiniPay wallet.
-- `MinipayGate.tsx` blocks the sub-section when `useIsMiniPay()` is `false`, showing how to open the page from inside MiniPay plus a link to `/gpbrv-swap/configure` when the wallet has no link yet. While detection is pending (`undefined`) it renders the children, so nobody sees a flash of the fallback.
+- **MiniPay tab** — `app/[community]/gpbrv-swap/minipay/` with a segmented sub-nav (`MinipayGate.tsx`) over `deposit` (`MinipayDepositForm.tsx` → `depositWithMinipay`) and `configure` (`ConfigureFromMinipay.tsx` → `configureFromMinipay`, where the input is the *main wallet* address). Both require the connected wallet to be the MiniPay wallet.
+- `MinipayGate.tsx` blocks the sub-section when `useIsMiniPay()` is `false`, showing how to open the page from inside MiniPay plus a link to `/[community]/gpbrv-swap/configure` when the wallet has no link yet. It takes `communitySlug` so its sub-nav and that link stay inside the active community. While detection is pending (`undefined`) it renders the children, so nobody sees a flash of the fallback.
 
-`Panel.tsx` is the shared section card.
+`components/Panel.tsx` is the shared section card, used by the swap forms **and** the distributor-admin panels (it replaced the `Panel`/`MessagePanel` copies those files each carried). Omit `title` for a plain card.
 
-- The top-level nav link lives in `components/HeaderWrapper.tsx` (`navLinks`) and points at `/gpbrv-swap/configure`.
-- Contract bindings, token addresses, the deployed `GPBRV_SWAPPER_ADDRESS` constant (exposed via the `getGpbrvSwapperAddress()` helper), and the `GPBRV_SWAP_ENABLED` feature flag (via `isGpbrvSwapEnabled()`) are in `lib/contracts.ts`. The ABI exposes `deposit`/`withdraw` (single wallet), `depositWithMinipay`/`withdrawWithMinipay`, and both link entry points `configure`/`configureFromMinipay`.
-- Feature flag: `GPBRV_SWAP_ENABLED` in `lib/contracts.ts` unblocks the swap routes (server `page.tsx`). Both Configure pages (main-wallet and MiniPay) are always available.
+- The top-level nav link is derived from `FEATURE_NAV.swap` in `lib/communities.ts` and points at `/[community]/gpbrv-swap/configure`.
+- Contract bindings, token addresses, and the deployed `GPBRV_SWAPPER_ADDRESS` constant are in `lib/contracts.ts`; each community references it via `contracts.swapper`. The ABI exposes `deposit`/`withdraw` (single wallet), `depositWithMinipay`/`withdrawWithMinipay`, and both link entry points `configure`/`configureFromMinipay`.
+- Feature flag: the community's `swap` feature unblocks the routes (`GPBRV_SWAP_ENABLED` / `isGpbrvSwapEnabled()` are gone). The swap `layout.tsx` guards the whole sub-tree, so the Configure pages are gated too.
 - `GPBRV_SWAPPER_ADDRESS` in `lib/contracts.ts` holds the deployed contract address, alongside the other Celo addresses. Update it after redeploying the swapper.
-- The MiniPay deposit page shows an amber warning and disables inputs when the connected wallet is not registered (`minipayToUser`). Forms compute a **read-only** minimum-received field from a live on-chain Mento router quote, adjusted for the 5% Sarafu pool fee and the editable slippage buffer (default 5%, `SLIPPAGE_BPS`). Quote logic lives in `app/gpbrv-swap/useEstimatedMin.ts` (parametrized by the selected stable + slippage bps); Mento/BRLM/USDC/USDT addresses and ABIs are in `lib/contracts.ts`. For USDC/USDT the quote uses the 2-hop route BRLM↔USDM↔stable. The deposit estimate stays correct under the contract's `deductFee` swap: taking 5% off the BRLM input is proportionally identical to taking it off the GPBRV output.
+- The MiniPay deposit page shows an amber warning and disables inputs when the connected wallet is not registered (`minipayToUser`). Forms compute a **read-only** minimum-received field from a live on-chain Mento router quote, adjusted for the 5% Sarafu pool fee and the editable slippage buffer (default 5%, `SLIPPAGE_BPS`). Quote logic lives in `app/[community]/gpbrv-swap/useEstimatedMin.ts` (parametrized by the selected stable + slippage bps); Mento/BRLM/USDC/USDT addresses and ABIs are in `lib/contracts.ts`. For USDC/USDT the quote uses the 2-hop route BRLM↔USDM↔stable. The deposit estimate stays correct under the contract's `deductFee` swap: taking 5% off the BRLM input is proportionally identical to taking it off the GPBRV output.
 
 ## MiniPay
 
@@ -84,7 +127,7 @@ UI primitives live under `components/ui/`. Configuration is in `components.json`
 
 **Currently installed:** `button`, `card`, `dropdown-menu`, `separator`, `tooltip`.
 
-The home page (`app/page.tsx`) uses `HomeSection` for hero blocks and shadcn `Card` + `Separator` for the resources list.
+The community selector (`app/page.tsx`) uses `HomeSection` for the hero and shadcn `Card` + `CardDescription` for the community cards. The community home (`app/[community]/page.tsx`) uses `HomeSection` plus `Card` + `Separator` for the resources list.
 
 ### Icons
 
@@ -146,12 +189,12 @@ export default async function MyPage() {
 
 Use **`useTranslation()`** from `lib/i18n/LanguageProvider` only in client components (`"use client"`) that need interactivity, wagmi, or live locale updates (e.g. form validation messages, dynamic contract UI).
 
-**Pattern for interactive pages:** server `page.tsx` renders static translated shell (title, descriptions); a client sibling (e.g. `ClaimForm.tsx`, `Configure.tsx`) handles wallet/forms with `useTranslation()`.
+**Pattern for interactive pages:** server `page.tsx` renders static translated shell (title, descriptions); a client sibling (e.g. `ClaimForm.tsx`, `ConfigurePanels.tsx`) handles wallet/forms with `useTranslation()`.
 
 | Server (`getServerTranslations`) | Client (`useTranslation`) |
 |----------------------------------|---------------------------|
-| `app/page.tsx` | `app/claim/ClaimForm.tsx`, `app/configure/Configure.tsx`, etc. |
-| `app/*/page.tsx` (titles, static copy) | `components/Header.tsx` |
+| `app/page.tsx`, `app/[community]/**/page.tsx` | `app/claim/ClaimForm.tsx`, `app/[community]/distributor-admin/*Panels.tsx`, etc. |
+| `app/[community]/layout.tsx`, swap `layout.tsx` (tab labels) | `components/Header.tsx`, `SwapTabs.tsx` |
 | `components/HeaderWrapper.tsx` (nav labels) | `components/Providers.tsx`, `TxButton` |
 | `app/layout.tsx` (`generateMetadata`, `<html lang>`) | |
 
@@ -159,8 +202,8 @@ Use **`useTranslation()`** from `lib/i18n/LanguageProvider` only in client compo
 
 ### Components
 
-- **`HeaderWrapper`:** server component; resolves main nav, tools menu, and settings menu labels with `getServerTranslations()` and renders `Header`.
-- **`Header`:** client; **Registrar presença** and **Resgatar** nav links, **Ferramentas** tools dropdown (external links with shadcn `Tooltip`), settings **gear dropdown** (Create Distribution, Configure via shadcn `DropdownMenu` + react-icons), logo links home, pathname highlighting, PT/EN toggle, RainbowKit connect button. Uses `useTranslation()` for locale toggle and `nav.settingsMenu` aria-label.
+- **`HeaderWrapper`:** server component; takes `community: CommunityConfig | null`, resolves the per-community nav and tools-menu labels with `getServerTranslations()`, and renders `Header`.
+- **`Header`:** client; receives already-translated nav links and tools items as props and renders them only when non-empty (the selector page passes none), **Ferramentas** tools dropdown (external links with shadcn `Tooltip`), logo links to `/`, pathname highlighting, PT/EN toggle, RainbowKit connect button. Uses `useTranslation()` for the locale toggle and the logo aria-label. The settings gear now lives on the feature pages (`components/SettingsGearLink.tsx`), not here.
 - **`TxButton`:** client; receives all label strings as props (`label`, `pendingLabel`, `successLabel`, `errorLabel`) — no i18n hook inside.
 
 ### Untranslated strings

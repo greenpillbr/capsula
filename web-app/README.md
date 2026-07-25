@@ -1,26 +1,39 @@
 # Capsula Web App
 
-Next.js web UI for Capsula `TokenDistributor` contracts on Celo (GPBR attendance + Good Dollar rewards).
+Next.js web UI for Capsula: a customizable framework for community management with decentralized power, running on Celo.
+
+## Communities (multi-tenant)
+
+Capsula hosts several communities. `/` is the community selector; everything else lives under `/[community]/…`, and that first path segment is the only thing that decides which instance is active.
+
+| Community | Slug | Features |
+|---|---|---|
+| GreenPillBR | `greenpillbr` | Attendance, Resgatar, Swap, Ferramentas |
+| GrowEcossistemas | `grow` | Attendance (contract not deployed yet) |
+
+Instances are configured in **`lib/communities.ts`** — enabled features, contract addresses, logo, description, home content and tools links. Adding a community is a data change there plus a logo in `public/communities/` and two i18n strings. Addresses themselves stay in `lib/contracts.ts`.
 
 ## Pages
 
-- **Register attendance** (`/registrar-presenca`) — Register GPBR attendance for the latest distribution.
-- **Claim** (`/resgatar`) — Claim Good Dollar (G$) from the latest distribution.
-- **Create Distribution** (`/create-distribution/gpbr`, `/create-distribution/good-dollar`) — Fund a distributor contract and create distributions (whitelisted wallets only). Tabbed subpages per token.
-- **Configure** (`/configure/gpbr`, `/configure/good-dollar`) — Contract config and creator allowlist per token (authorized wallets only).
-- **GPBRV Swap** (`/gpbrv-swap/*`) — Four tabs over the `GPBRVSwapper` contract:
-  - `/gpbrv-swap/swap-deposit` — spend USDM, receive GPBRV in the same wallet.
-  - `/gpbrv-swap/swap-withdraw` — spend GPBRV, receive USDM in the same wallet; optionally send the USDM to a linked MiniPay wallet instead.
-  - `/gpbrv-swap/configure` — link a MiniPay wallet from your main wallet.
-  - `/gpbrv-swap/minipay/*` — the MiniPay-only section (deposit + link your main wallet). Usable only inside the MiniPay in-app browser; elsewhere it explains how to get there.
+- **Community selector** (`/`) — Capsula's pitch plus a card per community.
+- **Community home** (`/[community]`) — that community's intro, meeting info and useful links.
+- **Register attendance** (`/[community]/registrar-presenca`) — Register attendance for the latest distribution. Gear icon → `…/configurar`.
+- **Claim** (`/[community]/resgatar`) — Claim Good Dollar (G$) from the latest distribution. Gear icon → `…/configurar`.
+- **Distributor admin** (`/[community]/{registrar-presenca,resgatar}/configurar`) — Per feature, on one page: fund the contract, create distributions, set the reward config, and manage the creator allowlist (authorized wallets only).
+- **GPBRV Swap** (`/[community]/gpbrv-swap/*`) — Four tabs over the `GPBRVSwapper` contract:
+  - `/[community]/gpbrv-swap/deposit` — spend a stablecoin, receive GPBRV in the same wallet.
+  - `/[community]/gpbrv-swap/withdraw` — spend GPBRV, receive the stablecoin in the same wallet; optionally send it to a linked MiniPay wallet instead.
+  - `/[community]/gpbrv-swap/configure` — link a MiniPay wallet from your main wallet.
+  - `/[community]/gpbrv-swap/minipay/*` — the MiniPay-only section (deposit + link your main wallet). Usable only inside the MiniPay in-app browser; elsewhere it explains how to get there.
 
-  The swap routes are gated behind the `NEXT_PUBLIC_ENABLE_GPBRV_SWAP` feature flag; both Configure pages are always available.
+A route 404s when the community does not enable its feature; when the feature is on but the contract is still `null`, the page shows a "not deployed yet" notice instead of the form. The old un-prefixed URLs redirect to `greenpillbr` (see `next.config.ts`).
 
-Interactive routes use a server `page.tsx` for static translated shell and a client sibling for wallet/forms (e.g. `app/claim/ClaimForm.tsx`, `app/configure/Configure.tsx`).
+Interactive routes use a server `page.tsx` for the static translated shell and a client sibling for wallet/forms (e.g. `app/claim/ClaimForm.tsx`, `app/[community]/distributor-admin/ConfigurePanels.tsx`).
 
 ## Components
 
-- **`HeaderWrapper`** — Server component; resolves nav labels and renders **`Header`**.
+- **`AppShell`** — Server component; header + `<main>` + footer chrome, rendered below the root layout so the header can know the active community.
+- **`HeaderWrapper`** — Server component; takes a `CommunityConfig | null`, resolves that community's nav labels, and renders **`Header`**.
 - **`Header`** — Client component; navigation, locale toggle, RainbowKit connect button.
 
 See `AGENTS.md` for i18n conventions and full agent guidance.
@@ -39,16 +52,14 @@ bun dev
 | Variable | Description |
 |----------|-------------|
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project ID ([cloud.walletconnect.com](https://cloud.walletconnect.com)) |
-| `NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS` | Deployed `GPBRVSwapper` address. Required for the GPBRV Swap pages. |
-| `NEXT_PUBLIC_ENABLE_GPBRV_SWAP` | Set to `true` to enable the Withdraw and Deposit tabs/routes. Configure stays available regardless. |
 | `NEXT_PUBLIC_CELO_RPC_URL` | Optional RPC URL. By default it is used only as a fallback after public Celo (forno). |
 | `NEXT_PUBLIC_CELO_ANVIL` | When set, `NEXT_PUBLIC_CELO_RPC_URL` becomes the primary transport (e.g. `http://127.0.0.1:8545`), so the app hits a local anvil fork instead of public Celo. |
 
 ### Local fork testing
 
+Point a community's `contracts` at the fork deployment in `lib/communities.ts` (or edit the address in `lib/contracts.ts`), then:
+
 ```bash
-NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS=<deployed-on-fork> \
-NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true \
 NEXT_PUBLIC_CELO_ANVIL=1 \
 NEXT_PUBLIC_CELO_RPC_URL=http://127.0.0.1:8545 \
 bun dev
@@ -68,4 +79,4 @@ bun dev
 - Good Dollar / G$ (18 decimals): `0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`
 - GPBRV (6 decimals): `0x6ec3d6e693526108990c6d5cbd2195e051321d32`
 - USDM (18 decimals): `0x765de816845861e75a25fca122bb6898b8b1282a`
-- GPBRVSwapper: set via `NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS` (no fixed mainnet deployment yet)
+- GPBRVSwapper (`GPBRV_SWAPPER_ADDRESS`): `0x126514F2A10e8B10F70c66aeFE9886C7129a727D` — update in `lib/contracts.ts` after redeploying

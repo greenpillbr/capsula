@@ -4,8 +4,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { BR, US } from "country-flag-icons/react/3x2";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { HiOutlineCog6Tooth } from "react-icons/hi2";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -94,50 +93,6 @@ function ToolsMenu({
   );
 }
 
-function SettingsMenu({
-  settingsLabels,
-  isSettingsActive,
-  pathname,
-  router,
-  settingsMenuLabel,
-}: {
-  settingsLabels: NavLabel[];
-  isSettingsActive: boolean;
-  pathname: string;
-  router: ReturnType<typeof useRouter>;
-  settingsMenuLabel: string;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className={navLinkClass(isSettingsActive)}
-            aria-label={settingsMenuLabel}
-          />
-        }
-      >
-        <HiOutlineCog6Tooth className="size-5" aria-hidden />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuGroup>
-          {settingsLabels.map(({ href, label }) => (
-            <DropdownMenuItem
-              key={href}
-              className={pathname === href ? "text-green-600" : undefined}
-              onClick={() => router.push(href)}
-            >
-              {label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 function LanguageToggle() {
   const { locale, setLocale } = useTranslation();
 
@@ -170,32 +125,23 @@ function LanguageToggle() {
   );
 }
 
+/**
+ * `navLabels` and `toolsItems` are resolved per community by `HeaderWrapper`; both
+ * are empty on the community selector, where the header is just the logo and the
+ * locale/wallet controls.
+ */
 export function Header({
   navLabels,
-  settingsLabels,
   toolsMenuLabel,
   toolsItems,
 }: {
   navLabels: NavLabel[];
-  settingsLabels: NavLabel[];
   toolsMenuLabel: string;
   toolsItems: ToolsItem[];
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { t } = useTranslation();
   const isMiniPay = useIsMiniPay();
-  const isSettingsActive = settingsLabels.some(({ href }) => pathname === href);
-
-  const settingsMenu = (
-    <SettingsMenu
-      settingsLabels={settingsLabels}
-      isSettingsActive={isSettingsActive}
-      pathname={pathname}
-      router={router}
-      settingsMenuLabel={t("nav.settingsMenu")}
-    />
-  );
 
   return (
     <header className="border-b border-gray-200 bg-white">
@@ -212,23 +158,28 @@ export function Header({
                 priority
               />
             </Link>
-            <nav className="flex flex-wrap items-center gap-4 lg:flex-nowrap">
-              {navLabels.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={navLinkClass(pathname === href)}
-                >
-                  {label}
-                </Link>
-              ))}
-              <ToolsMenu toolsMenuLabel={toolsMenuLabel} toolsItems={toolsItems} />
-            </nav>
+            {(navLabels.length > 0 || toolsItems.length > 0) && (
+              <nav className="flex flex-wrap items-center gap-4 lg:flex-nowrap">
+                {navLabels.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={navLinkClass(pathname === href)}
+                  >
+                    {label}
+                  </Link>
+                ))}
+                {toolsItems.length > 0 && (
+                  <ToolsMenu
+                    toolsMenuLabel={toolsMenuLabel}
+                    toolsItems={toolsItems}
+                  />
+                )}
+              </nav>
+            )}
           </div>
-          <div className="shrink-0 md:hidden">{settingsMenu}</div>
         </div>
         <div className="flex w-full items-center justify-center gap-4 md:w-auto md:justify-end">
-          <div className="hidden shrink-0 md:block">{settingsMenu}</div>
           <LanguageToggle />
           {/* Inside MiniPay the connection is implicit; the Celo docs require hiding this. */}
           {!isMiniPay && <ConnectButton chainStatus="icon" showBalance={false} />}
