@@ -14,8 +14,8 @@ export default function GpbrvSwapLayout({
   const { t } = useTranslation();
 
   const tabs = [
-    { href: "/gpbrv-swap/swap-deposit", label: t("gpbrvSwap.tabSwapDeposit") },
-    { href: "/gpbrv-swap/swap-withdraw", label: t("gpbrvSwap.tabSwapWithdraw") },
+    { href: "/gpbrv-swap/deposit", label: t("gpbrvSwap.tabSwapDeposit") },
+    { href: "/gpbrv-swap/withdraw", label: t("gpbrvSwap.tabSwapWithdraw") },
     { href: "/gpbrv-swap/configure", label: t("gpbrvSwap.tabConfigure") },
     { href: "/gpbrv-swap/minipay/deposit", label: t("gpbrvSwap.tabMinipay") },
   ];

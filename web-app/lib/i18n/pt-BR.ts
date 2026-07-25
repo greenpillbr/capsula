@@ -153,12 +153,12 @@ export const ptBR: Translations = {
   "gpbrvSwap.openInMinipayConfigureCta":
     "Sua carteira ainda não tem um endereço MiniPay vinculado. Você pode vincular por aqui mesmo, pela carteira principal:",
   "gpbrvSwap.openInMinipayConfigureLink": "Ir para Configurar",
-  "gpbrvSwap.swapWithdrawTitle": "Sacar (GPBRV para USDM)",
+  "gpbrvSwap.swapWithdrawTitle": "Sacar (GPBRV para stablecoin)",
   "gpbrvSwap.swapWithdrawDescription":
-    "Gaste GPBRV da sua carteira e receba USDM na mesma carteira. Nenhuma configuração necessária.",
-  "gpbrvSwap.swapDepositTitle": "Depositar (USDM para GPBRV)",
+    "Gaste GPBRV da sua carteira e receba a stablecoin escolhida na mesma carteira. Nenhuma configuração necessária.",
+  "gpbrvSwap.swapDepositTitle": "Depositar (stablecoin para GPBRV)",
   "gpbrvSwap.swapDepositDescription":
-    "Gaste USDM da sua carteira e receba GPBRV na mesma carteira. Nenhuma configuração necessária.",
+    "Gaste a stablecoin escolhida da sua carteira e receba GPBRV na mesma carteira. Nenhuma configuração necessária.",
   "gpbrvSwap.connectWallet": "Conecte sua carteira para acessar esta página.",
   "gpbrvSwap.notDeployed":
     "O endereço do GPBRVSwapper não está configurado. Defina NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS.",
@@ -185,16 +185,22 @@ export const ptBR: Translations = {
   "gpbrvSwap.notConfiguredYetMinipay":
     "Nenhuma carteira principal vinculada a esta MiniPay ainda.",
   "gpbrvSwap.sendToMinipayLabel":
-    "Enviar o USDM para minha carteira MiniPay vinculada",
+    "Enviar a stablecoin para minha carteira MiniPay vinculada",
   "gpbrvSwap.sendToMinipayNotLinked":
     "Disponível apenas com uma carteira MiniPay vinculada. Vincule na aba Configurar.",
   "gpbrvSwap.notConfiguredWarningMinipay":
     "Sua carteira não está registrada como MiniPay. O proprietário deve vinculá-la na aba Configurar antes de depositar.",
   "gpbrvSwap.amountGpbrv": "Valor (GPBRV)",
   "gpbrvSwap.amountUsdm": "Valor (USDM)",
+  "gpbrvSwap.amountLabel": "Valor",
+  "gpbrvSwap.balanceOf": "Saldo",
+  "gpbrvSwap.payWith": "Pagar com",
+  "gpbrvSwap.youReceive": "Receber",
+  "gpbrvSwap.slippage": "Slippage",
+  "gpbrvSwap.slippageEdit": "Editar slippage",
   "gpbrvSwap.minReceived": "Mínimo recebido",
   "gpbrvSwap.slippageNote":
-    "Pré-preenchido com a saída estimada menos 6% de slippage. Edite se necessário.",
+    "Calculado a partir da saída estimada menos a taxa Sarafu e o slippage configurado. Ajuste o slippage na engrenagem acima.",
   "gpbrvSwap.estimating": "Buscando cotação ao vivo…",
   "gpbrvSwap.estimatedOutput": "Saída estimada",
   "gpbrvSwap.exchangeRate": "Taxa",

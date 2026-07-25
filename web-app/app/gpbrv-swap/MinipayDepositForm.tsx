@@ -12,16 +12,19 @@ import {
 
 import { Panel } from "@/app/gpbrv-swap/Panel";
 import { QuoteSummary } from "@/app/gpbrv-swap/QuoteSummary";
+import { SlippageControl } from "@/app/gpbrv-swap/SlippageControl";
+import { TokenSelector } from "@/app/gpbrv-swap/TokenSelector";
 import { useEstimatedMin } from "@/app/gpbrv-swap/useEstimatedMin";
 import { useSpendTokenApproval } from "@/app/gpbrv-swap/useSpendTokenApproval";
 import { TxButton } from "@/components/TxButton";
 import {
+  DEFAULT_SWAP_STABLE,
   GPBRV_DECIMALS,
-  USDM_ADDRESS,
-  USDM_DECIMALS,
+  SLIPPAGE_BPS,
   ZERO_ADDRESS,
   getGpbrvSwapperAddress,
   gpbrvSwapperAbi,
+  type SwapStable,
 } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
@@ -35,19 +38,20 @@ export function MinipayDepositForm() {
   const queryClient = useQueryClient();
 
   const [amount, setAmount] = useState("");
-  const [minOverride, setMinOverride] = useState<string | null>(null);
+  const [selectedStable, setSelectedStable] = useState<SwapStable>(DEFAULT_SWAP_STABLE);
+  const [slippageBps, setSlippageBps] = useState<bigint>(SLIPPAGE_BPS);
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
     estimatedMin,
     estimatedOutput,
     exchangeRate,
-    mentoQuoteBrlPerUsd,
-    mentoQuoteUsdmPerBrl,
+    mentoQuoteBrlPerStable,
+    mentoQuoteStablePerBrl,
     isEstimating,
     spotFailed,
     quoteFailed,
-  } = useEstimatedMin("deposit", amount, locale);
+  } = useEstimatedMin("deposit", amount, locale, selectedStable, slippageBps);
 
   const swapper = getGpbrvSwapperAddress();
 
@@ -60,7 +64,7 @@ export function MinipayDepositForm() {
   });
 
   const { data: balance } = useReadContract({
-    address: USDM_ADDRESS,
+    address: selectedStable.address,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
@@ -69,11 +73,11 @@ export function MinipayDepositForm() {
 
   const parsedAmount = useMemo(() => {
     try {
-      return amount ? parseUnits(amount, USDM_DECIMALS) : undefined;
+      return amount ? parseUnits(amount, selectedStable.decimals) : undefined;
     } catch {
       return undefined;
     }
-  }, [amount]);
+  }, [amount, selectedStable.decimals]);
 
   const {
     needsApproval,
@@ -86,7 +90,7 @@ export function MinipayDepositForm() {
     isApproveConfirmError,
   } = useSpendTokenApproval({
     owner: address,
-    token: USDM_ADDRESS,
+    token: selectedStable.address,
     spender: swapper,
     amount: parsedAmount,
   });
@@ -131,7 +135,7 @@ export function MinipayDepositForm() {
     mappedUser && mappedUser !== ZERO_ADDRESS ? mappedUser : undefined;
   const configured = recipient !== undefined;
 
-  const resolvedMin = minOverride ?? estimatedMin;
+  const resolvedMin = estimatedMin;
 
   function onApprove() {
     setFormError(null);
@@ -160,7 +164,7 @@ export function MinipayDepositForm() {
       address: swapper!,
       abi: gpbrvSwapperAbi,
       functionName: "depositWithMinipay",
-      args: [parsedAmount, minOut],
+      args: [parsedAmount, minOut, selectedStable.address],
     });
   }
 
@@ -184,16 +188,25 @@ export function MinipayDepositForm() {
       )}
 
       <p className="mb-4 text-sm text-gray-600">
-        {t("gpbrvSwap.usdmBalance")}:{" "}
+        {t("gpbrvSwap.balanceOf")} {selectedStable.symbol}:{" "}
         <span className="font-medium">
           {balance !== undefined
-            ? formatUnits(balance, USDM_DECIMALS)
+            ? formatUnits(balance, selectedStable.decimals)
             : t("common.loading")}
         </span>
       </p>
 
+      <div className="mb-4">
+        <TokenSelector
+          value={selectedStable}
+          onChange={setSelectedStable}
+          label={t("gpbrvSwap.payWith")}
+          disabled={!configured}
+        />
+      </div>
+
       <label className="mb-2 block text-sm font-medium" htmlFor="swap-amount">
-        {t("gpbrvSwap.amountUsdm")}
+        {t("gpbrvSwap.amountLabel")} ({selectedStable.symbol})
       </label>
       <input
         id="swap-amount"
@@ -203,7 +216,6 @@ export function MinipayDepositForm() {
         disabled={!configured}
         onChange={(e) => {
           setAmount(e.target.value);
-          setMinOverride(null);
           setFormError(null);
         }}
         className="mb-4 h-12 w-full rounded-lg border border-gray-300 px-3 text-base focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-gray-50"
@@ -212,29 +224,27 @@ export function MinipayDepositForm() {
       <QuoteSummary
         estimatedOutput={estimatedOutput}
         exchangeRate={exchangeRate}
-        mentoQuoteBrlPerUsd={mentoQuoteBrlPerUsd}
-        mentoQuoteUsdmPerBrl={mentoQuoteUsdmPerBrl}
+        mentoQuoteBrlPerStable={mentoQuoteBrlPerStable}
+        mentoQuoteStablePerBrl={mentoQuoteStablePerBrl}
+        stableSymbol={selectedStable.symbol}
         outputSymbol="GPBRV"
         isEstimating={isEstimating}
         spotFailed={spotFailed}
         quoteFailed={quoteFailed}
       />
 
+      <SlippageControl slippageBps={slippageBps} onChange={setSlippageBps} />
+
       <label className="mb-2 block text-sm font-medium" htmlFor="swap-min">
         {t("gpbrvSwap.minReceived")}
       </label>
-      <input
+      <div
         id="swap-min"
-        type="text"
-        inputMode="decimal"
-        value={resolvedMin}
-        disabled={!configured}
-        onChange={(e) => {
-          setMinOverride(e.target.value);
-          setFormError(null);
-        }}
-        className="mb-1 h-12 w-full rounded-lg border border-gray-300 px-3 text-base focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-gray-50"
-      />
+        className="mb-1 flex h-12 w-full items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-base text-gray-900"
+      >
+        <span className="font-medium">{resolvedMin || "—"}</span>
+        {resolvedMin && <span className="ml-1 text-gray-500">GPBRV</span>}
+      </div>
       <p className="mb-4 text-xs text-gray-500">{t("gpbrvSwap.slippageNote")}</p>
 
       {formError && <p className="mb-2 text-sm text-red-600">{formError}</p>}

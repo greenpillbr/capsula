@@ -150,12 +150,12 @@ export const en: Translations = {
   "gpbrvSwap.openInMinipayConfigureCta":
     "Your wallet has no linked MiniPay address yet. You can link one from here using your main wallet:",
   "gpbrvSwap.openInMinipayConfigureLink": "Go to Configure",
-  "gpbrvSwap.swapWithdrawTitle": "Withdraw (GPBRV to USDM)",
+  "gpbrvSwap.swapWithdrawTitle": "Withdraw (GPBRV to stablecoin)",
   "gpbrvSwap.swapWithdrawDescription":
-    "Spend GPBRV from your wallet and receive USDM in the same wallet. No setup required.",
-  "gpbrvSwap.swapDepositTitle": "Deposit (USDM to GPBRV)",
+    "Spend GPBRV from your wallet and receive the chosen stablecoin in the same wallet. No setup required.",
+  "gpbrvSwap.swapDepositTitle": "Deposit (stablecoin to GPBRV)",
   "gpbrvSwap.swapDepositDescription":
-    "Spend USDM from your wallet and receive GPBRV in the same wallet. No setup required.",
+    "Spend the chosen stablecoin from your wallet and receive GPBRV in the same wallet. No setup required.",
   "gpbrvSwap.connectWallet": "Connect your wallet to access this page.",
   "gpbrvSwap.notDeployed":
     "The GPBRVSwapper address is not configured. Set NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS.",
@@ -181,16 +181,22 @@ export const en: Translations = {
   "gpbrvSwap.currentUser": "Linked main wallet",
   "gpbrvSwap.notConfiguredYetMinipay":
     "No main wallet is linked to this MiniPay wallet yet.",
-  "gpbrvSwap.sendToMinipayLabel": "Send the USDM to my linked MiniPay wallet",
+  "gpbrvSwap.sendToMinipayLabel": "Send the stablecoin to my linked MiniPay wallet",
   "gpbrvSwap.sendToMinipayNotLinked":
     "Available once a MiniPay wallet is linked. Link one on the Configure tab.",
   "gpbrvSwap.notConfiguredWarningMinipay":
     "Your wallet is not registered as a MiniPay wallet. The owner must link it on the Configure tab before depositing.",
   "gpbrvSwap.amountGpbrv": "Amount (GPBRV)",
   "gpbrvSwap.amountUsdm": "Amount (USDM)",
+  "gpbrvSwap.amountLabel": "Amount",
+  "gpbrvSwap.balanceOf": "Balance",
+  "gpbrvSwap.payWith": "Pay with",
+  "gpbrvSwap.youReceive": "You receive",
+  "gpbrvSwap.slippage": "Slippage",
+  "gpbrvSwap.slippageEdit": "Edit slippage",
   "gpbrvSwap.minReceived": "Minimum received",
   "gpbrvSwap.slippageNote":
-    "Pre-filled from the estimated output with a 6% slippage buffer. Edit if needed.",
+    "Computed from the estimated output minus the Sarafu fee and the configured slippage. Adjust slippage with the gear above.",
   "gpbrvSwap.estimating": "Fetching live quote…",
   "gpbrvSwap.estimatedOutput": "Estimated output",
   "gpbrvSwap.exchangeRate": "Rate",

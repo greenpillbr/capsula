@@ -22,15 +22,24 @@ This file provides guidance to agents when working with code in smart-contracts 
     - GPBR - 6 decimals - 0xd832B2F117db51021Ad0387c17182796DBEB69df
     - GPBRV - 6 decimals - 0x6ec3d6e693526108990c6d5cbd2195e051321d32
     - BRLM - 18 decimals - 0xe8537a3d056da446677b9e9d6c5db704eaab4787
-    - USDM - 18 decimals - 0x765de816845861e75a25fca122bb6898b8b1282a
+    - USDM (cUSD) - 18 decimals - 0x765de816845861e75a25fca122bb6898b8b1282a
+    - USDC - 6 decimals - 0xceba9300f2b948710d2653dd7b07f33a8b32118c
+    - USDT - 6 decimals - 0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e
     - Good Dollar (G$) - 18 decimals - 0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A
 
 ## GPBRVSwapper external contracts (Celo)
     - Sarafu swap pool - 0xD12F1aE0C018210d18F6cB01cD6c7bd669eF7529
     - Mento router - 0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6
-    - Mento factory - 0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3
+    - Mento factory (BRLM<->USDM) - 0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3
+    - Stable cUSD factory (USDM<->USDC and USDM<->USDT pools) - 0xa849b475FE5a4B5C9C3280152c7a1945b907613b
 
 ## GPBRVSwapper notes
+    - Stablecoin selector: `deposit`/`withdraw`/`depositWithMinipay`/`withdrawWithMinipay` take a
+      trailing `address stable` arg. USDM is the native Mento counterpart (single BRLM<->USDM hop);
+      other stables (USDC, USDT) are registered at deploy via constructor parallel arrays
+      `(address[] stables, address[] factories)` and route through USDM as the middle hop
+      (BRLM <-> USDM <-> stable), using the per-stable factory in `stableCusdFactory`. An
+      unregistered stable reverts `UnsupportedStable`.
     - The two Sarafu legs are asymmetric:
         - GPBRV (6) -> BRLM (18), used by `withdraw`/`withdrawWithMinipay`: plain 3-arg `withdraw`.
         - BRLM (18) -> GPBRV (6), used by `deposit`/`depositWithMinipay`: **must** use the
@@ -112,16 +121,26 @@ bunx hardhat ignition verify gpbrv-swapper-v2
 ```
 
 Direct verify fallback (needs `CELOSCAN_API_KEY`), constructor args in order —
-gpbrv, brlm, usdm, sarafuPool, mentoRouter, mentoFactory:
+gpbrv, brlm, usdm, sarafuPool, mentoRouter, mentoFactory, stables[], factories[].
+The two array args are best passed via a JS args module:
 
 ```bash
-bunx hardhat verify --network celo <DEPLOYED_ADDRESS> \
-  0x6ec3d6e693526108990c6d5cbd2195e051321d32 \
-  0xe8537a3d056da446677b9e9d6c5db704eaab4787 \
-  0x765de816845861e75a25fca122bb6898b8b1282a \
-  0xD12F1aE0C018210d18F6cB01cD6c7bd669eF7529 \
-  0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6 \
-  0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3
+bunx hardhat verify --network celo --constructor-args verify-args.gpbrv-swapper.js <DEPLOYED_ADDRESS>
+```
+
+where `verify-args.gpbrv-swapper.js` is:
+
+```js
+module.exports = [
+  "0x6ec3d6e693526108990c6d5cbd2195e051321d32", // gpbrv
+  "0xe8537a3d056da446677b9e9d6c5db704eaab4787", // brlm
+  "0x765de816845861e75a25fca122bb6898b8b1282a", // usdm
+  "0xD12F1aE0C018210d18F6cB01cD6c7bd669eF7529", // sarafuPool
+  "0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6", // mentoRouter
+  "0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3", // mentoFactory
+  ["0xceba9300f2b948710d2653dd7b07f33a8b32118c", "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e"], // stables: USDC, USDT
+  ["0xa849b475FE5a4B5C9C3280152c7a1945b907613b", "0xa849b475FE5a4B5C9C3280152c7a1945b907613b"], // factories
+];
 ```
 
 Afterwards set `NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS` in the web-app to the new address.
@@ -143,13 +162,16 @@ bun scripts/read-state.ts
 ### GPBRVSwapper scripts (require GPBRV_SWAPPER_ADDRESS, default NETWORK=localFork)
 ```bash
 # Single-wallet (no configure needed): caller spends one token, receives the other in the same wallet
-AMOUNT=1000000 MIN_USDM_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw-direct.ts   # withdraw(): GPBRV (6 dec) -> USDM
+# STABLE selects the stablecoin side (USDM default, or USDC/USDT address). MIN_STABLE_OUT replaces MIN_USDM_OUT.
+AMOUNT=1000000 MIN_STABLE_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw-direct.ts   # withdraw(): GPBRV (6 dec) -> USDM
+AMOUNT=1000000 MIN_STABLE_OUT=0 STABLE=0xceba9300f2b948710d2653dd7b07f33a8b32118c USER_INDEX=0 bun scripts/gpbrv-withdraw-direct.ts  # -> USDC
 AMOUNT=100000000000000000 MIN_GPBRV_OUT=0 USER_INDEX=0 bun scripts/gpbrv-deposit-direct.ts  # deposit(): USDM (18 dec) -> GPBRV
+AMOUNT=1000000 MIN_GPBRV_OUT=0 STABLE=0xceba9300f2b948710d2653dd7b07f33a8b32118c USER_INDEX=0 bun scripts/gpbrv-deposit-direct.ts  # USDC (6 dec) -> GPBRV
 
 # MiniPay-linked (requires configure): withdrawWithMinipay()/depositWithMinipay()
 CONFIGURE_MINIPAY=0x... USER_INDEX=0 bun scripts/gpbrv-configure.ts             # link from the main wallet
 CONFIGURE_USER=0x... MINIPAY_INDEX=1 bun scripts/gpbrv-configure-from-minipay.ts # link from the MiniPay wallet
-AMOUNT=1000000 MIN_USDM_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw.ts   # AMOUNT in GPBRV (6 dec)
-AMOUNT=100000000000000000 MIN_GPBRV_OUT=0 MINIPAY_INDEX=1 bun scripts/gpbrv-deposit.ts  # AMOUNT in USDM (18 dec)
+AMOUNT=1000000 MIN_STABLE_OUT=0 USER_INDEX=0 bun scripts/gpbrv-withdraw.ts   # AMOUNT in GPBRV (6 dec); STABLE optional
+AMOUNT=100000000000000000 MIN_GPBRV_OUT=0 MINIPAY_INDEX=1 bun scripts/gpbrv-deposit.ts  # AMOUNT in stable units; STABLE optional
 ADDRESS=0x... bun scripts/gpbrv-read-state.ts
 ```

@@ -5,8 +5,9 @@ import { useTranslation } from "@/lib/i18n/LanguageProvider";
 type QuoteSummaryProps = {
   estimatedOutput: string;
   exchangeRate: string;
-  mentoQuoteBrlPerUsd: string;
-  mentoQuoteUsdmPerBrl: string;
+  mentoQuoteBrlPerStable: string;
+  mentoQuoteStablePerBrl: string;
+  stableSymbol: string;
   outputSymbol: string;
   isEstimating: boolean;
   spotFailed: boolean;
@@ -16,8 +17,9 @@ type QuoteSummaryProps = {
 export function QuoteSummary({
   estimatedOutput,
   exchangeRate,
-  mentoQuoteBrlPerUsd,
-  mentoQuoteUsdmPerBrl,
+  mentoQuoteBrlPerStable,
+  mentoQuoteStablePerBrl,
+  stableSymbol,
   outputSymbol,
   isEstimating,
   spotFailed,
@@ -25,7 +27,8 @@ export function QuoteSummary({
 }: QuoteSummaryProps) {
   const { t } = useTranslation();
 
-  const hasMentoQuote = mentoQuoteBrlPerUsd !== "" && mentoQuoteUsdmPerBrl !== "";
+  const hasMentoQuote =
+    mentoQuoteBrlPerStable !== "" && mentoQuoteStablePerBrl !== "";
   const hasAmountQuote = estimatedOutput !== "";
 
   if (isEstimating && !hasMentoQuote) {
@@ -48,7 +51,7 @@ export function QuoteSummary({
         <p className="text-gray-600">
           {t("gpbrvSwap.mentoQuote")}:{" "}
           <span className="font-medium text-gray-900">
-            {mentoQuoteBrlPerUsd} (1 BRL = {mentoQuoteUsdmPerBrl} USDM)
+            {mentoQuoteBrlPerStable} (1 BRL = {mentoQuoteStablePerBrl} {stableSymbol})
           </span>
         </p>
       )}

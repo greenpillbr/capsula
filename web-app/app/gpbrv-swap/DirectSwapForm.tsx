@@ -12,17 +12,20 @@ import {
 
 import { Panel } from "@/app/gpbrv-swap/Panel";
 import { QuoteSummary } from "@/app/gpbrv-swap/QuoteSummary";
+import { SlippageControl } from "@/app/gpbrv-swap/SlippageControl";
+import { TokenSelector } from "@/app/gpbrv-swap/TokenSelector";
 import { useEstimatedMin } from "@/app/gpbrv-swap/useEstimatedMin";
 import { useSpendTokenApproval } from "@/app/gpbrv-swap/useSpendTokenApproval";
 import { TxButton } from "@/components/TxButton";
 import {
+  DEFAULT_SWAP_STABLE,
   GPBRV_ADDRESS,
   GPBRV_DECIMALS,
-  USDM_ADDRESS,
-  USDM_DECIMALS,
+  SLIPPAGE_BPS,
   ZERO_ADDRESS,
   getGpbrvSwapperAddress,
   gpbrvSwapperAbi,
+  type SwapStable,
 } from "@/lib/contracts";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 
@@ -32,27 +35,31 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
   const queryClient = useQueryClient();
 
   const [amount, setAmount] = useState("");
-  const [minOverride, setMinOverride] = useState<string | null>(null);
+  const [selectedStable, setSelectedStable] = useState<SwapStable>(DEFAULT_SWAP_STABLE);
+  const [slippageBps, setSlippageBps] = useState<bigint>(SLIPPAGE_BPS);
   const [formError, setFormError] = useState<string | null>(null);
   const [sendToMinipay, setSendToMinipay] = useState(false);
+
+  const isWithdraw = mode === "withdraw";
 
   const {
     estimatedMin,
     estimatedOutput,
     exchangeRate,
-    mentoQuoteBrlPerUsd,
-    mentoQuoteUsdmPerBrl,
+    mentoQuoteBrlPerStable,
+    mentoQuoteStablePerBrl,
     isEstimating,
     spotFailed,
     quoteFailed,
-  } = useEstimatedMin(mode, amount, locale);
+  } = useEstimatedMin(mode, amount, locale, selectedStable, slippageBps);
 
   const swapper = getGpbrvSwapperAddress();
 
-  const isWithdraw = mode === "withdraw";
-  const spendToken = isWithdraw ? GPBRV_ADDRESS : USDM_ADDRESS;
-  const spendDecimals = isWithdraw ? GPBRV_DECIMALS : USDM_DECIMALS;
-  const outDecimals = isWithdraw ? USDM_DECIMALS : GPBRV_DECIMALS;
+  const spendToken = isWithdraw ? GPBRV_ADDRESS : selectedStable.address;
+  const spendDecimals = isWithdraw ? GPBRV_DECIMALS : selectedStable.decimals;
+  const outDecimals = isWithdraw ? selectedStable.decimals : GPBRV_DECIMALS;
+  const spendSymbol = isWithdraw ? "GPBRV" : selectedStable.symbol;
+  const outputSymbol = isWithdraw ? selectedStable.symbol : "GPBRV";
 
   const { data: balance } = useReadContract({
     address: spendToken,
@@ -136,7 +143,7 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
     );
   }
 
-  const resolvedMin = minOverride ?? estimatedMin;
+  const resolvedMin = estimatedMin;
 
   function onApprove() {
     setFormError(null);
@@ -170,7 +177,7 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
           ? "withdrawWithMinipay"
           : "withdraw"
         : "deposit",
-      args: [parsedAmount, minOut],
+      args: [parsedAmount, minOut, selectedStable.address],
     });
   }
 
@@ -189,7 +196,7 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
       </p>
 
       <p className="mb-4 text-sm text-gray-600">
-        {isWithdraw ? t("gpbrvSwap.gpbrvBalance") : t("gpbrvSwap.usdmBalance")}:{" "}
+        {t("gpbrvSwap.balanceOf")} {spendSymbol}:{" "}
         <span className="font-medium">
           {balance !== undefined
             ? formatUnits(balance, spendDecimals)
@@ -225,8 +232,16 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
         </div>
       )}
 
+      <div className="mb-4">
+        <TokenSelector
+          value={selectedStable}
+          onChange={setSelectedStable}
+          label={isWithdraw ? t("gpbrvSwap.youReceive") : t("gpbrvSwap.payWith")}
+        />
+      </div>
+
       <label className="mb-2 block text-sm font-medium" htmlFor="swap-amount">
-        {isWithdraw ? t("gpbrvSwap.amountGpbrv") : t("gpbrvSwap.amountUsdm")}
+        {t("gpbrvSwap.amountLabel")} ({spendSymbol})
       </label>
       <input
         id="swap-amount"
@@ -235,7 +250,6 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
         value={amount}
         onChange={(e) => {
           setAmount(e.target.value);
-          setMinOverride(null);
           setFormError(null);
         }}
         className="mb-4 h-12 w-full rounded-lg border border-gray-300 px-3 text-base focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
@@ -244,28 +258,29 @@ export function DirectSwapForm({ mode }: { mode: "withdraw" | "deposit" }) {
       <QuoteSummary
         estimatedOutput={estimatedOutput}
         exchangeRate={exchangeRate}
-        mentoQuoteBrlPerUsd={mentoQuoteBrlPerUsd}
-        mentoQuoteUsdmPerBrl={mentoQuoteUsdmPerBrl}
-        outputSymbol={isWithdraw ? "USDM" : "GPBRV"}
+        mentoQuoteBrlPerStable={mentoQuoteBrlPerStable}
+        mentoQuoteStablePerBrl={mentoQuoteStablePerBrl}
+        stableSymbol={selectedStable.symbol}
+        outputSymbol={isWithdraw ? selectedStable.symbol : "GPBRV"}
         isEstimating={isEstimating}
         spotFailed={spotFailed}
         quoteFailed={quoteFailed}
       />
 
+      <SlippageControl slippageBps={slippageBps} onChange={setSlippageBps} />
+
       <label className="mb-2 block text-sm font-medium" htmlFor="swap-min">
         {t("gpbrvSwap.minReceived")}
       </label>
-      <input
+      <div
         id="swap-min"
-        type="text"
-        inputMode="decimal"
-        value={resolvedMin}
-        onChange={(e) => {
-          setMinOverride(e.target.value);
-          setFormError(null);
-        }}
-        className="mb-1 h-12 w-full rounded-lg border border-gray-300 px-3 text-base focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
-      />
+        className="mb-1 flex h-12 w-full items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-base text-gray-900"
+      >
+        <span className="font-medium">{resolvedMin || "—"}</span>
+        {resolvedMin && (
+          <span className="ml-1 text-gray-500">{outputSymbol}</span>
+        )}
+      </div>
       <p className="mb-4 text-xs text-gray-500">{t("gpbrvSwap.slippageNote")}</p>
 
       {formError && <p className="mb-2 text-sm text-red-600">{formError}</p>}

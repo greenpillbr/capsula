@@ -37,12 +37,14 @@ Header nav: **Registrar presença**, **Resgatar**; settings menu links to GPBR a
 
 | Tab | Route | Contract call |
 |---|---|---|
-| Depositar | `/gpbrv-swap/swap-deposit` | `deposit` |
-| Sacar | `/gpbrv-swap/swap-withdraw` | `withdraw`, or `withdrawWithMinipay` when the MiniPay checkbox is on |
+| Depositar | `/gpbrv-swap/deposit` | `deposit` |
+| Sacar | `/gpbrv-swap/withdraw` | `withdraw`, or `withdrawWithMinipay` when the MiniPay checkbox is on |
 | Configurar | `/gpbrv-swap/configure` | `configure` |
 | MiniPay | `/gpbrv-swap/minipay/*` | see below |
 
-- **Single-wallet flow** — `swap-deposit` / `swap-withdraw` share `DirectSwapForm.tsx`. **No `configure` step is required.** In `withdraw` mode the form also offers a checkbox that redirects the USDM to the caller's linked MiniPay wallet by calling `withdrawWithMinipay` instead of `withdraw`; it is disabled until `userToMinipay[address]` is set. `withdrawWithMinipay` pulls GPBRV from the caller, so it can only be sent by the *main* wallet — that is why it lives here and not under the MiniPay tab.
+- **Single-wallet flow** — `deposit` / `withdraw` share `DirectSwapForm.tsx`. **No `configure` step is required.** In `withdraw` mode the form also offers a checkbox that redirects the stablecoin to the caller's linked MiniPay wallet by calling `withdrawWithMinipay` instead of `withdraw`; it is disabled until `userToMinipay[address]` is set. `withdrawWithMinipay` pulls GPBRV from the caller, so it can only be sent by the *main* wallet — that is why it lives here and not under the MiniPay tab.
+- **Stablecoin selector** — deposit, withdraw, and the MiniPay deposit form all render `TokenSelector.tsx` to pick the stable side (USDM / USDC / USDT, from `SWAP_STABLES` in `lib/contracts.ts`, logos in `public/tokens/`). The selected stable's address is passed as the trailing arg to every `deposit`/`withdraw`/`*WithMinipay` call. USDC/USDT (6 decimals) route via the contract's 2-hop path; USDM (18) is single-hop.
+- **Slippage & minimum received** — the minimum-received field is read-only and computed from the live Mento quote minus the 5% Sarafu fee minus the slippage buffer. Slippage (default 5%, `SLIPPAGE_BPS`) is the editable knob via `SlippageControl.tsx` (gear icon → inline percent input). `useEstimatedMin` takes the selected stable and the slippage bps.
 - **MiniPay tab** — `app/gpbrv-swap/minipay/` with a segmented sub-nav (`MinipayGate.tsx`) over `deposit` (`MinipayDepositForm.tsx` → `depositWithMinipay`) and `configure` (`ConfigureFromMinipay.tsx` → `configureFromMinipay`, where the input is the *main wallet* address). Both require the connected wallet to be the MiniPay wallet.
 - `MinipayGate.tsx` blocks the sub-section when `useIsMiniPay()` is `false`, showing how to open the page from inside MiniPay plus a link to `/gpbrv-swap/configure` when the wallet has no link yet. While detection is pending (`undefined`) it renders the children, so nobody sees a flash of the fallback.
 
@@ -52,7 +54,7 @@ Header nav: **Registrar presença**, **Resgatar**; settings menu links to GPBR a
 - Contract bindings, token addresses, the deployed `GPBRV_SWAPPER_ADDRESS` constant (exposed via the `getGpbrvSwapperAddress()` helper), and the `GPBRV_SWAP_ENABLED` feature flag (via `isGpbrvSwapEnabled()`) are in `lib/contracts.ts`. The ABI exposes `deposit`/`withdraw` (single wallet), `depositWithMinipay`/`withdrawWithMinipay`, and both link entry points `configure`/`configureFromMinipay`.
 - Feature flag: `GPBRV_SWAP_ENABLED` in `lib/contracts.ts` unblocks the swap routes (server `page.tsx`). Both Configure pages (main-wallet and MiniPay) are always available.
 - `GPBRV_SWAPPER_ADDRESS` in `lib/contracts.ts` holds the deployed contract address, alongside the other Celo addresses. Update it after redeploying the swapper.
-- The MiniPay deposit page shows an amber warning and disables inputs when the connected wallet is not registered (`minipayToUser`). Forms pre-fill the minimum-received field from a live on-chain Mento router quote, adjusted for the 5% Sarafu pool fee and 6% slippage buffer (editable). Quote logic lives in `app/gpbrv-swap/useEstimatedMin.ts`; Mento/BRLM addresses and ABIs are in `lib/contracts.ts`. The deposit estimate stays correct under the contract's `deductFee` swap: taking 5% off the BRLM input is proportionally identical to taking it off the GPBRV output.
+- The MiniPay deposit page shows an amber warning and disables inputs when the connected wallet is not registered (`minipayToUser`). Forms compute a **read-only** minimum-received field from a live on-chain Mento router quote, adjusted for the 5% Sarafu pool fee and the editable slippage buffer (default 5%, `SLIPPAGE_BPS`). Quote logic lives in `app/gpbrv-swap/useEstimatedMin.ts` (parametrized by the selected stable + slippage bps); Mento/BRLM/USDC/USDT addresses and ABIs are in `lib/contracts.ts`. For USDC/USDT the quote uses the 2-hop route BRLM↔USDM↔stable. The deposit estimate stays correct under the contract's `deductFee` swap: taking 5% off the BRLM input is proportionally identical to taking it off the GPBRV output.
 
 ## MiniPay
 

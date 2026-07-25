@@ -11,30 +11,43 @@ import {
   MENTO_FACTORY_ADDRESS,
   MENTO_ROUTER_ADDRESS,
   SARAFU_FEE_BPS,
-  SLIPPAGE_BPS,
   USDM_ADDRESS,
-  USDM_DECIMALS,
   mentoRouterAbi,
+  type SwapStable,
 } from "@/lib/contracts";
 
-const GPBRV_TO_BRLM_SCALE = BigInt(10) ** BigInt(BRLM_DECIMALS - GPBRV_DECIMALS);
+type Route = { from: `0x${string}`; to: `0x${string}`; factory: `0x${string}` };
+
 const ONE_BRLM = parseUnits("1", BRLM_DECIMALS);
-const ONE_USDM = parseUnits("1", USDM_DECIMALS);
 
-const BRL_TO_USDM_ROUTE = [
-  { from: BRLM_ADDRESS, to: USDM_ADDRESS, factory: MENTO_FACTORY_ADDRESS },
-] as const;
+/** Mento route BRLM -> stable. One hop for USDM, two hops (via USDM) otherwise. */
+function routesFromBrlm(stable: SwapStable): Route[] {
+  if (stable.address === USDM_ADDRESS) {
+    return [{ from: BRLM_ADDRESS, to: USDM_ADDRESS, factory: MENTO_FACTORY_ADDRESS }];
+  }
+  return [
+    { from: BRLM_ADDRESS, to: USDM_ADDRESS, factory: MENTO_FACTORY_ADDRESS },
+    { from: USDM_ADDRESS, to: stable.address, factory: stable.cusdFactory! },
+  ];
+}
 
-const USDM_TO_BRL_ROUTE = [
-  { from: USDM_ADDRESS, to: BRLM_ADDRESS, factory: MENTO_FACTORY_ADDRESS },
-] as const;
+/** Mento route stable -> BRLM. Reverse of `routesFromBrlm`. */
+function routesToBrlm(stable: SwapStable): Route[] {
+  if (stable.address === USDM_ADDRESS) {
+    return [{ from: USDM_ADDRESS, to: BRLM_ADDRESS, factory: MENTO_FACTORY_ADDRESS }];
+  }
+  return [
+    { from: stable.address, to: USDM_ADDRESS, factory: stable.cusdFactory! },
+    { from: USDM_ADDRESS, to: BRLM_ADDRESS, factory: MENTO_FACTORY_ADDRESS },
+  ];
+}
 
 function applySarafuFee(value: bigint): bigint {
   return (value * (BPS_DENOMINATOR - SARAFU_FEE_BPS)) / BPS_DENOMINATOR;
 }
 
-function applySlippage(value: bigint): bigint {
-  return (value * (BPS_DENOMINATOR - SLIPPAGE_BPS)) / BPS_DENOMINATOR;
+function applySlippage(value: bigint, slippageBps: bigint): bigint {
+  return (value * (BPS_DENOMINATOR - slippageBps)) / BPS_DENOMINATOR;
 }
 
 function formatAmount(value: bigint, decimals: number): string {
@@ -69,27 +82,34 @@ export function useEstimatedMin(
   mode: "withdraw" | "deposit",
   amount: string,
   locale: string,
+  stable: SwapStable,
+  slippageBps: bigint,
 ) {
   const isWithdraw = mode === "withdraw";
+  const oneStable = parseUnits("1", stable.decimals);
 
   let mentoAmountIn: bigint | undefined;
   try {
     if (!amount || Number.isNaN(Number(amount)) || Number(amount) <= 0) {
       mentoAmountIn = undefined;
     } else if (isWithdraw) {
-      // Sarafu fee is taken on GPBRV -> BRLM before the Mento leg.
+      // GPBRV -> BRLM is 1:1 value (BRLM has 18 decimals). Sarafu fee is taken on that leg
+      // before the Mento swap.
       mentoAmountIn = applySarafuFee(parseUnits(amount, BRLM_DECIMALS));
     } else {
-      mentoAmountIn = parseUnits(amount, USDM_DECIMALS);
+      mentoAmountIn = parseUnits(amount, stable.decimals);
     }
   } catch {
     mentoAmountIn = undefined;
   }
 
-  const routes = isWithdraw ? BRL_TO_USDM_ROUTE : USDM_TO_BRL_ROUTE;
+  const fromBrlm = routesFromBrlm(stable);
+  const toBrlm = routesToBrlm(stable);
+  const routes = isWithdraw ? fromBrlm : toBrlm;
 
+  // Spot rates for the selected stable (informational): 1 BRL = X stable, and 1 stable = Y BRL.
   const {
-    data: spotBrlToUsd,
+    data: spotStablePerBrl,
     isLoading: isSpotBrlLoading,
     isFetching: isSpotBrlFetching,
     isError: isSpotBrlError,
@@ -97,11 +117,11 @@ export function useEstimatedMin(
     address: MENTO_ROUTER_ADDRESS,
     abi: mentoRouterAbi,
     functionName: "getAmountsOut",
-    args: [ONE_BRLM, BRL_TO_USDM_ROUTE],
+    args: [ONE_BRLM, fromBrlm],
   });
 
   const {
-    data: spotUsdToBrl,
+    data: spotBrlPerStable,
     isLoading: isSpotUsdLoading,
     isFetching: isSpotUsdFetching,
     isError: isSpotUsdError,
@@ -109,7 +129,7 @@ export function useEstimatedMin(
     address: MENTO_ROUTER_ADDRESS,
     abi: mentoRouterAbi,
     functionName: "getAmountsOut",
-    args: [ONE_USDM, USDM_TO_BRL_ROUTE],
+    args: [oneStable, toBrlm],
   });
 
   const { data: amounts, isLoading, isFetching, isError } = useReadContract({
@@ -120,17 +140,17 @@ export function useEstimatedMin(
     query: { enabled: mentoAmountIn !== undefined && mentoAmountIn > BigInt(0) },
   });
 
-  let mentoQuoteBrlPerUsd = "";
-  let mentoQuoteUsdmPerBrl = "";
-  if (spotBrlToUsd && spotBrlToUsd.length > 1) {
-    mentoQuoteUsdmPerBrl = formatQuoteNumber(
-      formatAmount(spotBrlToUsd[spotBrlToUsd.length - 1]!, USDM_DECIMALS),
+  let mentoQuoteBrlPerStable = "";
+  let mentoQuoteStablePerBrl = "";
+  if (spotStablePerBrl && spotStablePerBrl.length > 1) {
+    mentoQuoteStablePerBrl = formatQuoteNumber(
+      formatAmount(spotStablePerBrl[spotStablePerBrl.length - 1]!, stable.decimals),
       locale,
     );
   }
-  if (spotUsdToBrl && spotUsdToBrl.length > 1) {
-    mentoQuoteBrlPerUsd = formatQuoteNumber(
-      formatAmount(spotUsdToBrl[spotUsdToBrl.length - 1]!, BRLM_DECIMALS),
+  if (spotBrlPerStable && spotBrlPerStable.length > 1) {
+    mentoQuoteBrlPerStable = formatQuoteNumber(
+      formatAmount(spotBrlPerStable[spotBrlPerStable.length - 1]!, BRLM_DECIMALS),
       locale,
     );
   }
@@ -142,26 +162,27 @@ export function useEstimatedMin(
     const mentoQuoteOut = amounts[amounts.length - 1]!;
 
     if (isWithdraw) {
-      estimatedOutput = formatAmount(mentoQuoteOut, USDM_DECIMALS);
-      estimatedMin = formatAmount(applySlippage(mentoQuoteOut), USDM_DECIMALS);
+      estimatedOutput = formatAmount(mentoQuoteOut, stable.decimals);
+      estimatedMin = formatAmount(applySlippage(mentoQuoteOut, slippageBps), stable.decimals);
       exchangeRate = formatExchangeRate(
         amount,
         mentoQuoteOut,
-        USDM_DECIMALS,
+        stable.decimals,
         "GPBRV",
-        "USDM",
+        stable.symbol,
       );
     } else {
+      const gpbrvScale = BigInt(10) ** BigInt(BRLM_DECIMALS - GPBRV_DECIMALS);
       const afterSarafuFee = applySarafuFee(mentoQuoteOut);
-      const gpbrvOut = afterSarafuFee / GPBRV_TO_BRLM_SCALE;
-      const gpbrvMin = applySlippage(afterSarafuFee) / GPBRV_TO_BRLM_SCALE;
+      const gpbrvOut = afterSarafuFee / gpbrvScale;
+      const gpbrvMin = applySlippage(afterSarafuFee, slippageBps) / gpbrvScale;
       estimatedOutput = formatAmount(gpbrvOut, GPBRV_DECIMALS);
       estimatedMin = formatAmount(gpbrvMin, GPBRV_DECIMALS);
       exchangeRate = formatExchangeRate(
         amount,
         gpbrvOut,
         GPBRV_DECIMALS,
-        "USDM",
+        stable.symbol,
         "GPBRV",
       );
     }
@@ -171,8 +192,8 @@ export function useEstimatedMin(
     estimatedMin,
     estimatedOutput,
     exchangeRate,
-    mentoQuoteBrlPerUsd,
-    mentoQuoteUsdmPerBrl,
+    mentoQuoteBrlPerStable,
+    mentoQuoteStablePerBrl,
     isEstimating:
       isSpotBrlLoading ||
       isSpotBrlFetching ||
