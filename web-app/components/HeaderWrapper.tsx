@@ -1,50 +1,47 @@
 import { Header } from "@/components/Header";
+import {
+  FEATURE_NAV,
+  hasFeature,
+  type CommunityConfig,
+  type CommunityPageFeature,
+} from "@/lib/communities";
 import { getServerTranslations } from "@/lib/i18n/server";
-import type { TranslationKey } from "@/lib/i18n/types";
 
-const navLinks: { href: string; labelKey: TranslationKey }[] = [
-  { href: "/registrar-presenca", labelKey: "nav.registerAttendance" },
-  { href: "/resgatar", labelKey: "nav.claim" },
-  { href: "/gpbrv-swap/configure", labelKey: "nav.gpbrvSwap" },
-];
+/** Nav order; each entry only renders when the community enables that feature. */
+const PAGE_FEATURES: CommunityPageFeature[] = ["attendance", "redeem", "swap"];
 
-const settingsLinks: { href: string; labelKey: TranslationKey }[] = [
-  { href: "/create-distribution/gpbr", labelKey: "nav.createDistribution" },
-  { href: "/configure/gpbr", labelKey: "nav.configure" },
-];
-
-const toolsLinks: {
-  href: string;
-  labelKey: TranslationKey;
-  tooltipKey: TranslationKey;
-}[] = [
-  {
-    href: "https://empatictech.vercel.app/",
-    labelKey: "nav.empaticTech",
-    tooltipKey: "nav.empaticTechTooltip",
-  },
-];
-
-export async function HeaderWrapper() {
+/**
+ * Resolves the nav for the active community. `community` is `null` on the
+ * community selector (`/`), where there is nothing to navigate within yet.
+ */
+export async function HeaderWrapper({
+  community,
+}: {
+  community: CommunityConfig | null;
+}) {
   const { t } = await getServerTranslations();
-  const navLabels = navLinks.map(({ href, labelKey }) => ({
-    href,
-    label: t(labelKey),
-  }));
-  const settingsLabels = settingsLinks.map(({ href, labelKey }) => ({
-    href,
-    label: t(labelKey),
-  }));
-  const toolsItems = toolsLinks.map(({ href, labelKey, tooltipKey }) => ({
-    href,
-    label: t(labelKey),
-    tooltip: t(tooltipKey),
-  }));
+
+  const navLabels = community
+    ? PAGE_FEATURES.filter((feature) => hasFeature(community, feature)).map(
+        (feature) => ({
+          href: `/${community.slug}/${FEATURE_NAV[feature].segment}`,
+          label: t(FEATURE_NAV[feature].labelKey),
+        }),
+      )
+    : [];
+
+  const toolsItems =
+    community && hasFeature(community, "tools")
+      ? community.tools.map(({ href, labelKey, tooltipKey }) => ({
+          href,
+          label: t(labelKey),
+          tooltip: t(tooltipKey),
+        }))
+      : [];
 
   return (
     <Header
       navLabels={navLabels}
-      settingsLabels={settingsLabels}
       toolsMenuLabel={t("nav.tools")}
       toolsItems={toolsItems}
     />

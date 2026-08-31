@@ -42,10 +42,7 @@ export const ZERO_ADDRESS =
 // GPBRVSwapper bindings. Deployed on Celo mainnet via
 // smart-contracts/ignition/modules/GPBRVSwapper.ts — update after redeploying.
 export const GPBRV_SWAPPER_ADDRESS =
-  "0x7A267B904F3B97551c5C4F4821Cd29f08C380202" as const;
-
-/** Feature flag that unblocks the GPBRV swap routes. */
-export const GPBRV_SWAP_ENABLED = true;
+  "0x126514F2A10e8B10F70c66aeFE9886C7129a727D" as const;
 
 export const GPBRV_ADDRESS =
   "0x6ec3d6e693526108990c6d5cbd2195e051321d32" as const;
@@ -125,14 +122,6 @@ export const SARAFU_FEE_BPS = BigInt(500);
 export const SLIPPAGE_BPS = BigInt(500);
 
 export const BPS_DENOMINATOR = BigInt(10_000);
-
-export function getGpbrvSwapperAddress(): `0x${string}` | undefined {
-  return GPBRV_SWAPPER_ADDRESS;
-}
-
-export function isGpbrvSwapEnabled(): boolean {
-  return GPBRV_SWAP_ENABLED;
-}
 
 export const ADMIN_WHITELIST = new Set(
   [
