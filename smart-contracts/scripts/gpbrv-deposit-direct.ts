@@ -5,7 +5,7 @@ import { connect, requireAddressEnv, requireEnv } from "./_shared.js";
 const { viem, publicClient, networkName } = await connect();
 
 const swapperAddress = requireAddressEnv("GPBRV_SWAPPER_ADDRESS");
-const amount = BigInt(requireEnv("AMOUNT")); // USDM (18 decimals)
+const amount = BigInt(requireEnv("AMOUNT")); // stable units (USDM 18 dec, USDC/USDT 6 dec)
 const minGpbrvOut = BigInt(process.env.MIN_GPBRV_OUT ?? "0"); // GPBRV (6 decimals)
 
 const wallets = await viem.getWalletClients();
@@ -21,12 +21,14 @@ const swapper = await viem.getContractAt("GPBRVSwapper", swapperAddress, {
 
 const gpbrv = (await swapper.read.gpbrv()) as `0x${string}`;
 const usdm = (await swapper.read.usdm()) as `0x${string}`;
+// STABLE selects the input stablecoin (USDM, USDC, USDT); defaults to USDM.
+const stable = (process.env.STABLE as `0x${string}` | undefined) ?? usdm;
 
 console.log(`[${networkName}] account: ${user.account.address}`);
-console.log(`[${networkName}] deposit(amount=${amount}, minGpbrvOut=${minGpbrvOut}) -> same wallet`);
+console.log(`[${networkName}] deposit(amount=${amount}, minGpbrvOut=${minGpbrvOut}, stable=${stable}) -> same wallet`);
 
 const approveHash = await user.writeContract({
-  address: usdm,
+  address: stable,
   abi: erc20Abi,
   functionName: "approve",
   args: [swapperAddress, amount],
@@ -40,7 +42,7 @@ const before = await publicClient.readContract({
   args: [user.account.address],
 });
 
-const hash = await swapper.write.deposit([amount, minGpbrvOut]);
+const hash = await swapper.write.deposit([amount, minGpbrvOut, stable]);
 const receipt = await publicClient.waitForTransactionReceipt({ hash });
 console.log(`tx mined in block ${receipt.blockNumber}: ${hash}`);
 

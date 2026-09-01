@@ -15,14 +15,25 @@ import { createWalletClient, encodeFunctionData, erc20Abi, http, parseUnits, Hex
  *
  * Note: the real Sarafu pool and Mento router enforce liquidity and per-swap limits.
  * Keep WITHDRAW_AMOUNT / DEPOSIT_AMOUNT small; tune them to the live pool reserves.
+ *
+ * Caveat (Mento oracle freshness): the BRLM<->USDM leg reads Mento SortedOracles, which
+ * rejects price reports older than its expiry window. On a long-lived fork the clock drifts
+ * as tests run, so a later swap can revert with "no valid median" (surfacing here as a
+ * 0-delta balance). This is an environment artifact, not a contract bug — verified by
+ * re-running against a *fresh* fork, where each stable (USDM/USDC/USDT) swaps successfully.
+ * If you hit spurious 0-delta failures, restart anvil and re-run.
  */
 
 const GPBRV_ADDRESS = "0x6ec3d6e693526108990c6d5cbd2195e051321d32" as const;
 const BRLM_ADDRESS = "0xe8537a3d056da446677b9e9d6c5db704eaab4787" as const;
 const USDM_ADDRESS = "0x765de816845861e75a25fca122bb6898b8b1282a" as const;
+const USDC_ADDRESS = "0xceba9300f2b948710d2653dd7b07f33a8b32118c" as const;
+const USDT_ADDRESS = "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e" as const;
 const SARAFU_POOL = "0xD12F1aE0C018210d18F6cB01cD6c7bd669eF7529" as const;
 const MENTO_ROUTER = "0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6" as const;
 const MENTO_FACTORY = "0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3" as const;
+// Shared USDM<->USDC and USDM<->USDT pool factory (from decoded router txs).
+const STABLE_CUSD_FACTORY = "0xa849b475FE5a4B5C9C3280152c7a1945b907613b" as const;
 
 const WITHDRAW_AMOUNT = parseUnits("1", 6); // 1 GPBRV
 const DEPOSIT_AMOUNT = parseUnits("0.1", 18); // 0.1 USDM
@@ -100,6 +111,8 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
       SARAFU_POOL,
       MENTO_ROUTER,
       MENTO_FACTORY,
+      [USDC_ADDRESS, USDT_ADDRESS],
+      [STABLE_CUSD_FACTORY, STABLE_CUSD_FACTORY],
     ]);
   }
 
@@ -129,7 +142,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     });
     logStep(testName, 4, 6, `read USDM balance before withdraw (${usdmBefore})`);
 
-    const hash = await swapper.write.withdraw([WITHDRAW_AMOUNT, 0n]);
+    const hash = await swapper.write.withdraw([WITHDRAW_AMOUNT, 0n, USDM_ADDRESS]);
     await publicClient.waitForTransactionReceipt({ hash });
     logStep(testName, 5, 6, `withdraw tx confirmed (${hash})`);
 
@@ -173,7 +186,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     });
     logStep(testName, 4, 6, `read GPBRV balance before deposit (${gpbrvBefore})`);
 
-    const hash = await swapper.write.deposit([DEPOSIT_AMOUNT, 0n]);
+    const hash = await swapper.write.deposit([DEPOSIT_AMOUNT, 0n, USDM_ADDRESS]);
     await publicClient.waitForTransactionReceipt({ hash });
     logStep(testName, 5, 6, `deposit tx confirmed (${hash})`);
 
@@ -220,7 +233,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     });
     logStep(testName, 5, 7, `read minipay USDM balance before withdraw (${minipayBefore})`);
 
-    const hash = await swapper.write.withdrawWithMinipay([WITHDRAW_AMOUNT, 0n]);
+    const hash = await swapper.write.withdrawWithMinipay([WITHDRAW_AMOUNT, 0n, USDM_ADDRESS]);
     await publicClient.waitForTransactionReceipt({ hash });
     logStep(testName, 6, 7, `withdrawWithMinipay tx confirmed (${hash})`);
 
@@ -274,7 +287,7 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     const swapperAsMinipay = await viem.getContractAt("GPBRVSwapper", swapper.address, {
       client: { wallet: minipay },
     });
-    const hash = await swapperAsMinipay.write.depositWithMinipay([DEPOSIT_AMOUNT, 0n]);
+    const hash = await swapperAsMinipay.write.depositWithMinipay([DEPOSIT_AMOUNT, 0n, USDM_ADDRESS]);
     await publicClient.waitForTransactionReceipt({ hash });
     logStep(testName, 6, 7, `depositWithMinipay tx confirmed (${hash})`);
 
@@ -289,6 +302,88 @@ describe("GPBRVSwapper (live, forked Celo)", async function () {
     assert.ok(
       userAfter > userBefore,
       `expected user GPBRV to increase, got ${userBefore} -> ${userAfter}`,
+    );
+  });
+
+  // Helper: seed GPBRV, then withdraw to `stable`, returning the stable balance gained.
+  // Lets the USDC/USDT round-trip tests obtain the 6-decimal stable without a dedicated whale.
+  async function withdrawToStable(swapperAddress: `0x${string}`, stable: `0x${string}`) {
+    await seedToken(GPBRV_ADDRESS, gpbrvWhale!, owner.account.address, WITHDRAW_AMOUNT);
+    const approveHash = await owner.writeContract({
+      address: GPBRV_ADDRESS,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [swapperAddress, WITHDRAW_AMOUNT],
+    });
+    await publicClient.waitForTransactionReceipt({ hash: approveHash });
+
+    const before = (await publicClient.readContract({
+      address: stable,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [owner.account.address],
+    })) as bigint;
+
+    const swapper = await viem.getContractAt("GPBRVSwapper", swapperAddress);
+    const hash = await swapper.write.withdraw([WITHDRAW_AMOUNT, 0n, stable]);
+    await publicClient.waitForTransactionReceipt({ hash });
+
+    const after = (await publicClient.readContract({
+      address: stable,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [owner.account.address],
+    })) as bigint;
+    return { before, after, gained: after - before };
+  }
+
+  it("withdraw to USDC (2-hop): caller GPBRV becomes USDC via BRLM->USDM->USDC", async () => {
+    const swapper = await deploySwapper();
+    const { gained } = await withdrawToStable(swapper.address, USDC_ADDRESS);
+    assert.ok(gained > 0n, `expected caller USDC to increase, gained ${gained}`);
+  });
+
+  it("withdraw to USDT (2-hop): caller GPBRV becomes USDT via BRLM->USDM->USDT", async () => {
+    const swapper = await deploySwapper();
+    const { gained } = await withdrawToStable(swapper.address, USDT_ADDRESS);
+    assert.ok(gained > 0n, `expected caller USDT to increase, gained ${gained}`);
+  });
+
+  it("deposit from USDC (2-hop): caller USDC becomes GPBRV via USDC->USDM->BRLM", async () => {
+    const swapper = await deploySwapper();
+
+    // Obtain USDC by first withdrawing, then deposit it back.
+    const { gained: usdcAmount } = await withdrawToStable(swapper.address, USDC_ADDRESS);
+    assert.ok(usdcAmount > 0n, "precondition: obtained USDC to deposit");
+
+    const approveHash = await owner.writeContract({
+      address: USDC_ADDRESS,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [swapper.address, usdcAmount],
+    });
+    await publicClient.waitForTransactionReceipt({ hash: approveHash });
+
+    const gpbrvBefore = (await publicClient.readContract({
+      address: GPBRV_ADDRESS,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [owner.account.address],
+    })) as bigint;
+
+    const hash = await swapper.write.deposit([usdcAmount, 0n, USDC_ADDRESS]);
+    await publicClient.waitForTransactionReceipt({ hash });
+
+    const gpbrvAfter = (await publicClient.readContract({
+      address: GPBRV_ADDRESS,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [owner.account.address],
+    })) as bigint;
+
+    assert.ok(
+      gpbrvAfter > gpbrvBefore,
+      `expected caller GPBRV to increase, got ${gpbrvBefore} -> ${gpbrvAfter}`,
     );
   });
 });

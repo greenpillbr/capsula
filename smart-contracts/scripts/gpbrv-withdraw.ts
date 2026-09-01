@@ -6,7 +6,7 @@ const { viem, publicClient, networkName } = await connect();
 
 const swapperAddress = requireAddressEnv("GPBRV_SWAPPER_ADDRESS");
 const amount = BigInt(requireEnv("AMOUNT")); // GPBRV (6 decimals)
-const minUsdmOut = BigInt(process.env.MIN_USDM_OUT ?? "0"); // USDM (18 decimals)
+const minStableOut = BigInt(process.env.MIN_STABLE_OUT ?? process.env.MIN_USDM_OUT ?? "0");
 
 const wallets = await viem.getWalletClients();
 const userIndex = Number(process.env.USER_INDEX ?? "0");
@@ -21,10 +21,12 @@ const swapper = await viem.getContractAt("GPBRVSwapper", swapperAddress, {
 
 const gpbrv = (await swapper.read.gpbrv()) as `0x${string}`;
 const usdm = (await swapper.read.usdm()) as `0x${string}`;
+// STABLE selects the output stablecoin (USDM, USDC, USDT); defaults to USDM.
+const stable = (process.env.STABLE as `0x${string}` | undefined) ?? usdm;
 const minipay = (await swapper.read.userToMinipay([user.account.address])) as `0x${string}`;
 
 console.log(`[${networkName}] user: ${user.account.address}`);
-console.log(`[${networkName}] withdraw(amount=${amount}, minUsdmOut=${minUsdmOut}) -> minipay ${minipay}`);
+console.log(`[${networkName}] withdraw(amount=${amount}, minStableOut=${minStableOut}, stable=${stable}) -> minipay ${minipay}`);
 
 const approveHash = await user.writeContract({
   address: gpbrv,
@@ -35,20 +37,20 @@ const approveHash = await user.writeContract({
 await publicClient.waitForTransactionReceipt({ hash: approveHash });
 
 const minipayBefore = await publicClient.readContract({
-  address: usdm,
+  address: stable,
   abi: erc20Abi,
   functionName: "balanceOf",
   args: [minipay],
 });
 
-const hash = await swapper.write.withdrawWithMinipay([amount, minUsdmOut]);
+const hash = await swapper.write.withdrawWithMinipay([amount, minStableOut, stable]);
 const receipt = await publicClient.waitForTransactionReceipt({ hash });
 console.log(`tx mined in block ${receipt.blockNumber}: ${hash}`);
 
 const minipayAfter = await publicClient.readContract({
-  address: usdm,
+  address: stable,
   abi: erc20Abi,
   functionName: "balanceOf",
   args: [minipay],
 });
-console.log(`minipay received: ${minipayAfter - minipayBefore} USDM units (balance now ${minipayAfter})`);
+console.log(`minipay received: ${minipayAfter - minipayBefore} stable units (balance now ${minipayAfter})`);

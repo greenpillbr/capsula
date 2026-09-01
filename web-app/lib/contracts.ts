@@ -42,7 +42,7 @@ export const ZERO_ADDRESS =
 // GPBRVSwapper bindings. Deployed on Celo mainnet via
 // smart-contracts/ignition/modules/GPBRVSwapper.ts — update after redeploying.
 export const GPBRV_SWAPPER_ADDRESS =
-  "0x7A267B904F3B97551c5C4F4821Cd29f08C380202" as const;
+  "0x126514F2A10e8B10F70c66aeFE9886C7129a727D" as const;
 
 /** Feature flag that unblocks the GPBRV swap routes. */
 export const GPBRV_SWAP_ENABLED = true;
@@ -53,34 +53,78 @@ export const GPBRV_ADDRESS =
 export const USDM_ADDRESS =
   "0x765de816845861e75a25fca122bb6898b8b1282a" as const;
 
+export const USDC_ADDRESS =
+  "0xceba9300f2b948710d2653dd7b07f33a8b32118c" as const;
+
+export const USDT_ADDRESS =
+  "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e" as const;
+
 export const BRLM_ADDRESS =
   "0xe8537a3d056da446677b9e9d6c5db704eaab4787" as const;
 
 export const MENTO_ROUTER_ADDRESS =
   "0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6" as const;
 
+/** Mento factory for the BRLM <-> USDM (cUSD) pool. */
 export const MENTO_FACTORY_ADDRESS =
   "0x22abd4ADF6aab38aC1022352d496A07Acee5aCB3" as const;
 
+/** Mento factory for the USDM <-> USDC and USDM <-> USDT pools (2-hop stables). */
+export const STABLE_CUSD_FACTORY_ADDRESS =
+  "0xa849b475FE5a4B5C9C3280152c7a1945b907613b" as const;
+
 export const GPBRV_DECIMALS = 6;
 export const USDM_DECIMALS = 18;
+export const USDC_DECIMALS = 6;
+export const USDT_DECIMALS = 6;
 export const BRLM_DECIMALS = 18;
+
+/**
+ * Stablecoins the swapper can convert GPBRV to/from. USDM is the native Mento
+ * counterpart (single BRLM<->USDM hop); the others route through USDM via
+ * `cusdFactory` (BRLM<->USDM<->stable). Logos live in `public/tokens/`.
+ */
+export type SwapStable = {
+  address: `0x${string}`;
+  decimals: number;
+  symbol: string;
+  image: string;
+  /** Mento factory of the USDM<->stable pool; undefined for USDM (native hop). */
+  cusdFactory?: `0x${string}`;
+};
+
+export const SWAP_STABLES: SwapStable[] = [
+  {
+    address: USDM_ADDRESS,
+    decimals: USDM_DECIMALS,
+    symbol: "USDM",
+    image: "/tokens/usdm.png",
+  },
+  {
+    address: USDC_ADDRESS,
+    decimals: USDC_DECIMALS,
+    symbol: "USDC",
+    image: "/tokens/usdc.png",
+    cusdFactory: STABLE_CUSD_FACTORY_ADDRESS,
+  },
+  {
+    address: USDT_ADDRESS,
+    decimals: USDT_DECIMALS,
+    symbol: "USDT",
+    image: "/tokens/usdt.png",
+    cusdFactory: STABLE_CUSD_FACTORY_ADDRESS,
+  },
+];
+
+export const DEFAULT_SWAP_STABLE = SWAP_STABLES[0]!;
 
 /** Fixed 5% fee charged by the Sarafu swap pool on GPBRV <-> BRLM swaps. */
 export const SARAFU_FEE_BPS = BigInt(500);
 
 /** Default slippage buffer applied on top of the live Mento quote. */
-export const SLIPPAGE_BPS = BigInt(600);
+export const SLIPPAGE_BPS = BigInt(500);
 
 export const BPS_DENOMINATOR = BigInt(10_000);
-
-export function getGpbrvSwapperAddress(): `0x${string}` | undefined {
-  return GPBRV_SWAPPER_ADDRESS;
-}
-
-export function isGpbrvSwapEnabled(): boolean {
-  return GPBRV_SWAP_ENABLED;
-}
 
 export const ADMIN_WHITELIST = new Set(
   [
@@ -220,9 +264,10 @@ export const gpbrvSwapperAbi = [
     name: "withdraw",
     inputs: [
       { name: "amount", type: "uint256" },
-      { name: "minUsdmOut", type: "uint256" },
+      { name: "minStableOut", type: "uint256" },
+      { name: "stable", type: "address" },
     ],
-    outputs: [{ name: "usdmOut", type: "uint256" }],
+    outputs: [{ name: "stableOut", type: "uint256" }],
     stateMutability: "nonpayable",
   },
   {
@@ -231,6 +276,7 @@ export const gpbrvSwapperAbi = [
     inputs: [
       { name: "amount", type: "uint256" },
       { name: "minGpbrvOut", type: "uint256" },
+      { name: "stable", type: "address" },
     ],
     outputs: [{ name: "gpbrvOut", type: "uint256" }],
     stateMutability: "nonpayable",
@@ -240,9 +286,10 @@ export const gpbrvSwapperAbi = [
     name: "withdrawWithMinipay",
     inputs: [
       { name: "amount", type: "uint256" },
-      { name: "minUsdmOut", type: "uint256" },
+      { name: "minStableOut", type: "uint256" },
+      { name: "stable", type: "address" },
     ],
-    outputs: [{ name: "usdmOut", type: "uint256" }],
+    outputs: [{ name: "stableOut", type: "uint256" }],
     stateMutability: "nonpayable",
   },
   {
@@ -251,6 +298,7 @@ export const gpbrvSwapperAbi = [
     inputs: [
       { name: "amount", type: "uint256" },
       { name: "minGpbrvOut", type: "uint256" },
+      { name: "stable", type: "address" },
     ],
     outputs: [{ name: "gpbrvOut", type: "uint256" }],
     stateMutability: "nonpayable",

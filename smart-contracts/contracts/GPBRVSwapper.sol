@@ -8,14 +8,18 @@ import {ISwapPool} from "./interfaces/ISwapPool.sol";
 import {IMentoRouter} from "./interfaces/IMentoRouter.sol";
 
 /// @title GPBRVSwapper
-/// @notice Converts between GPBRV and USDM by chaining the Sarafu swap pool and the
-///         Mento router. Two flavours are available:
+/// @notice Converts between GPBRV and a supported stablecoin by chaining the Sarafu swap pool
+///         and the Mento router. The caller picks the stablecoin per call:
+///           - USDM (Celo cUSD) is the native Mento counterpart and swaps in a single hop.
+///           - Any other registered stable (e.g. USDC, USDT) routes through USDM as the middle
+///             hop (BRLM <-> USDM <-> stable), using the per-stable factory recorded at deploy.
+///         Two flavours are available:
 ///           - Single wallet (`deposit` / `withdraw`): the caller spends one token and
 ///             receives the other in the same wallet. No setup required.
 ///           - MiniPay-linked (`depositWithMinipay` / `withdrawWithMinipay`): a user links
 ///             a MiniPay address once, then either side can move value across:
-///               - withdrawWithMinipay: user spends GPBRV, MiniPay receives USDM
-///               - depositWithMinipay:  MiniPay spends USDM, user receives GPBRV
+///               - withdrawWithMinipay: user spends GPBRV, MiniPay receives the stable
+///               - depositWithMinipay:  MiniPay spends the stable, user receives GPBRV
 ///         The link can be created from either end: `configure` is called by the main
 ///         wallet, `configureFromMinipay` by the MiniPay wallet (which is the only option
 ///         while browsing inside MiniPay).
@@ -33,6 +37,10 @@ contract GPBRVSwapper {
     IMentoRouter public immutable mentoRouter;
     address public immutable mentoFactory;
 
+    /// @notice Registered 2-hop stable => the Mento factory of its USDM<->stable pool.
+    ///         USDM itself is always supported (native single hop) and is not stored here.
+    mapping(address => address) public stableCusdFactory;
+
     uint256 private constant SWAP_DEADLINE = 300;
 
     /// @notice Main wallet => linked MiniPay wallet.
@@ -41,25 +49,32 @@ contract GPBRVSwapper {
     mapping(address => address) public minipayToUser;
 
     event Configured(address indexed user, address indexed minipay);
-    event WithdrawMiniPay(address indexed user, address indexed minipay, uint256 gpbrvIn, uint256 usdmOut);
-    event DepositMinipay(address indexed minipay, address indexed user, uint256 usdmIn, uint256 gpbrvOut);
-    event WithdrawnDirect(address indexed account, uint256 gpbrvIn, uint256 usdmOut);
-    event DepositedDirect(address indexed account, uint256 usdmIn, uint256 gpbrvOut);
+    event WithdrawMiniPay(address indexed user, address indexed minipay, address stable, uint256 gpbrvIn, uint256 stableOut);
+    event DepositMinipay(address indexed minipay, address indexed user, address stable, uint256 stableIn, uint256 gpbrvOut);
+    event WithdrawnDirect(address indexed account, address indexed stable, uint256 gpbrvIn, uint256 stableOut);
+    event DepositedDirect(address indexed account, address indexed stable, uint256 stableIn, uint256 gpbrvOut);
 
     error InvalidAddress();
+    error ArrayLengthMismatch();
+    error UnsupportedStable();
     error MinipayAlreadyLinked();
     error UserAlreadyLinked();
     error NotConfigured();
     error NothingReceived();
     error InsufficientOutput();
 
+    /// @param stables Additional stablecoins reachable via USDM (e.g. USDC, USDT).
+    /// @param factories Parallel array: `factories[i]` is the Mento factory of the
+    ///        USDM<->`stables[i]` pool. Must be the same length as `stables`.
     constructor(
         address _gpbrv,
         address _brlm,
         address _usdm,
         address _sarafuPool,
         address _mentoRouter,
-        address _mentoFactory
+        address _mentoFactory,
+        address[] memory stables,
+        address[] memory factories
     ) {
         if (
             _gpbrv == address(0) ||
@@ -69,6 +84,7 @@ contract GPBRVSwapper {
             _mentoRouter == address(0) ||
             _mentoFactory == address(0)
         ) revert InvalidAddress();
+        if (stables.length != factories.length) revert ArrayLengthMismatch();
 
         gpbrv = IERC20(_gpbrv);
         brlm = IERC20(_brlm);
@@ -76,6 +92,11 @@ contract GPBRVSwapper {
         sarafuPool = ISwapPool(_sarafuPool);
         mentoRouter = IMentoRouter(_mentoRouter);
         mentoFactory = _mentoFactory;
+
+        for (uint256 i = 0; i < stables.length; i++) {
+            if (stables[i] == address(0) || factories[i] == address(0)) revert InvalidAddress();
+            stableCusdFactory[stables[i]] = factories[i];
+        }
     }
 
     /// @notice Link the caller's main wallet to a MiniPay wallet. Re-configuring with a
@@ -117,68 +138,113 @@ contract GPBRVSwapper {
         emit Configured(user, msg.sender);
     }
 
-    /// @notice Caller spends GPBRV and receives USDM in the same wallet.
+    /// @notice Caller spends GPBRV and receives `stable` in the same wallet.
     /// @param amount GPBRV amount to convert (6 decimals).
-    /// @param minUsdmOut Minimum USDM the caller must receive (slippage guard, 18 decimals).
-    function withdraw(uint256 amount, uint256 minUsdmOut) external returns (uint256 usdmOut) {
+    /// @param minStableOut Minimum stable the caller must receive (slippage guard).
+    /// @param stable USDM, or any registered 2-hop stable (USDC, USDT).
+    function withdraw(uint256 amount, uint256 minStableOut, address stable) external returns (uint256 stableOut) {
+        IMentoRouter.Route[] memory routes = _routesFromBrlm(stable);
+
         gpbrv.safeTransferFrom(msg.sender, address(this), amount);
 
         uint256 brlmReceived = _sarafuSwap(gpbrv, brlm, amount, false);
-        usdmOut = _mentoSwap(brlm, usdm, brlmReceived, minUsdmOut, msg.sender);
+        stableOut = _mentoSwap(brlm, IERC20(stable), routes, brlmReceived, minStableOut, msg.sender);
 
-        emit WithdrawnDirect(msg.sender, amount, usdmOut);
+        emit WithdrawnDirect(msg.sender, stable, amount, stableOut);
     }
 
-    /// @notice Caller spends USDM and receives GPBRV in the same wallet.
-    /// @param amount USDM amount to convert (18 decimals).
+    /// @notice Caller spends `stable` and receives GPBRV in the same wallet.
+    /// @param amount Stable amount to convert.
     /// @param minGpbrvOut Minimum GPBRV the caller must receive (slippage guard, 6 decimals).
-    function deposit(uint256 amount, uint256 minGpbrvOut) external returns (uint256 gpbrvOut) {
-        usdm.safeTransferFrom(msg.sender, address(this), amount);
+    /// @param stable USDM, or any registered 2-hop stable (USDC, USDT).
+    function deposit(uint256 amount, uint256 minGpbrvOut, address stable) external returns (uint256 gpbrvOut) {
+        IMentoRouter.Route[] memory routes = _routesToBrlm(stable);
+
+        IERC20(stable).safeTransferFrom(msg.sender, address(this), amount);
 
         // Intermediate BRLM has no user-facing slippage guard; the final GPBRV output is checked instead.
-        uint256 brlmReceived = _mentoSwap(usdm, brlm, amount, 0, address(this));
+        uint256 brlmReceived = _mentoSwap(IERC20(stable), brlm, routes, amount, 0, address(this));
         // BRLM (18) -> GPBRV (6) requires the deductFee overload; see the contract-level @dev note.
         gpbrvOut = _sarafuSwap(brlm, gpbrv, brlmReceived, true);
         if (gpbrvOut < minGpbrvOut) revert InsufficientOutput();
 
         gpbrv.safeTransfer(msg.sender, gpbrvOut);
 
-        emit DepositedDirect(msg.sender, amount, gpbrvOut);
+        emit DepositedDirect(msg.sender, stable, amount, gpbrvOut);
     }
 
-    /// @notice User spends GPBRV; the configured MiniPay wallet receives USDM.
+    /// @notice User spends GPBRV; the configured MiniPay wallet receives `stable`.
     /// @param amount GPBRV amount to convert (6 decimals).
-    /// @param minUsdmOut Minimum USDM the MiniPay wallet must receive (slippage guard, 18 decimals).
-    function withdrawWithMinipay(uint256 amount, uint256 minUsdmOut) external returns (uint256 usdmOut) {
+    /// @param minStableOut Minimum stable the MiniPay wallet must receive (slippage guard).
+    /// @param stable USDM, or any registered 2-hop stable (USDC, USDT).
+    function withdrawWithMinipay(uint256 amount, uint256 minStableOut, address stable) external returns (uint256 stableOut) {
         address minipay = userToMinipay[msg.sender];
         if (minipay == address(0)) revert NotConfigured();
+
+        IMentoRouter.Route[] memory routes = _routesFromBrlm(stable);
 
         gpbrv.safeTransferFrom(msg.sender, address(this), amount);
 
         uint256 brlmReceived = _sarafuSwap(gpbrv, brlm, amount, false);
-        usdmOut = _mentoSwap(brlm, usdm, brlmReceived, minUsdmOut, minipay);
+        stableOut = _mentoSwap(brlm, IERC20(stable), routes, brlmReceived, minStableOut, minipay);
 
-        emit WithdrawMiniPay(msg.sender, minipay, amount, usdmOut);
+        emit WithdrawMiniPay(msg.sender, minipay, stable, amount, stableOut);
     }
 
-    /// @notice MiniPay spends USDM; the linked main wallet receives GPBRV.
-    /// @param amount USDM amount to convert (18 decimals).
+    /// @notice MiniPay spends `stable`; the linked main wallet receives GPBRV.
+    /// @param amount Stable amount to convert.
     /// @param minGpbrvOut Minimum GPBRV the user must receive (slippage guard, 6 decimals).
-    function depositWithMinipay(uint256 amount, uint256 minGpbrvOut) external returns (uint256 gpbrvOut) {
+    /// @param stable USDM, or any registered 2-hop stable (USDC, USDT).
+    function depositWithMinipay(uint256 amount, uint256 minGpbrvOut, address stable) external returns (uint256 gpbrvOut) {
         address user = minipayToUser[msg.sender];
         if (user == address(0)) revert NotConfigured();
 
-        usdm.safeTransferFrom(msg.sender, address(this), amount);
+        IMentoRouter.Route[] memory routes = _routesToBrlm(stable);
+
+        IERC20(stable).safeTransferFrom(msg.sender, address(this), amount);
 
         // Intermediate BRLM has no user-facing slippage guard; the final GPBRV output is checked instead.
-        uint256 brlmReceived = _mentoSwap(usdm, brlm, amount, 0, address(this));
+        uint256 brlmReceived = _mentoSwap(IERC20(stable), brlm, routes, amount, 0, address(this));
         // BRLM (18) -> GPBRV (6) requires the deductFee overload; see the contract-level @dev note.
         gpbrvOut = _sarafuSwap(brlm, gpbrv, brlmReceived, true);
         if (gpbrvOut < minGpbrvOut) revert InsufficientOutput();
 
         gpbrv.safeTransfer(user, gpbrvOut);
 
-        emit DepositMinipay(msg.sender, user, amount, gpbrvOut);
+        emit DepositMinipay(msg.sender, user, stable, amount, gpbrvOut);
+    }
+
+    /// @dev Mento route BRLM -> `stable`. One hop for USDM, two hops (via USDM) otherwise.
+    ///      Reverts `UnsupportedStable` for a stable that was not registered at deploy.
+    function _routesFromBrlm(address stable) private view returns (IMentoRouter.Route[] memory routes) {
+        if (stable == address(usdm)) {
+            routes = new IMentoRouter.Route[](1);
+            routes[0] = IMentoRouter.Route({from: address(brlm), to: address(usdm), factory: mentoFactory});
+            return routes;
+        }
+
+        address factory = stableCusdFactory[stable];
+        if (factory == address(0)) revert UnsupportedStable();
+
+        routes = new IMentoRouter.Route[](2);
+        routes[0] = IMentoRouter.Route({from: address(brlm), to: address(usdm), factory: mentoFactory});
+        routes[1] = IMentoRouter.Route({from: address(usdm), to: stable, factory: factory});
+    }
+
+    /// @dev Mento route `stable` -> BRLM. Reverse of `_routesFromBrlm`.
+    function _routesToBrlm(address stable) private view returns (IMentoRouter.Route[] memory routes) {
+        if (stable == address(usdm)) {
+            routes = new IMentoRouter.Route[](1);
+            routes[0] = IMentoRouter.Route({from: address(usdm), to: address(brlm), factory: mentoFactory});
+            return routes;
+        }
+
+        address factory = stableCusdFactory[stable];
+        if (factory == address(0)) revert UnsupportedStable();
+
+        routes = new IMentoRouter.Route[](2);
+        routes[0] = IMentoRouter.Route({from: stable, to: address(usdm), factory: factory});
+        routes[1] = IMentoRouter.Route({from: address(usdm), to: address(brlm), factory: mentoFactory});
     }
 
     /// @dev Swaps `amountIn` of `tokenIn` for `tokenOut` through the Sarafu pool, returning
@@ -202,19 +268,17 @@ contract GPBRVSwapper {
         if (received == 0) revert NothingReceived();
     }
 
-    /// @dev Swaps `amountIn` of `tokenIn` for `tokenOut` through the Mento router, sending
-    ///      the output to `to` and returning the amount `to` received.
+    /// @dev Swaps `amountIn` of `tokenIn` for `tokenOut` through the Mento router along the
+    ///      given `routes`, sending the output to `to` and returning the amount `to` received.
     function _mentoSwap(
         IERC20 tokenIn,
         IERC20 tokenOut,
+        IMentoRouter.Route[] memory routes,
         uint256 amountIn,
         uint256 minOut,
         address to
     ) private returns (uint256 received) {
         tokenIn.forceApprove(address(mentoRouter), amountIn);
-
-        IMentoRouter.Route[] memory routes = new IMentoRouter.Route[](1);
-        routes[0] = IMentoRouter.Route({from: address(tokenIn), to: address(tokenOut), factory: mentoFactory});
 
         uint256 before = tokenOut.balanceOf(to);
         mentoRouter.swapExactTokensForTokens(amountIn, minOut, routes, to, block.timestamp + SWAP_DEADLINE);

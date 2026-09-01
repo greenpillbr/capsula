@@ -5,12 +5,10 @@ export const en: Translations = {
   "meta.description":
     "Admin UI for Capsula Attendance distributions on Celo",
   "nav.home": "Home",
-  "nav.createDistribution": "Create Distribution",
   "nav.registerAttendance": "Register attendance",
   "nav.claim": "Claim",
   "nav.configure": "Configure",
   "nav.gpbrvSwap": "GPBRV Swap",
-  "nav.settingsMenu": "Settings menu",
   "nav.tools": "Tools",
   "nav.empaticTech": "Desanuveador Tech Empático",
   "nav.empaticTechTooltip":
@@ -24,9 +22,22 @@ export const en: Translations = {
   "common.success": "Success",
   "common.tryAgain": "Try again",
   "home.title": "What is Capsula?",
-  "home.intro": "It is the on-chain activities interface of the GreenPillBR community",
+  "home.tagline":
+    "A customizable framework for community management with decentralized power.",
+  "home.selectCommunity": "Choose your community",
+  "home.switchCommunity": "Switch community",
+  "community.notDeployed":
+    "This feature has not been deployed for this community yet.",
+  "community.greenpillbr.description":
+    "Online community organizing regeneration, solidarity economy and decentralization initiatives",
+  "community.greenpillbr.intro":
+    "It is the on-chain activities interface of the GreenPillBR community",
+  "community.cooperativista.description":
+    "Backoffice for our collective shopping platform",
+  "community.cooperativista.intro":
+    "This is the Cooperativista organization interface. New features will be available soon.",
   "home.participate.title":
-    "Want to participate? Join the GreenPillBR community meetings (Portuguese speaking)!",
+    "Want to participate? Join the community meetings (Portuguese speaking)!",
   "home.participate.time": "⏰ Wednesday's at 5:30 PM to 7:00 PM (São Paulo time)",
   "home.participate.meetLabel": "🔗 Community meetings:",
   "home.resources.title": "Useful resources",
@@ -71,8 +82,6 @@ export const en: Translations = {
   "claim.buttonLabel": "Claim distribution",
   "claim.buttonPending": "Claiming…",
   "claim.buttonSuccess": "Claimed",
-  "createDistribution.tabGpbr": "GPBR",
-  "createDistribution.tabGoodDollar": "Good Dollar",
   "createDistribution.title": "Create Distribution",
   "createDistribution.connectWallet":
     "Connect your wallet to access this page.",
@@ -103,8 +112,6 @@ export const en: Translations = {
   "createDistribution.createButton": "Create distribution",
   "createDistribution.createButtonPending": "Creating…",
   "createDistribution.createButtonSuccess": "Distribution created",
-  "configure.tabGpbr": "GPBR",
-  "configure.tabGoodDollar": "Good Dollar",
   "configure.title": "Configure",
   "configure.connectWallet": "Connect your wallet to access this page.",
   "configure.notAuthorized":
@@ -150,17 +157,15 @@ export const en: Translations = {
   "gpbrvSwap.openInMinipayConfigureCta":
     "Your wallet has no linked MiniPay address yet. You can link one from here using your main wallet:",
   "gpbrvSwap.openInMinipayConfigureLink": "Go to Configure",
-  "gpbrvSwap.swapWithdrawTitle": "Withdraw (GPBRV to USDM)",
+  "gpbrvSwap.swapWithdrawTitle": "Withdraw (GPBRV to stablecoin)",
   "gpbrvSwap.swapWithdrawDescription":
-    "Spend GPBRV from your wallet and receive USDM in the same wallet. No setup required.",
-  "gpbrvSwap.swapDepositTitle": "Deposit (USDM to GPBRV)",
+    "Spend GPBRV from your wallet and receive the chosen stablecoin in the same wallet. No setup required.",
+  "gpbrvSwap.swapDepositTitle": "Deposit (stablecoin to GPBRV)",
   "gpbrvSwap.swapDepositDescription":
-    "Spend USDM from your wallet and receive GPBRV in the same wallet. No setup required.",
+    "Spend the chosen stablecoin from your wallet and receive GPBRV in the same wallet. No setup required.",
   "gpbrvSwap.connectWallet": "Connect your wallet to access this page.",
   "gpbrvSwap.notDeployed":
-    "The GPBRVSwapper address is not configured. Set NEXT_PUBLIC_GPBRV_SWAPPER_ADDRESS.",
-  "gpbrvSwap.featureDisabled":
-    "This page is disabled. Set NEXT_PUBLIC_ENABLE_GPBRV_SWAP=true to enable it.",
+    "The GPBRVSwapper address is not configured for this community.",
   "gpbrvSwap.configureTitle": "Link your MiniPay wallet",
   "gpbrvSwap.configureDescription":
     "Store the MiniPay address that should receive USDM on withdraw and spend USDM on deposit. This link is required before withdrawing or depositing.",
@@ -181,16 +186,22 @@ export const en: Translations = {
   "gpbrvSwap.currentUser": "Linked main wallet",
   "gpbrvSwap.notConfiguredYetMinipay":
     "No main wallet is linked to this MiniPay wallet yet.",
-  "gpbrvSwap.sendToMinipayLabel": "Send the USDM to my linked MiniPay wallet",
+  "gpbrvSwap.sendToMinipayLabel": "Send the stablecoin to my linked MiniPay wallet",
   "gpbrvSwap.sendToMinipayNotLinked":
     "Available once a MiniPay wallet is linked. Link one on the Configure tab.",
   "gpbrvSwap.notConfiguredWarningMinipay":
     "Your wallet is not registered as a MiniPay wallet. The owner must link it on the Configure tab before depositing.",
   "gpbrvSwap.amountGpbrv": "Amount (GPBRV)",
   "gpbrvSwap.amountUsdm": "Amount (USDM)",
+  "gpbrvSwap.amountLabel": "Amount",
+  "gpbrvSwap.balanceOf": "Balance",
+  "gpbrvSwap.payWith": "Pay with",
+  "gpbrvSwap.youReceive": "You receive",
+  "gpbrvSwap.slippage": "Slippage",
+  "gpbrvSwap.slippageEdit": "Edit slippage",
   "gpbrvSwap.minReceived": "Minimum received",
   "gpbrvSwap.slippageNote":
-    "Pre-filled from the estimated output with a 6% slippage buffer. Edit if needed.",
+    "Computed from the estimated output minus the Sarafu fee and the configured slippage. Adjust slippage with the gear above.",
   "gpbrvSwap.estimating": "Fetching live quote…",
   "gpbrvSwap.estimatedOutput": "Estimated output",
   "gpbrvSwap.exchangeRate": "Rate",
