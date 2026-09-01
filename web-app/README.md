@@ -9,7 +9,7 @@ Capsula hosts several communities. `/` is the community selector; everything els
 | Community | Slug | Features |
 |---|---|---|
 | GreenPillBR | `greenpillbr` | Attendance, Resgatar, Swap, Ferramentas |
-| GrowEcossistemas | `grow` | Attendance (contract not deployed yet) |
+| Cooperativista | `cooperativista` | None yet |
 
 Instances are configured in **`lib/communities.ts`** — enabled features, contract addresses, logo, description, home content and tools links. Adding a community is a data change there plus a logo in `public/communities/` and two i18n strings. Addresses themselves stay in `lib/contracts.ts`.
 

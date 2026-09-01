@@ -32,10 +32,10 @@ export const ptBR: Translations = {
     "Comunidade online para organizar ações de regeneração, economia solidária e descentralização",
   "community.greenpillbr.intro":
     "É a interface das atividades on-chain da comunidade GreenPillBR",
-  "community.grow.description":
-    "Empresa decentralizada habilitadora de frameworks de governança, mrv e desenvolvimento rural inteligente",
-  "community.grow.intro":
-    "É a interface das atividades on-chain da GrowEcossistemas",
+  "community.cooperativista.description":
+    "Recursos administrativos da nossa loja de compras coletivas",
+  "community.cooperativista.intro":
+    "É a interface da organização Cooperativista. Novas funcionalidades serão disponibilizadas em breve.",
   "home.participate.title":
     "Quer participar? Compareça nos encontros da comunidade!",
   "home.participate.time": "⏰ As quartas-feiras das 17h30 às 19h00 (horário de São Paulo)",

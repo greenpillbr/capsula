@@ -103,21 +103,19 @@ export const COMMUNITIES: Record<string, CommunityConfig> = {
       },
     ],
   },
-  grow: {
-    slug: "grow",
-    name: "GrowEcossistemas",
-    logo: "/communities/grow.jpg",
-    descriptionKey: "community.grow.description",
-    features: ["attendance"],
+  cooperativista: {
+    slug: "cooperativista",
+    name: "Cooperativista",
+    logo: "/communities/cooperativista.png",
+    descriptionKey: "community.cooperativista.description",
+    features: [],
     contracts: {
-      // No distributor deployed yet — the attendance page renders a notice instead
-      // of the claim form and makes no on-chain reads.
       attendance: null,
       redeem: null,
       swapper: null,
     },
     home: {
-      introKey: "community.grow.intro",
+      introKey: "community.cooperativista.intro",
       resources: [],
     },
     tools: [],

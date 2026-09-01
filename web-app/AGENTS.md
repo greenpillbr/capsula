@@ -10,7 +10,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Multi-tenant communities
 
-The app is multi-tenant: **every routed page lives under an `app/[community]/` segment**, and the first path segment names the instance (`/greenpillbr/registrar-presenca`, `/grow/registrar-presenca`). There is no cookie or env var — **the URL is the only source of truth** for which community is active.
+The app is multi-tenant: **every routed page lives under an `app/[community]/` segment**, and the first path segment names the instance (`/greenpillbr/registrar-presenca`, `/cooperativista`). There is no cookie or env var — **the URL is the only source of truth** for which community is active.
 
 ### The config module — `lib/communities.ts`
 
@@ -31,12 +31,12 @@ Also exported: `COMMUNITY_SLUGS`, `DEFAULT_COMMUNITY_SLUG`, `getCommunity()`, `h
 
 The module must stay importable from **both** server and client components — no `next/headers`, no server-only imports. It composes the addresses out of `lib/contracts.ts`, which remains the single place addresses are edited.
 
-Current instances: **greenpillbr** (all four features) and **grow** (`attendance` only, all contracts `null`).
+Current instances: **greenpillbr** (all four features) and **cooperativista** (no features enabled, all contracts `null`).
 
 ### Feature gating and undeployed contracts
 
-- Every page under `[community]` starts with `getCommunity(slug)` → `notFound()` when the slug is unknown **or** the feature is off. So `/grow/resgatar` is a 404.
-- When the feature is on but its contract is `null`, the page renders `NotDeployedNotice` (`community.notDeployed`) instead of the form and makes **no on-chain reads**. That is what `/grow/registrar-presenca` shows today.
+- Every page under `[community]` starts with `getCommunity(slug)` → `notFound()` when the slug is unknown **or** the feature is off. So every feature route under `/cooperativista` is a 404 for now.
+- When a feature is on but its contract is `null`, the page renders `NotDeployedNotice` (`community.notDeployed`) instead of the form and makes **no on-chain reads**.
 
 ### Chrome: root layout vs `AppShell`
 
